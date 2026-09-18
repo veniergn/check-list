@@ -1,0 +1,6 @@
+{
+  "name": "Control de Avance",
+  "description": "Sistema de inspección de obra, control de avance por gremios, gestión de departamentos y espacios comunes, checklist técnico con observaciones, exportación a Excel y reportes PDF.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
