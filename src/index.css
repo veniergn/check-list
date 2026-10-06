@@ -1,0 +1,721 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant glass (&:where(.theme-glass, .theme-glass *));
+@custom-variant original (&:where(.theme-original, .theme-original *));
+
+:root {
+  --neon-color: #00f2fe;
+  --neon-glow: rgba(0, 242, 254, 0.38);
+  --neon-glow-soft: rgba(0, 242, 254, 0.15);
+  --app-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--app-font-family);
+}
+
+/* Aplicar la tipografía dinámicamente a todos los elementos, títulos y tarjetas */
+*,
+*::before,
+*::after,
+html,
+body,
+button,
+input,
+select,
+textarea,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+label,
+a,
+div {
+  font-family: var(--app-font-family) !important;
+}
+
+.font-mono,
+[class*="font-mono"] {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+}
+
+/* Modo Negrita Global (Bold Text Mode) */
+html.font-bold-mode,
+html.font-bold-mode body,
+html.font-bold-mode button,
+html.font-bold-mode input,
+html.font-bold-mode select,
+html.font-bold-mode textarea,
+html.font-bold-mode p,
+html.font-bold-mode span,
+html.font-bold-mode label,
+html.font-bold-mode a {
+  font-weight: 700;
+}
+
+html.font-bold-mode .font-normal {
+  font-weight: 600 !important;
+}
+
+html.font-bold-mode .font-medium {
+  font-weight: 700 !important;
+}
+
+html.font-bold-mode .font-semibold {
+  font-weight: 800 !important;
+}
+
+html.font-bold-mode .font-bold,
+html.font-bold-mode .font-extrabold,
+html.font-bold-mode .font-black {
+  font-weight: 900 !important;
+}
+
+@theme {
+  --color-brand-dark: #111827;
+  --color-brand-navy: #1e293b;
+  --color-brand-gold: #c59b27;
+  --color-brand-gold-light: #eab308;
+  --color-brand-gold-bg: #fef9c3;
+  --color-brand-accent: #b48316;
+}
+
+.border-neon {
+  border-color: var(--neon-color) !important;
+}
+
+.text-neon {
+  color: var(--neon-color) !important;
+}
+
+.bg-neon-soft {
+  background-color: var(--neon-glow-soft) !important;
+}
+
+.shadow-neon {
+  box-shadow: 0 0 30px var(--neon-glow) !important;
+}
+
+/* Touch targets optimization for job site mobile devices */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Hide scrollbars completely across WebKit, Blink, Gecko, and Trident engines */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+.gantt-scroll-viewport::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-track,
+.scrollbar-none::-webkit-scrollbar-track,
+.gantt-scroll-viewport::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-thumb,
+.scrollbar-none::-webkit-scrollbar-thumb,
+.gantt-scroll-viewport::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+.no-scrollbar,
+.scrollbar-none,
+.gantt-scroll-viewport {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Dark sleek scrollbar for custom-scrollbar containers to prevent default white browser scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.7);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(51, 65, 85, 0.7) transparent;
+}
+
+/* Print specific styles for Technical Inspection Act & Gantt PDF - Strict Landscape */
+@media print {
+  @page {
+    size: landscape;
+    margin: 6mm !important;
+  }
+  *, *:before, *:after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body, #root, #root > div {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .no-print,
+  header,
+  nav,
+  main,
+  footer,
+  #root > div > header,
+  #root > div > main,
+  #root > div > nav,
+  body::before,
+  body::after,
+  html::before,
+  html::after,
+  [class*="wallpaper"],
+  [class*="luminous"],
+  [class*="blur-"] {
+    display: none !important;
+  }
+
+  /* Desactivar backdrop oscuro y centrado fixed del modal para que solo fluya la hoja */
+  .report-modal-backdrop {
+    position: static !important;
+    inset: auto !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .report-modal-dialog {
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .report-sheet-wrapper,
+  .monthly-report-sheet-wrapper {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .printable-document-container {
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  .page-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .page-break-before-always {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Estilos específicos para Informe Mensual de Obra Ejecutivo Vertical (A4 Portrait) */
+  .monthly-report-page {
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 297mm !important;
+    max-height: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .monthly-report-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+  .monthly-report-page input,
+  .monthly-report-page textarea {
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Vista previa en pantalla del informe mensual estilo hoja A4 ejecutiva */
+.monthly-report-preview-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  color: #0f172a;
+  position: relative;
+  overflow: visible;
+  box-sizing: border-box;
+}
+@media (max-width: 850px) {
+  .monthly-report-preview-sheet {
+    width: 100%;
+    min-height: auto;
+  }
+}
+
+/* Ocultar insignia/badge de Netlify y cualquier widget o iframe inyectado en el borde */
+iframe[src*="netlify"],
+iframe[id*="netlify"],
+iframe[title*="netlify" i],
+#netlify-badge,
+[data-netlify-badge],
+.netlify-badge,
+div[id*="netlify" i],
+div[class*="netlify" i],
+body > iframe {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  top: -99999px !important;
+  left: -99999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: -99999 !important;
+}
+
+/* ==========================================================================
+   SISTEMA DE TEMAS: TEMA 1 (ORIGINAL OSCURO) vs TEMA 2 (GLASSMORPHISM)
+   ========================================================================== */
+
+/* Transición suave global al alternar entre temas */
+body,
+header,
+nav,
+main,
+.theme-glass,
+.theme-original {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   TEMA 1: APARIENCIA ORIGINAL OSCURA CON VIDRIO ESMERILADO FLOTANTE (DARK GLASS)
+   ========================================================================== */
+
+/* Fondo general ambiente cuando NO hay un fondo de color o wallpaper personalizado */
+html.theme-original:not(.has-custom-bg),
+body.theme-original:not(.has-custom-bg) {
+  background-color: #0b1120;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.22) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(14, 116, 144, 0.18) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(88, 28, 135, 0.18) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+.theme-original {
+  color: #f1f5f9;
+}
+
+/* Tarjetas y Contenedores Flotantes con Efecto Vidrio Esmerilado (Dark Glassmorphism) */
+.project-card-glass,
+.theme-original .project-card-glass,
+.theme-original .bg-\[\#131b2c\],
+.theme-original .bg-\[\#131b2c\]\/80,
+.theme-original .bg-\[\#151f33\],
+.theme-original .bg-\[\#151f33\]\/90,
+.theme-original .bg-\[\#151f33\]\/80,
+.theme-original .bg-\[\#162035\],
+.theme-original .bg-\[\#162035\]\/95,
+.theme-original .bg-\[\#162238\],
+.theme-original .bg-\[\#19263e\],
+.theme-original .bg-\[\#1a2942\],
+.theme-original .bg-\[\#0f172a\],
+.theme-original .bg-\[\#0f172a\]\/95,
+.theme-original .bg-\[\#0e1422\],
+.theme-original .bg-\[\#111827\],
+.theme-original .bg-slate-900,
+.theme-original .bg-slate-900\/90,
+.theme-original .bg-slate-900\/80,
+.theme-original .bg-slate-900\/60,
+.theme-original .bg-slate-900\/50,
+.theme-original .bg-slate-950,
+.theme-original .bg-slate-950\/90,
+.theme-original .bg-slate-950\/80,
+.theme-original .bg-slate-850,
+.theme-original .bg-slate-800,
+.theme-original .bg-slate-800\/90,
+.theme-original .bg-slate-800\/80,
+.theme-original [class*="bg-\[\#131b2c\]"],
+.theme-original [class*="bg-\[\#151f33\]"],
+.theme-original [class*="bg-\[\#162035\]"] {
+  background: rgba(15, 23, 42, 0.44) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
+}
+
+/* Header Superior Glassmorphism Translúcido */
+header,
+.theme-original header {
+  background: rgba(15, 23, 42, 0.58) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Dock de Navegación Inferior Flotante Translúcido (Glass Dock) */
+.glass-dock {
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+}
+
+.theme-original .glass-dock,
+html:not(.theme-glass) .glass-dock,
+nav.glass-dock {
+  background: rgba(15, 23, 42, 0.50) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.10) inset !important;
+}
+
+/* Modales Flotantes en Tema Original */
+.theme-original .fixed.inset-0.bg-black\/80,
+.theme-original .fixed.inset-0.bg-black\/70,
+.theme-original .fixed.inset-0.bg-black\/60 {
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+/* ==========================================================================
+   TEMA 2: NUEVA APARIENCIA MINIMALISTA / GLASSMORPHISM (Estilo Dribbble Ref)
+   ========================================================================== */
+
+/* Fondo general luminoso cuando NO hay un fondo de color o wallpaper personalizado */
+html.theme-glass:not(.has-custom-bg),
+body.theme-glass:not(.has-custom-bg) {
+  background-color: #f0f3f8;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(224, 231, 255, 0.7) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(207, 250, 254, 0.6) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(243, 232, 255, 0.6) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+.theme-glass {
+  color: #0f172a;
+}
+
+/* Desactivar gradientes base cuando hay fondo de color o wallpaper activo */
+html.has-custom-bg,
+body.has-custom-bg {
+  background-image: none !important;
+}
+
+/* Tarjetas y Contenedores con Efecto Vidrio Esmerilado (Glassmorphism) */
+.theme-glass .project-card-glass,
+.theme-glass .bg-\[\#131b2c\],
+.theme-glass .bg-\[\#131b2c\]\/80,
+.theme-glass .bg-\[\#151f33\],
+.theme-glass .bg-\[\#151f33\]\/90,
+.theme-glass .bg-\[\#151f33\]\/80,
+.theme-glass .bg-\[\#162035\],
+.theme-glass .bg-\[\#162035\]\/95,
+.theme-glass .bg-\[\#162238\],
+.theme-glass .bg-\[\#19263e\],
+.theme-glass .bg-\[\#1a2942\],
+.theme-glass .bg-\[\#0f172a\],
+.theme-glass .bg-\[\#0f172a\]\/95,
+.theme-glass .bg-\[\#0e1422\],
+.theme-glass .bg-\[\#111827\],
+.theme-glass .bg-\[\#1e293b\],
+.theme-glass .bg-slate-900,
+.theme-glass .bg-slate-900\/90,
+.theme-glass .bg-slate-900\/80,
+.theme-glass .bg-slate-900\/60,
+.theme-glass .bg-slate-900\/50,
+.theme-glass .bg-slate-950,
+.theme-glass .bg-slate-950\/90,
+.theme-glass .bg-slate-950\/80,
+.theme-glass .bg-slate-950\/60,
+.theme-glass .bg-slate-850,
+.theme-glass .bg-slate-800,
+.theme-glass .bg-slate-800\/90,
+.theme-glass .bg-slate-800\/80,
+.theme-glass .bg-slate-800\/60,
+.theme-glass .bg-slate-800\/50,
+.theme-glass .bg-slate-800\/40 {
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8) inset !important;
+}
+
+/* Sub-paneles y áreas internas con contraste suave */
+.theme-glass .bg-slate-950\/60,
+.theme-glass .bg-slate-900\/40,
+.theme-glass .bg-slate-800\/30,
+.theme-glass .bg-slate-800\/20 {
+  background-color: rgba(241, 245, 249, 0.7) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+/* Hover en tarjetas de cristal */
+.theme-glass .hover\:bg-slate-800:hover,
+.theme-glass .hover\:bg-slate-850:hover,
+.theme-glass .hover\:bg-slate-900:hover {
+  background: rgba(241, 245, 249, 0.9) !important;
+}
+
+/* Bordes y Divisores en Glassmorphism */
+.theme-glass .border-slate-800,
+.theme-glass .border-slate-800\/80,
+.theme-glass .border-slate-800\/60,
+.theme-glass .border-slate-800\/50,
+.theme-glass .border-slate-800\/40,
+.theme-glass .border-slate-800\/30,
+.theme-glass .border-slate-800\/20,
+.theme-glass .border-slate-700,
+.theme-glass .border-slate-700\/80,
+.theme-glass .border-slate-700\/60,
+.theme-glass .border-slate-700\/50,
+.theme-glass .border-slate-700\/40 {
+  border-color: rgba(226, 232, 240, 0.75) !important;
+}
+
+.theme-glass .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+.theme-glass .divide-slate-700 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(226, 232, 240, 0.75) !important;
+}
+
+.theme-glass hr,
+.theme-glass .h-px.bg-slate-800,
+.theme-glass .h-px.bg-slate-800\/80,
+.theme-glass .h-px.bg-slate-700 {
+  background-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+/* Barra de Navegación Superior (Header) Glassmorphism */
+.theme-glass header {
+  background: rgba(255, 255, 255, 0.84) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.theme-glass header h1,
+.theme-glass header .text-white {
+  color: #0f172a !important;
+}
+
+.theme-glass header .bg-slate-800\/80,
+.theme-glass header .bg-slate-800 {
+  background-color: rgba(241, 245, 249, 0.85) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  color: #334155 !important;
+}
+
+.theme-glass header .text-slate-300,
+.theme-glass header .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* Breadcrumb Subheader */
+.theme-glass .bg-slate-950.border-b.border-slate-800 {
+  background: rgba(248, 250, 252, 0.9) !important;
+  border-bottom-color: rgba(226, 232, 240, 0.85) !important;
+}
+
+/* Barra Flotante Inferior (Bottom Floating Dock) */
+.theme-glass nav.fixed.bottom-3,
+.theme-glass nav.fixed.bottom-4,
+.theme-glass nav.glass-dock {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.1), 0 4px 14px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-glass nav.fixed.bottom-3 button,
+.theme-glass nav.fixed.bottom-4 button {
+  color: #64748b !important;
+}
+
+.theme-glass nav.fixed.bottom-3 button:hover,
+.theme-glass nav.fixed.bottom-4 button:hover {
+  color: #0f172a !important;
+}
+
+/* Tipografía y Textos Nítidos para el Modo Glass */
+.theme-glass h1:not([class*="bg-"]),
+.theme-glass h2:not([class*="bg-"]),
+.theme-glass h3:not([class*="bg-"]),
+.theme-glass h4:not([class*="bg-"]),
+.theme-glass h5:not([class*="bg-"]),
+.theme-glass h6:not([class*="bg-"]) {
+  color: #0f172a !important;
+}
+
+.theme-glass .text-white:not(
+  [class*="bg-emerald"],
+  [class*="bg-rose"],
+  [class*="bg-amber"],
+  [class*="bg-purple"],
+  [class*="bg-indigo"],
+  [class*="bg-blue"],
+  [class*="bg-cyan-600"],
+  [class*="bg-black"],
+  .badge,
+  .badge *
+) {
+  color: #0f172a !important;
+}
+
+.theme-glass .text-slate-100:not(
+  [class*="bg-emerald"],
+  [class*="bg-rose"],
+  [class*="bg-amber"],
+  [class*="bg-purple"],
+  [class*="bg-indigo"]
+),
+.theme-glass .text-slate-200:not(
+  [class*="bg-emerald"],
+  [class*="bg-rose"],
+  [class*="bg-amber"],
+  [class*="bg-purple"]
+) {
+  color: #1e293b !important;
+}
+
+.theme-glass .text-slate-300 {
+  color: #334155 !important;
+}
+
+.theme-glass .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Diagrama de Gantt & Calendarios en Glassmorphism */
+.theme-glass .sticky.left-0 {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(226, 232, 240, 0.9) !important;
+  color: #0f172a !important;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-glass .sticky.top-0 {
+  background: rgba(248, 250, 252, 0.96) !important;
+  border-color: rgba(226, 232, 240, 0.9) !important;
+  color: #1e293b !important;
+}
+
+.theme-glass .gantt-scroll-viewport {
+  background: rgba(255, 255, 255, 0.65) !important;
+}
+
+.theme-glass [class*="border-slate-800\/30"],
+.theme-glass [class*="border-slate-800\/50"] {
+  border-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+.theme-glass [class*="bg-slate-900\/30"] {
+  background-color: rgba(241, 245, 249, 0.7) !important;
+}
+
+/* Modales y Cuadros de Diálogo en Glassmorphism */
+.theme-glass .fixed.inset-0.bg-black\/80,
+.theme-glass .fixed.inset-0.bg-black\/70,
+.theme-glass .fixed.inset-0.bg-black\/60,
+.theme-glass .fixed.inset-0.bg-slate-950\/80 {
+  background-color: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.theme-glass .fixed.inset-0 .bg-slate-900,
+.theme-glass .fixed.inset-0 .bg-slate-950,
+.theme-glass .fixed.inset-0 .bg-\[\#0e1422\],
+.theme-glass .fixed.inset-0 .bg-\[\#131b2c\],
+.theme-glass .fixed.inset-0 .bg-\[\#162035\] {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.14) !important;
+  color: #0f172a !important;
+}
+
+.theme-glass input[type="text"]:not([class*="bg-transparent"]),
+.theme-glass input[type="number"]:not([class*="bg-transparent"]),
+.theme-glass input[type="date"]:not([class*="bg-transparent"]),
+.theme-glass textarea,
+.theme-glass select {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Scrollbar en tema Glassmorphism */
+.theme-glass .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.6) !important;
+}
+.theme-glass .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5) !important;
+}
+.theme-glass .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7) !important;
+}
+

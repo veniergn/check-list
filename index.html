@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" class="h-full bg-slate-100 dark:bg-slate-950">
+<html lang="es" class="dark h-full bg-[#0e1422]">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -7,15 +7,144 @@
     <meta name="description" content="Sistema de inspección de obra, control de avance por gremios, gestión de departamentos y espacios comunes, checklist técnico con observaciones, exportación a Excel y reportes PDF." />
     <meta property="og:title" content="Control de Avance - Inspección en Obra" />
     <meta property="og:description" content="Sistema de inspección de obra, control de avance por gremios, gestión de departamentos y espacios comunes, checklist técnico con observaciones, exportación a Excel y reportes PDF." />
+    <meta property="og:site_name" content="Control de Avance de Obra" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://checklistvg.netlify.app/" />
+    <meta property="og:image" content="https://checklistvg.netlify.app/og-banner.png" />
+    <meta property="og:image:secure_url" content="https://checklistvg.netlify.app/og-banner.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="Control de Avance - Inspección en Obra" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://checklistvg.netlify.app/og-banner.png" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Control Obra" />
+    <meta name="application-name" content="Control Obra" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-TileImage" content="https://checklistvg.netlify.app/icon-512.png?v=5" />
+
+    <link rel="manifest" href="/manifest.json?v=16" />
+    <link rel="icon" type="image/png" sizes="1024x1024" href="/icon.png?v=5" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=5" />
+    <link rel="icon" type="image/png" sizes="256x256" href="/icon-256.png?v=5" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=5" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/icon-128.png?v=5" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=5" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png?v=5" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=5" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg?v=5" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=5" />
+    <link rel="shortcut icon" href="/favicon.ico?v=5" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* Bloquear e invisibilizar badge de Netlify y drawers inyectados */
+      iframe[src*="netlify"],
+      iframe[id*="netlify"],
+      iframe[title*="netlify" i],
+      #netlify-badge,
+      [data-netlify-badge],
+      .netlify-badge,
+      div[id*="netlify" i],
+      div[class*="netlify" i],
+      body > iframe {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        z-index: -99999 !important;
+      }
+    </style>
   </head>
-  <body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-amber-200">
+  <body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-amber-200">
     <div id="root" class="h-full"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function() {
+        function purgeNetlifyBadge() {
+          var selectors = [
+            'iframe[src*="netlify"]',
+            'iframe[id*="netlify"]',
+            'iframe[title*="netlify" i]',
+            '#netlify-badge',
+            '[data-netlify-badge]',
+            '.netlify-badge',
+            'div[id*="netlify" i]',
+            'div[class*="netlify" i]'
+          ];
+          selectors.forEach(function(s) {
+            try {
+              document.querySelectorAll(s).forEach(function(el) { el.remove(); });
+            } catch(e) {}
+          });
+          var root = document.getElementById('root');
+          if (document.body) {
+            var children = Array.from(document.body.children);
+            children.forEach(function(child) {
+              if (child !== root && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE' && child.tagName !== 'LINK') {
+                if (child.tagName === 'IFRAME' || /netlify/i.test(child.id || '') || /netlify/i.test(child.className || '')) {
+                  child.remove();
+                }
+              }
+            });
+          }
+        }
+        purgeNetlifyBadge();
+        if (window.MutationObserver) {
+          var observer = new MutationObserver(purgeNetlifyBadge);
+          observer.observe(document.documentElement, { childList: true, subtree: true });
+        }
+        window.addEventListener('DOMContentLoaded', purgeNetlifyBadge);
+        window.addEventListener('load', purgeNetlifyBadge);
+      })();
+    </script>
+    <script>
+      // Optimización de orientación para tablet: detectar tablet y fijar apaisado (landscape)
+      (function() {
+        function enforceLandscapeOnTablet() {
+          try {
+            var minSide = Math.min(window.screen.width, window.screen.height);
+            var isTablet = minSide >= 500 || /tablet|ipad|playbook|silk/i.test(navigator.userAgent);
+            if (window.screen && window.screen.orientation) {
+              if (isTablet && window.screen.orientation.lock) {
+                window.screen.orientation.lock('landscape').catch(function() {
+                  if (window.screen.orientation.unlock) window.screen.orientation.unlock();
+                });
+              } else if (window.screen.orientation.unlock) {
+                window.screen.orientation.unlock();
+              }
+            }
+          } catch(e) {}
+        }
+        enforceLandscapeOnTablet();
+        window.addEventListener('DOMContentLoaded', enforceLandscapeOnTablet);
+        window.addEventListener('load', enforceLandscapeOnTablet);
+        window.addEventListener('pointerdown', enforceLandscapeOnTablet, { once: true });
+        window.addEventListener('touchstart', enforceLandscapeOnTablet, { once: true });
+        window.addEventListener('click', enforceLandscapeOnTablet, { once: true });
+      })();
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js?v=16').then((reg) => {
+            reg.update();
+          }).catch((err) => {
+            console.warn('Service worker registration failed:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
 
