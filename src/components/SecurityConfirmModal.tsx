@@ -45,15 +45,15 @@ export function SecurityConfirmModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl border-t-4 border-rose-600 space-y-4">
+      <div className="bg-[#101D30] text-[#F8FAFC] w-full max-w-sm rounded-2xl p-5 shadow-2xl border border-[#29384C] border-t-4 border-t-rose-600 space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between pb-2 border-b border-slate-100">
+        <div className="flex items-start justify-between pb-2 border-b border-[#29384C]">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-700 flex-shrink-0">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-slate-950 text-base leading-tight">
+              <h3 className="font-black text-[#F8FAFC] text-base leading-tight">
                 {title}
               </h3>
               <p className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
@@ -63,18 +63,18 @@ export function SecurityConfirmModal({
           </div>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 touch-target rounded-lg"
+            className="text-[#94A3B8] hover:text-slate-600 p-1.5 touch-target rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Warning Details */}
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-950 space-y-1">
-          <p className="font-bold text-[13px] text-rose-900 break-words">
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-3 text-xs text-rose-200 space-y-1">
+          <p className="font-bold text-[13px] text-rose-200 break-words">
             ¿Eliminar {itemType === 'project' ? 'la obra' : 'la unidad / espacio'} &ldquo;{itemName}&rdquo;?
           </p>
-          <p className="text-[11px] text-rose-800 leading-relaxed font-medium">
+          <p className="text-[11px] text-rose-300 leading-relaxed font-medium">
             Esta operación no se puede deshacer. Se borrarán permanentemente sus gremios, avances, fotos y notas técnicas asociadas.
           </p>
         </div>
@@ -82,11 +82,11 @@ export function SecurityConfirmModal({
         {/* PIN Form */}
         <form onSubmit={handleConfirm} className="space-y-3 pt-1">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+            <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-1 flex items-center justify-between">
               <span className="flex items-center gap-1">
                 <KeyRound className="w-3.5 h-3.5 text-slate-500" /> Ingrese Clave de Seguridad:
               </span>
-              <span className="text-[10px] text-slate-400 font-normal">Clave: 2600</span>
+              <span className="text-[10px] text-[#94A3B8] font-normal">Clave: 2600</span>
             </label>
             <input
               type="password"
@@ -100,7 +100,7 @@ export function SecurityConfirmModal({
                 setPin(e.target.value);
                 if (error) setError('');
               }}
-              className="w-full text-center tracking-widest font-mono text-xl py-2.5 px-3 rounded-xl border-2 border-slate-300 focus:outline-none focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 font-black text-slate-900 bg-slate-50"
+              className="w-full text-center tracking-widest font-mono text-xl py-2.5 px-3 rounded-xl border-2 border-[#29384C] focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 font-black text-white bg-[#17263B]"
             />
           </div>
 
@@ -115,7 +115,7 @@ export function SecurityConfirmModal({
             <button
               type="button"
               onClick={handleClose}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-300 transition-colors touch-target"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold text-[#94A3B8] hover:text-white bg-[#17263B] hover:bg-[#20324c] border border-[#29384C] transition-colors touch-target"
             >
               Cancelar
             </button>

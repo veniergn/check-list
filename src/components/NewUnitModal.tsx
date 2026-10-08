@@ -53,10 +53,10 @@ export function NewUnitModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
-      <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl border-t-4 border-slate-900 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-[#101D30] text-[#F8FAFC] w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl border border-[#29384C] border-t-4 border-t-amber-500 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 border-b border-[#29384C]">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-900 font-bold">
+            <div className="w-8 h-8 rounded-full bg-[#17263B] flex items-center justify-center text-white border border-[#29384C] font-bold">
               {spaceType === 'unit' ? (
                 <DoorOpen className="w-4 h-4 text-amber-600" />
               ) : (
@@ -64,28 +64,28 @@ export function NewUnitModal({
               )}
             </div>
             <div>
-              <h3 className="font-black text-slate-900 text-base leading-tight">
+              <h3 className="font-black text-[#F8FAFC] text-base leading-tight">
                 Agregar al Complejo
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[#94A3B8]">
                 Departamento o espacio común / de servicio
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 touch-target">
+          <button onClick={onClose} className="text-[#94A3B8] hover:text-slate-600 p-2 touch-target">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Space Type Selector Tabs */}
-        <div className="grid grid-cols-2 gap-2 mt-3 p-1 bg-slate-100 rounded-xl">
+        <div className="grid grid-cols-2 gap-2 mt-3 p-1 bg-[#17263B] rounded-xl border border-[#29384C]">
           <button
             type="button"
             onClick={() => setSpaceType('unit')}
             className={`py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
               spaceType === 'unit'
-                ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#101D30] text-white shadow-sm border border-amber-500/50'
+                : 'text-[#94A3B8] hover:text-white'
             }`}
           >
             <DoorOpen className="w-3.5 h-3.5 text-amber-600" />
@@ -97,8 +97,8 @@ export function NewUnitModal({
             onClick={() => setSpaceType('common_area')}
             className={`py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
               spaceType === 'common_area'
-                ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#101D30] text-white shadow-sm border border-amber-500/50'
+                : 'text-[#94A3B8] hover:text-white'
             }`}
           >
             <Building2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -110,7 +110,7 @@ export function NewUnitModal({
           {spaceType === 'unit' ? (
             <>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
                   Nombre / Identificador de Unidad
                 </label>
                 <input
@@ -119,14 +119,14 @@ export function NewUnitModal({
                   placeholder="Ej: Depto 2-3"
                   value={unitName}
                   onChange={(e) => setUnitName(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-slate-50 font-bold text-slate-900"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-[#17263B] font-bold text-white border-[#29384C]"
                 />
               </div>
 
               {/* Floor & Depto Selector Assistant */}
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+              <div className="bg-[#17263B] p-3 rounded-xl border border-[#29384C] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#F8FAFC] flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-amber-600" />
                     Configurador Rápido por Pisos:
                   </span>
@@ -149,7 +149,7 @@ export function NewUnitModal({
                         const f = parseInt(e.target.value, 10) || 1;
                         handleApplyFloor(f, unitNum);
                       }}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-center bg-white"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#29384C] text-xs font-bold text-center bg-[#101D30] text-white"
                     />
                   </div>
 
@@ -166,7 +166,7 @@ export function NewUnitModal({
                         const u = parseInt(e.target.value, 10) || 1;
                         handleApplyFloor(floor, u);
                       }}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-center bg-white"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#29384C] text-xs font-bold text-center bg-[#101D30] text-white"
                     />
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export function NewUnitModal({
             <>
               {/* Common Area Configuration */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
                   Denominación del Espacio Común
                 </label>
                 <input
@@ -211,7 +211,7 @@ export function NewUnitModal({
                   placeholder="Ej: Sector Quincho, Sala SET, Cocheras..."
                   value={commonAreaName}
                   onChange={(e) => setCommonAreaName(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-slate-50 font-bold text-slate-900"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-[#17263B] font-bold text-white border-[#29384C]"
                 />
               </div>
 
@@ -254,13 +254,13 @@ export function NewUnitModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm touch-target"
+              className="flex-1 py-3 bg-[#17263B] hover:bg-[#20324c] text-[#94A3B8] hover:text-white font-bold rounded-xl text-sm touch-target border border-[#29384C]"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black rounded-xl text-sm shadow-md touch-target active:scale-95 transition-all border border-amber-500/50 flex items-center justify-center gap-1.5"
+              className="flex-1 py-3 bg-[#101D30] hover:bg-[#17263B] text-amber-400 font-black rounded-xl text-sm shadow-md touch-target active:scale-95 transition-all border border-amber-500/50 flex items-center justify-center gap-1.5"
             >
               <Check className="w-4 h-4" />
               <span>Guardar {spaceType === 'unit' ? 'Unidad' : 'Espacio'}</span>

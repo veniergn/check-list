@@ -253,7 +253,7 @@ export function ChecklistView({
           borderColor: neonColor,
           boxShadow: `0 0 30px ${hexToRgba(neonColor, 0.28)}`
         }}
-        className="rounded-3xl p-5 sm:p-6 border-2 bg-[#131b2c] project-card-glass text-white relative overflow-hidden"
+        className="rounded-3xl p-5 sm:p-6 border-2 bg-[#101D30] project-card-glass text-white relative overflow-hidden"
       >
         {/* Subtle background ambient light */}
         <div
@@ -274,7 +274,7 @@ export function ChecklistView({
               >
                 {isUnitCommonArea(unit) ? 'Espacio Común' : 'Departamento'}
               </span>
-              <span className="text-xs text-slate-400 font-bold truncate flex items-center gap-1">
+              <span className="text-xs text-[#94A3B8] font-bold truncate flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" style={{ color: neonColor }} />
                 {project.name}
               </span>
@@ -286,7 +286,7 @@ export function ChecklistView({
               </h2>
               <button
                 onClick={() => onEditUnit(unit)}
-                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 transition-colors"
+                className="p-1.5 rounded-xl bg-[#17263B] hover:bg-[#1f324d] border border-[#29384C] transition-colors"
                 style={{ color: neonColor }}
                 title="Editar denominación"
               >
@@ -312,7 +312,7 @@ export function ChecklistView({
               )}
             </p>
 
-            <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-[#29384C]">
               <button
                 onClick={() => onOpenReportModal('unit', project.id, unit.id)}
                 className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95"
@@ -346,7 +346,7 @@ export function ChecklistView({
               {onOpenBlueprints && (
                 <button
                   onClick={onOpenBlueprints}
-                  className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-[#00c2ff] border border-slate-700 hover:border-[#00c2ff]/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95"
+                  className="px-3 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-[#00c2ff] border border-[#29384C] hover:border-[#00c2ff]/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95"
                   title="Abrir y verificar planos técnicos de esta unidad"
                 >
                   <Compass className="w-3.5 h-3.5 text-[#00c2ff]" />
@@ -360,7 +360,7 @@ export function ChecklistView({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95 border ${
                     unit.signature
                       ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border-emerald-500/40'
-                      : 'bg-slate-800/80 hover:bg-slate-700 text-amber-400 border-amber-500/40'
+                      : 'bg-[#17263B] hover:bg-[#1f324d] text-amber-400 border-amber-500/40'
                   }`}
                   title={unit.signature ? `Firmado por ${unit.signedBy || 'Responsable'}` : 'Firmar acta digitalmente'}
                 >
@@ -414,10 +414,10 @@ export function ChecklistView({
       )}
 
       {/* Trade Filter & Management Section */}
-      <div className="bg-[#131b2c] project-card-glass p-3 rounded-2xl border border-slate-700/80 shadow-md space-y-3 transition-colors relative z-10">
+      <div className="bg-[#101D30] project-card-glass p-3 rounded-2xl border border-[#29384C] shadow-md space-y-3 transition-colors relative z-10">
         {/* Navigation Tabs Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <div className="flex items-center gap-1.5 p-1 bg-[#151f33]/90 border border-slate-700/80 rounded-xl">
+        <div className="flex items-center justify-between border-b border-[#29384C] pb-2">
+          <div className="flex items-center gap-1.5 p-1 bg-[#17263B]/90 border border-[#29384C] rounded-xl">
             <button
               type="button"
               onClick={() => setTradeSectionTab('filter')}
@@ -461,7 +461,7 @@ export function ChecklistView({
                 className={`flex-shrink-0 px-3.5 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                   selectedTradeFilter === 'all'
                     ? 'bg-[#00c2ff] text-slate-950 border-[#00c2ff] shadow-[0_0_15px_rgba(0,194,255,0.45)]'
-                    : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                    : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
                 }`}
               >
                 <span>Todos</span>
@@ -476,7 +476,7 @@ export function ChecklistView({
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                       isActive
                         ? 'bg-[#00c2ff] text-slate-950 border-[#00c2ff] shadow-[0_0_15px_rgba(0,194,255,0.45)]'
-                        : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                        : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
                     }`}
                   >
                     {getTradeIcon(trade.id)}
@@ -492,7 +492,7 @@ export function ChecklistView({
         {tradeSectionTab === 'manage' && (
           <div className="space-y-4 pt-1 animate-in fade-in duration-200">
             {/* Form to Add New Trade */}
-            <div className="p-3 bg-[#151f33] rounded-xl border border-slate-700 space-y-2.5">
+            <div className="p-3 bg-[#17263B] rounded-xl border border-[#29384C] space-y-2.5">
               <label className="block text-xs font-black text-slate-200 flex items-center gap-1.5">
                 <Plus className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
                 Agregar Nuevo Gremio a la Inspección
@@ -504,13 +504,13 @@ export function ChecklistView({
                   value={newTradeNameDraft}
                   onChange={(e) => setNewTradeNameDraft(e.target.value)}
                   placeholder="Ej: Pintura, Instalación de Gas, Herrería..."
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-700 bg-[#0e1422] text-slate-100 font-medium placeholder-slate-500 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe]"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#29384C] bg-[#0e1422] text-slate-100 font-medium placeholder-slate-500 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe]"
                 />
 
                 <select
                   value={newTradeScope}
                   onChange={(e) => setNewTradeScope(e.target.value as 'current_unit' | 'all_units')}
-                  className="px-3 py-2 text-xs rounded-xl border border-slate-700 bg-[#0e1422] text-slate-100 font-bold focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe]"
+                  className="px-3 py-2 text-xs rounded-xl border border-[#29384C] bg-[#0e1422] text-slate-100 font-bold focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe]"
                 >
                   <option value="current_unit">Solo en este depto ({unit.name})</option>
                   <option value="all_units">En todo el complejo ({project.name})</option>
@@ -534,7 +534,7 @@ export function ChecklistView({
 
               {/* Quick Preset Badges */}
               <div className="pt-1">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider block mb-1">
                   Sugerencias rápidas de gremios:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -551,7 +551,7 @@ export function ChecklistView({
                       key={preset}
                       type="button"
                       onClick={() => setNewTradeNameDraft(preset)}
-                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-[#162238] hover:bg-[#1c2d4a] text-slate-300 hover:text-white border border-slate-700 hover:border-[#00f2fe]/40 transition-colors active:scale-95"
+                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-[#17263B] hover:bg-[#1c2d4a] text-slate-300 hover:text-white border border-[#29384C] hover:border-[#00f2fe]/40 transition-colors active:scale-95"
                     >
                       + {preset}
                     </button>
@@ -569,7 +569,7 @@ export function ChecklistView({
                 {unitTradesList.map(trade => (
                   <div
                     key={trade.id}
-                    className="p-2.5 bg-[#162238] rounded-xl border border-slate-700/80 flex items-center justify-between shadow-2xs"
+                    className="p-2.5 bg-[#17263B] rounded-xl border border-[#29384C] flex items-center justify-between shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0 pr-2">
                       <div className="w-7 h-7 rounded-lg bg-[#00f2fe]/15 text-[#00f2fe] flex items-center justify-center flex-shrink-0">
@@ -579,7 +579,7 @@ export function ChecklistView({
                         <p className="text-xs font-bold text-slate-100 truncate">
                           {trade.name}
                         </p>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-[10px] text-[#94A3B8]">
                           {trade.items.length} {trade.items.length === 1 ? 'tarea' : 'tareas'}
                         </p>
                       </div>
@@ -610,12 +610,12 @@ export function ChecklistView({
       </div>
 
       {/* Task Status Filters - Executive Capsule Pills */}
-      <div className="bg-[#131b2c] project-card-glass p-2.5 rounded-2xl border border-slate-700/80 shadow-md space-y-2 transition-colors select-none relative z-10">
+      <div className="bg-[#101D30] project-card-glass p-2.5 rounded-2xl border border-[#29384C] shadow-md space-y-2 transition-colors select-none relative z-10">
         <div className="flex items-center justify-between px-1">
           <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
             Estado de Tareas:
           </span>
-          <span className="text-[10px] text-slate-400 font-medium">
+          <span className="text-[10px] text-[#94A3B8] font-medium">
             {taskStatusFilter === 'all' ? 'Todas las tareas' : (taskStatusFilter === 'pending' ? 'Solo pendientes' : 'Solo completadas')}
           </span>
         </div>
@@ -626,7 +626,7 @@ export function ChecklistView({
             className={`py-1.5 px-3 rounded-full font-bold border transition-all flex items-center justify-center gap-1.5 touch-target ${
               taskStatusFilter === 'all'
                 ? 'bg-[#00c2ff] text-slate-950 border-[#00c2ff] shadow-[0_0_15px_rgba(0,194,255,0.45)]'
-                : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -641,7 +641,7 @@ export function ChecklistView({
             className={`py-1.5 px-3 rounded-full font-bold border transition-all flex items-center justify-center gap-1.5 touch-target ${
               taskStatusFilter === 'completed'
                 ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.45)]'
-                : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
             }`}
           >
             <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -656,7 +656,7 @@ export function ChecklistView({
             className={`py-1.5 px-3 rounded-full font-bold border transition-all flex items-center justify-center gap-1.5 touch-target ${
               taskStatusFilter === 'pending'
                 ? 'bg-rose-500 text-white border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.45)]'
-                : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-rose-400" />
@@ -672,13 +672,13 @@ export function ChecklistView({
       <div className="flex gap-2 select-none relative z-10">
         <button
           onClick={() => toggleAll(true)}
-          className="flex-1 bg-[#131b2c] project-card-glass border border-slate-700/80 text-slate-300 hover:text-white hover:border-[#00f2fe]/60 py-2 rounded-xl text-xs font-bold touch-target flex items-center justify-center gap-1.5 shadow-2xs transition-all"
+          className="flex-1 bg-[#101D30] project-card-glass border border-[#29384C] text-slate-300 hover:text-white hover:border-[#00f2fe]/60 py-2 rounded-xl text-xs font-bold touch-target flex items-center justify-center gap-1.5 shadow-2xs transition-all"
         >
           <ChevronsDown className="w-3.5 h-3.5 text-[#00f2fe]" /> Expandir Todo
         </button>
         <button
           onClick={() => toggleAll(false)}
-          className="flex-1 bg-[#131b2c] project-card-glass border border-slate-700/80 text-slate-300 hover:text-white hover:border-[#00f2fe]/60 py-2 rounded-xl text-xs font-bold touch-target flex items-center justify-center gap-1.5 shadow-2xs transition-all"
+          className="flex-1 bg-[#101D30] project-card-glass border border-[#29384C] text-slate-300 hover:text-white hover:border-[#00f2fe]/60 py-2 rounded-xl text-xs font-bold touch-target flex items-center justify-center gap-1.5 shadow-2xs transition-all"
         >
           <ChevronsUp className="w-3.5 h-3.5 text-[#00f2fe]" /> Colapsar
         </button>
@@ -725,18 +725,18 @@ export function ChecklistView({
               } : undefined}
               className={`rounded-2xl shadow-md overflow-hidden transition-all duration-300 relative z-10 project-card-glass ${
                 isTradeActive
-                  ? 'border-2 bg-[#131b2c]'
-                  : 'border border-slate-700/80 hover:border-slate-500 bg-[#131b2c]'
+                  ? 'border-2 bg-[#101D30]'
+                  : 'border border-[#29384C] hover:border-slate-500 bg-[#101D30]'
               }`}
             >
               {/* Accordion Header */}
               <div
                 onClick={() => toggleTrade(trade.id)}
-                className="px-4 py-3.5 bg-[#162238] border-b border-slate-700/80 flex items-center justify-between cursor-pointer select-none"
+                className="px-4 py-3.5 bg-[#17263B] border-b border-[#29384C] flex items-center justify-between cursor-pointer select-none"
               >
                 <div className="flex items-center space-x-2.5">
                   <div
-                    className="w-8 h-8 rounded-xl bg-[#0e1422] border border-slate-700 shadow-xs flex items-center justify-center text-sm flex-shrink-0"
+                    className="w-8 h-8 rounded-xl bg-[#0e1422] border border-[#29384C] shadow-xs flex items-center justify-center text-sm flex-shrink-0"
                     style={{ color: neonColor }}
                   >
                     {getTradeIcon(trade.id)}
@@ -745,7 +745,7 @@ export function ChecklistView({
                     <h4 className="text-sm font-black text-white leading-tight">
                       {trade.name}
                     </h4>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-[#94A3B8]">
                       {completedTradeItems}/{totalTradeItems} verificados •{' '}
                       <span className="font-bold font-mono" style={{ color: neonColor }}>{tradePct}%</span>
                     </p>
@@ -765,7 +765,7 @@ export function ChecklistView({
                     <span className="text-[11px] font-bold hidden sm:inline">WhatsApp</span>
                   </button>
 
-                  <div className="w-14 bg-slate-800 h-2 rounded-full overflow-hidden hidden sm:block">
+                  <div className="w-14 bg-[#17263B] h-2 rounded-full overflow-hidden hidden sm:block">
                     <div
                       className="h-full rounded-full transition-all duration-300"
                       style={{
@@ -776,7 +776,7 @@ export function ChecklistView({
                     />
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                    className={`w-4 h-4 text-[#94A3B8] transition-transform duration-200 ${
                       isCollapsed ? '-rotate-90' : ''
                     }`}
                   />
@@ -785,9 +785,9 @@ export function ChecklistView({
 
               {/* Accordion Content */}
               {!isCollapsed && (
-                <div className="p-3 space-y-2.5 bg-[#131b2c] transition-colors">
+                <div className="p-3 space-y-2.5 bg-[#101D30] transition-colors">
                   {filteredItems.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic py-2 text-center">
+                    <p className="text-xs text-[#94A3B8] italic py-2 text-center">
                       No hay tareas con este criterio en {trade.name}
                     </p>
                   ) : (
@@ -812,7 +812,7 @@ export function ChecklistView({
                               ? 'bg-emerald-950/20 border border-emerald-500/40 text-white'
                               : isPartial
                               ? 'bg-cyan-950/20 border border-[#00c2ff]/40 text-white'
-                              : 'bg-[#151f33] border border-slate-700/80 text-white hover:border-[#00f2fe]/60'
+                              : 'bg-[#17263B] border border-[#29384C] text-white hover:border-[#00f2fe]/60'
                           }`}
                         >
                           {/* Fila Horizontal Principal */}
@@ -857,7 +857,7 @@ export function ChecklistView({
                                   <button
                                     type="button"
                                     onClick={() => setEditingItemId(null)}
-                                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all shrink-0"
+                                    className="p-1 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-all shrink-0"
                                     title="Cancelar"
                                   >
                                     <X className="w-4 h-4" />
@@ -940,7 +940,7 @@ export function ChecklistView({
                               {/* Barra de avance en curso */}
                               {isPartial && (
                                 <div className="mt-1.5 flex items-center gap-1.5">
-                                  <div className="w-16 sm:w-24 bg-slate-800 h-1.5 rounded-full overflow-hidden flex-shrink-0">
+                                  <div className="w-16 sm:w-24 bg-[#17263B] h-1.5 rounded-full overflow-hidden flex-shrink-0">
                                     <div
                                       className="h-full bg-[#00c2ff] rounded-full transition-all duration-200"
                                       style={{ width: `${currentPct}%` }}
@@ -977,14 +977,14 @@ export function ChecklistView({
                                     ? 'bg-[#122438] text-emerald-400 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                                     : item.severity
                                     ? 'bg-[#1a2942] text-[#00f2fe] border border-[#00f2fe]/60 shadow-[0_0_10px_rgba(0,242,254,0.2)]'
-                                    : 'bg-[#162238] text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500'
+                                    : 'bg-[#17263B] text-[#94A3B8] hover:text-white border border-[#29384C] hover:border-slate-500'
                                 }`}
                                 title={hasComment ? `Nota guardada: "${item.comment}"` : 'Agregar observación o foto'}
                               >
                                 <div className="relative flex items-center justify-center">
                                   <MessageSquare
                                     className={`w-3.5 h-3.5 ${
-                                      hasComment ? 'text-emerald-400' : (item.severity ? 'text-[#00f2fe]' : 'text-slate-400')
+                                      hasComment ? 'text-emerald-400' : (item.severity ? 'text-[#00f2fe]' : 'text-[#94A3B8]')
                                     }`}
                                   />
                                 </div>
@@ -1002,12 +1002,12 @@ export function ChecklistView({
                               <div
                                 onClick={(e) => e.stopPropagation()}
                                 className={`flex items-center rounded-lg border h-8 px-1 transition-all shadow-2xs flex-shrink-0 ${
-                                  unit.isLocked ? 'opacity-40 cursor-not-allowed bg-slate-800 border-slate-700' :
+                                  unit.isLocked ? 'opacity-40 cursor-not-allowed bg-[#17263B] border-[#29384C]' :
                                   isComplete
                                     ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300'
                                     : isPartial
                                     ? 'bg-[#1a2942] border-[#00c2ff]/60 text-[#00f2fe] ring-1 ring-[#00c2ff]/30'
-                                    : 'bg-[#162238] border-slate-700 text-slate-300 hover:border-slate-500'
+                                    : 'bg-[#17263B] border-[#29384C] text-slate-300 hover:border-slate-500'
                                 }`}
                                 title={unit.isLocked ? "Inspección bloqueada por acta" : "Porcentaje de avance del ítem (0% a 100%)"}
                               >
@@ -1015,7 +1015,7 @@ export function ChecklistView({
                                   type="button"
                                   disabled={unit.isLocked}
                                   onClick={() => onUpdateItemProgress(trade.id, item.id, Math.max(0, currentPct - 10))}
-                                  className={`w-4 h-6 text-slate-400 hover:text-white font-black text-xs flex items-center justify-center select-none active:scale-90 ${unit.isLocked ? 'cursor-not-allowed' : ''}`}
+                                  className={`w-4 h-6 text-[#94A3B8] hover:text-white font-black text-xs flex items-center justify-center select-none active:scale-90 ${unit.isLocked ? 'cursor-not-allowed' : ''}`}
                                   title="Restar 10%"
                                 >
                                   -
@@ -1039,7 +1039,7 @@ export function ChecklistView({
                                   type="button"
                                   disabled={unit.isLocked}
                                   onClick={() => onUpdateItemProgress(trade.id, item.id, Math.min(100, currentPct + 10))}
-                                  className={`w-4 h-6 text-slate-400 hover:text-white font-black text-xs flex items-center justify-center select-none active:scale-90 ${unit.isLocked ? 'cursor-not-allowed' : ''}`}
+                                  className={`w-4 h-6 text-[#94A3B8] hover:text-white font-black text-xs flex items-center justify-center select-none active:scale-90 ${unit.isLocked ? 'cursor-not-allowed' : ''}`}
                                   title="Sumar 10%"
                                 >
                                   +
@@ -1056,12 +1056,12 @@ export function ChecklistView({
                                 }}
                                 className={`w-8 h-8 min-w-[28px] min-h-[28px] rounded-lg border-2 flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
                                   unit.isLocked
-                                    ? 'opacity-40 cursor-not-allowed bg-slate-800 border-slate-700'
+                                    ? 'opacity-40 cursor-not-allowed bg-[#17263B] border-[#29384C]'
                                     : isComplete
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)] cursor-pointer'
                                     : isPartial
-                                    ? 'border-[#00c2ff] bg-[#162238] text-[#00c2ff] hover:border-[#00f2fe] cursor-pointer'
-                                    : 'border-slate-600 bg-[#162238] hover:border-[#00f2fe] cursor-pointer'
+                                    ? 'border-[#00c2ff] bg-[#17263B] text-[#00c2ff] hover:border-[#00f2fe] cursor-pointer'
+                                    : 'border-slate-600 bg-[#17263B] hover:border-[#00f2fe] cursor-pointer'
                                 }`}
                                 title={
                                   unit.isLocked
@@ -1084,11 +1084,11 @@ export function ChecklistView({
                                 className={`h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-bold transition-all active:scale-95 flex-shrink-0 ${
                                   photoCount > 0
                                     ? 'bg-[#0e1422] text-[#00f2fe] border border-[#00f2fe]/60 shadow-[0_0_8px_rgba(0,242,254,0.3)]'
-                                    : 'bg-[#162238] text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500'
+                                    : 'bg-[#17263B] text-[#94A3B8] hover:text-white border border-[#29384C] hover:border-slate-500'
                                 }`}
                                 title={photoCount > 0 ? `${photoCount} foto(s) registrada(s)` : 'Tomar o adjuntar foto'}
                               >
-                                <Camera className={`w-3.5 h-3.5 ${photoCount > 0 ? 'text-[#00f2fe]' : 'text-slate-400'}`} />
+                                <Camera className={`w-3.5 h-3.5 ${photoCount > 0 ? 'text-[#00f2fe]' : 'text-[#94A3B8]'}`} />
                                 {photoCount > 0 && (
                                   <span className="text-[11px] font-mono font-black">{photoCount}</span>
                                 )}
@@ -1102,7 +1102,7 @@ export function ChecklistView({
                                     e.stopPropagation();
                                     handleStartEditItem(item);
                                   }}
-                                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-[#00f2fe] hover:bg-[#00f2fe]/10 flex items-center justify-center flex-shrink-0 active:scale-90 transition-colors"
+                                  className="w-8 h-8 rounded-lg text-[#94A3B8] hover:text-[#00f2fe] hover:bg-[#00f2fe]/10 flex items-center justify-center flex-shrink-0 active:scale-90 transition-colors"
                                   title="Editar nombre de la tarea"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
@@ -1117,7 +1117,7 @@ export function ChecklistView({
                                     e.stopPropagation();
                                     onDeleteItem(trade.id, item.id);
                                   }}
-                                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 flex items-center justify-center flex-shrink-0 active:scale-90 transition-colors"
+                                  className="w-8 h-8 rounded-lg text-[#94A3B8] hover:text-rose-400 hover:bg-rose-950/40 flex items-center justify-center flex-shrink-0 active:scale-90 transition-colors"
                                   title="Eliminar tarea"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1130,7 +1130,7 @@ export function ChecklistView({
                           {editingCommentItemId === item.id && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              className="mt-2.5 p-3 rounded-xl bg-[#162238] border-2 border-[#00f2fe]/40 shadow-sm space-y-2 animate-in fade-in duration-150"
+                              className="mt-2.5 p-3 rounded-xl bg-[#17263B] border-2 border-[#00f2fe]/40 shadow-sm space-y-2 animate-in fade-in duration-150"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-black text-white flex items-center gap-1.5">
@@ -1164,12 +1164,12 @@ export function ChecklistView({
                                 value={commentDraft}
                                 onChange={(e) => setCommentDraft(e.target.value)}
                                 placeholder="Escribe detalles, tareas pendientes o notas técnicas..."
-                                className="w-full text-xs p-2.5 rounded-lg border border-slate-700 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] bg-[#0e1422] text-white font-medium leading-relaxed shadow-2xs placeholder-slate-500"
+                                className="w-full text-xs p-2.5 rounded-lg border border-[#29384C] focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] bg-[#0e1422] text-white font-medium leading-relaxed shadow-2xs placeholder-slate-500"
                               />
 
                               {/* Quick suggestion chips */}
                               <div className="flex flex-wrap gap-1 items-center pt-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase mr-0.5">Sugerencias:</span>
+                                <span className="text-[10px] font-bold text-[#94A3B8] uppercase mr-0.5">Sugerencias:</span>
                                 {[
                                   'Falta terminación',
                                   'Pendiente de material',
@@ -1183,7 +1183,7 @@ export function ChecklistView({
                                     onClick={() => {
                                       setCommentDraft(prev => prev ? `${prev}. ${preset}` : preset);
                                     }}
-                                    className="text-[10px] px-2 py-0.5 bg-[#131b2c] hover:bg-[#1c2d4a] border border-slate-700 hover:border-[#00f2fe]/40 text-slate-300 rounded-md font-semibold transition-colors shadow-2xs"
+                                    className="text-[10px] px-2 py-0.5 bg-[#101D30] hover:bg-[#1c2d4a] border border-[#29384C] hover:border-[#00f2fe]/40 text-slate-300 rounded-md font-semibold transition-colors shadow-2xs"
                                   >
                                     + {preset}
                                   </button>
@@ -1197,7 +1197,7 @@ export function ChecklistView({
                                     setEditingCommentItemId(null);
                                     setCommentDraft('');
                                   }}
-                                  className="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white bg-[#151f33] border border-slate-700 rounded-lg touch-target"
+                                  className="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white bg-[#17263B] border border-[#29384C] rounded-lg touch-target"
                                 >
                                   Cancelar
                                 </button>
@@ -1219,7 +1219,7 @@ export function ChecklistView({
 
                           {/* Photo Evidence Thumbnails Strip */}
                           {photoCount > 0 && (
-                            <div className="mt-2 pt-2 border-t border-slate-700/60 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                            <div className="mt-2 pt-2 border-t border-[#29384C] flex items-center gap-2 overflow-x-auto no-scrollbar">
                               {photoList.map((photo, pIdx) => (
                                 <div
                                   key={photo.id}
@@ -1260,14 +1260,14 @@ export function ChecklistView({
                   {/* Add New Task Form in this Trade */}
                   <form
                     onSubmit={(e) => handleAddTaskSubmit(e, trade.id, trade.name)}
-                    className="mt-3 pt-2.5 border-t border-slate-700/80 flex items-center gap-2"
+                    className="mt-3 pt-2.5 border-t border-[#29384C] flex items-center gap-2"
                   >
                     <input
                       type="text"
                       placeholder={`+ Añadir tarea a ${trade.name}...`}
                       value={newTaskNames[trade.id] || ''}
                       onChange={(e) => setNewTaskNames(prev => ({ ...prev, [trade.id]: e.target.value }))}
-                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-700 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] bg-[#151f33] font-medium text-white placeholder-slate-500"
+                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#29384C] focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] bg-[#17263B] font-medium text-white placeholder-slate-500"
                     />
                     <button
                       type="submit"
@@ -1341,7 +1341,7 @@ export function ChecklistView({
               boxShadow: `0 0 20px ${hexToRgba(neonColor, 0.35)}`,
               color: neonColor
             }}
-            className="px-4 py-2.5 rounded-full bg-[#131b2c] font-black text-xs flex items-center gap-2 shadow-2xl border-2 active:scale-95 hover:scale-105 transition-all touch-target"
+            className="px-4 py-2.5 rounded-full bg-[#101D30] font-black text-xs flex items-center gap-2 shadow-2xl border-2 active:scale-95 hover:scale-105 transition-all touch-target"
             title="Cotejar tareas contra el plano técnico"
           >
             <Compass className="w-4 h-4" style={{ color: neonColor }} />

@@ -240,9 +240,9 @@ export function MilestonesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn">
+      <div className="bg-white dark:bg-[#101D30] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#29384C] w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn">
         {/* Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-between border-b border-slate-700/80">
+        <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-between border-b border-[#29384C]/80">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shrink-0">
               <Calendar className="w-5 h-5" />
@@ -261,7 +261,7 @@ export function MilestonesModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
             title="Cerrar ventana"
           >
             <X className="w-5 h-5" />
@@ -272,8 +272,8 @@ export function MilestonesModal({
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {/* Form to Add or Edit */}
           {isAddingOrEditing ? (
-            <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+            <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-[#17263B]/80 border border-slate-300 dark:border-[#29384C] rounded-2xl p-4 sm:p-5 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[#29384C]">
                 <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                   <Sliders className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   {editingId ? 'Editar Hito Crítico' : 'Nuevo Hito Crítico de Obra'}
@@ -281,7 +281,7 @@ export function MilestonesModal({
                 <button
                   type="button"
                   onClick={() => setIsAddingOrEditing(false)}
-                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold"
+                  className="text-xs text-slate-500 dark:text-[#94A3B8] hover:text-slate-800 dark:hover:text-slate-200 font-bold"
                 >
                   Cancelar
                 </button>
@@ -298,7 +298,7 @@ export function MilestonesModal({
                   placeholder="Ej: Hormigonado de Losa, Finalización Cañerías, Revoque Fino..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -320,7 +320,7 @@ export function MilestonesModal({
                         setBuildingPart(e.target.value);
                       }
                     }}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     {availableBuildingParts.map(part => (
                       <option key={part} value={part}>
@@ -337,7 +337,7 @@ export function MilestonesModal({
                       placeholder="Escribe el sector (ej: Azotea, Cochera 2, etc.)"
                       value={customBuildingPart}
                       onChange={(e) => setCustomBuildingPart(e.target.value)}
-                      className="mt-1.5 w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-400 dark:border-amber-600 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="mt-1.5 w-full px-3 py-1.5 bg-white dark:bg-[#101D30] border border-amber-400 dark:border-amber-600 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   )}
                 </div>
@@ -358,7 +358,7 @@ export function MilestonesModal({
                         setTradeCategory(e.target.value);
                       }
                     }}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     {availableTradeNames.map(tr => (
                       <option key={tr} value={tr}>
@@ -375,7 +375,7 @@ export function MilestonesModal({
                       placeholder="Nombre del nuevo rubro (ej: Impermeabilización, Ascensores)"
                       value={newTradeName}
                       onChange={(e) => setNewTradeName(e.target.value)}
-                      className="mt-1.5 w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-400 dark:border-amber-600 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="mt-1.5 w-full px-3 py-1.5 bg-white dark:bg-[#101D30] border border-amber-400 dark:border-amber-600 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   )}
                 </div>
@@ -393,9 +393,9 @@ export function MilestonesModal({
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     Si hoy pasa de esta fecha y el avance es 0%, saltará en <strong className="text-rose-500">ROJO</strong>.
                   </p>
                 </div>
@@ -410,16 +410,16 @@ export function MilestonesModal({
                     required
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     Si hoy supera esta fecha y no está al 100%, saltará en <strong className="text-rose-500">ROJO</strong>.
                   </p>
                 </div>
               </div>
 
               {/* Progress Percentage Control */}
-              <div className="bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <div className="bg-white dark:bg-[#101D30] p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-[#29384C] space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <span>Porcentaje de Avance Actual:</span>
@@ -429,7 +429,7 @@ export function MilestonesModal({
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                       : progressPercentage > 0
                       ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                      : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      : 'bg-slate-100 text-slate-700 dark:bg-[#17263B] dark:text-slate-300'
                   }`}>
                     {progressPercentage}%
                   </span>
@@ -456,14 +456,14 @@ export function MilestonesModal({
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
                         progressPercentage === val
                           ? 'bg-amber-500 text-slate-950 shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                          : 'bg-slate-100 dark:bg-[#17263B] hover:bg-slate-200 dark:hover:bg-[#1f324d] text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {val === 0 ? '0% (No iniciado)' : val === 100 ? '100% (Finalizado)' : `${val}%`}
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                <p className="text-[10px] text-slate-500 dark:text-[#94A3B8]">
                   Al poner más de 0%, el cronograma reflejará que este hito ya ha comenzado.
                 </p>
               </div>
@@ -478,16 +478,16 @@ export function MilestonesModal({
                   placeholder="Ej: Coordinar entrega de áridos o prueba hidráulica"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-[#101D30] border border-slate-300 dark:border-[#29384C] rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               {/* Submit / Cancel Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#29384C]">
                 <button
                   type="button"
                   onClick={() => setIsAddingOrEditing(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-[#29384C] text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-[#1f324d] transition-colors"
                 >
                   Cancelar
                 </button>
@@ -506,7 +506,7 @@ export function MilestonesModal({
                 <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <span>Hitos Registrados ({milestones.length})</span>
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                   Control de inicio, terminación, sector de edificio y alarmas en tiempo real.
                 </p>
               </div>
@@ -523,13 +523,13 @@ export function MilestonesModal({
 
           {/* List of Existing Milestones */}
           {milestones.length === 0 && !isAddingOrEditing ? (
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center space-y-3">
+            <div className="bg-slate-50 dark:bg-[#17263B]/50 border border-dashed border-slate-300 dark:border-[#29384C] rounded-2xl p-6 text-center space-y-3">
               <Calendar className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
               <div>
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   No hay hitos críticos definidos
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                   Puedes crear un hito personalizado o agregar hitos rápidos recomendados:
                 </p>
               </div>
@@ -539,7 +539,7 @@ export function MilestonesModal({
                 <button
                   type="button"
                   onClick={() => handleQuickPreset('Instalación Sanitaria', 'Piso 1', 'Instalación Sanitaria', 'plomeria', 'Cañerías de agua', 15, 0)}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
+                  className="px-2.5 py-1.5 bg-white dark:bg-[#17263B] hover:bg-amber-50 dark:hover:bg-[#1f324d] border border-slate-300 dark:border-[#29384C] hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   + Inst. Sanitaria (15 días)
@@ -547,7 +547,7 @@ export function MilestonesModal({
                 <button
                   type="button"
                   onClick={() => handleQuickPreset('Muros y Tabiques', 'Piso 2', 'Albañilería', 'albanileria', 'Muros y tabiques', 25, 0)}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
+                  className="px-2.5 py-1.5 bg-white dark:bg-[#17263B] hover:bg-amber-50 dark:hover:bg-[#1f324d] border border-slate-300 dark:border-[#29384C] hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   + Muros Piso 2 (25 días)
@@ -555,7 +555,7 @@ export function MilestonesModal({
                 <button
                   type="button"
                   onClick={() => handleQuickPreset('Canalización Eléctrica', 'Planta Baja', 'Electricidad', 'electricidad', 'Canalizaciones', 30, 0)}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
+                  className="px-2.5 py-1.5 bg-white dark:bg-[#17263B] hover:bg-amber-50 dark:hover:bg-[#1f324d] border border-slate-300 dark:border-[#29384C] hover:border-amber-400 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-2xs transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   + Electricidad PB (30 días)
@@ -580,7 +580,7 @@ export function MilestonesModal({
                         ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800'
                         : calc.status === 'success_green'
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
-                        : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700'
+                        : 'bg-white dark:bg-[#17263B]/80 border-slate-200 dark:border-[#29384C]'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -627,12 +627,12 @@ export function MilestonesModal({
                         </h5>
 
                         {/* Dates timeline span */}
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium flex-wrap">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-[#94A3B8] font-medium flex-wrap">
                           <span className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
                             <Clock className="w-3 h-3 text-blue-500" />
                             {calc.startDateFormatted}
                           </span>
-                          <ArrowRight className="w-3 h-3 text-slate-400" />
+                          <ArrowRight className="w-3 h-3 text-[#94A3B8]" />
                           <span className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
                             <Calendar className="w-3 h-3 text-rose-500" />
                             {calc.targetDateFormatted}
@@ -652,7 +652,7 @@ export function MilestonesModal({
                         {/* Progress Bar & Inline Adjuster */}
                         <div className="mt-2 space-y-1 pt-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-slate-600 dark:text-slate-400 font-bold">
+                            <span className="text-slate-600 dark:text-[#94A3B8] font-bold">
                               Avance del Hito:
                             </span>
                             <div className="flex items-center gap-1.5">
@@ -726,7 +726,7 @@ export function MilestonesModal({
                           <button
                             type="button"
                             onClick={() => handleStartEdit(m)}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-1.5 text-[#94A3B8] hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1f324d] rounded-lg transition-colors"
                             title="Editar este hito"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -734,7 +734,7 @@ export function MilestonesModal({
                           <button
                             type="button"
                             onClick={() => onDeleteMilestone(project.id, m.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                            className="p-1.5 text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                             title="Eliminar este hito"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -750,14 +750,14 @@ export function MilestonesModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="px-5 py-3 bg-slate-50 dark:bg-[#17263B]/90 border-t border-slate-200 dark:border-[#29384C] flex items-center justify-between">
+          <span className="text-xs text-slate-500 dark:text-[#94A3B8]">
             Sincronizado en tiempo real con Supabase Cloud.
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+            className="px-4 py-1.5 bg-[#101D30] hover:bg-[#17263B] text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
           >
             Cerrar
           </button>

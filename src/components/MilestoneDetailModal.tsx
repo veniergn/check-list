@@ -186,11 +186,11 @@ export function MilestoneDetailModal({
         onClick={onClose}
       >
         <div
-          className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] sm:max-h-[88vh] text-left animate-scale-up"
+          className="w-full max-w-xl bg-[#101D30] border border-[#29384C]/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] sm:max-h-[88vh] text-left animate-scale-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 1. CABECERA: TÍTULO, ESTADO Y FECHAS */}
-          <div className="p-3.5 sm:p-5 border-b border-slate-800 bg-slate-900 flex items-start justify-between gap-3 shrink-0">
+          <div className="p-3.5 sm:p-5 border-b border-[#29384C] bg-[#101D30] flex items-start justify-between gap-3 shrink-0">
             <div className="flex items-start gap-3 min-w-0">
               <div
                 className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border"
@@ -221,16 +221,16 @@ export function MilestoneDetailModal({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300 border border-slate-700">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#17263B] text-cyan-300 border border-[#29384C]">
                     Hito de Obra
                   </span>
                   {milestone.buildingPart && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#17263B]/80 text-slate-300">
                       {milestone.buildingPart}
                     </span>
                   )}
                   {milestone.tradeCategory && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800/60 text-slate-400">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#17263B]/60 text-[#94A3B8]">
                       {milestone.tradeCategory}
                     </span>
                   )}
@@ -240,7 +240,7 @@ export function MilestoneDetailModal({
                   {milestone.name}
                 </h3>
 
-                <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                <div className="flex items-center gap-3 text-xs text-[#94A3B8] mt-1">
                   <span className="flex items-center gap-1 font-medium">
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
                     <span>Límite: {targetDate ? formatPMDate(targetDate) : 'Sin fecha'}</span>
@@ -255,7 +255,7 @@ export function MilestoneDetailModal({
                           ? 'bg-rose-500/20 text-rose-400 animate-pulse'
                           : isApproaching
                           ? 'bg-amber-500/20 text-amber-400'
-                          : 'bg-slate-800 text-slate-400'
+                          : 'bg-[#17263B] text-[#94A3B8]'
                       }`}
                     >
                       {isCompleted
@@ -274,7 +274,7 @@ export function MilestoneDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+              className="p-2 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors shrink-0"
               title="Cerrar"
             >
               <X className="w-5 h-5" />
@@ -284,7 +284,7 @@ export function MilestoneDetailModal({
           {/* 2. CONTENIDO PRINCIPAL SCROLLEABLE */}
           <div className="p-3.5 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             {/* SECCIÓN 1: PORCENTAJE DE AVANCE */}
-            <div className="bg-slate-800/50 border border-slate-700/70 rounded-2xl p-4 space-y-3">
+            <div className="bg-[#17263B]/50 border border-[#29384C]/70 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-cyan-400" />
@@ -299,7 +299,7 @@ export function MilestoneDetailModal({
                       ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm'
                       : progress > 0
                       ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                      : 'bg-[#17263B] text-[#94A3B8] border-[#29384C]'
                   }`}
                 >
                   {isCompleted ? (
@@ -319,7 +319,7 @@ export function MilestoneDetailModal({
                 step="5"
                 value={progress}
                 onChange={(e) => setProgress(Number(e.target.value))}
-                className="w-full accent-cyan-400 cursor-pointer h-2.5 bg-slate-900 rounded-lg"
+                className="w-full accent-cyan-400 cursor-pointer h-2.5 bg-[#101D30] rounded-lg"
               />
 
               {/* Botones de Acceso Rápido */}
@@ -332,7 +332,7 @@ export function MilestoneDetailModal({
                     className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all ${
                       progress === pct
                         ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
-                        : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/80'
+                        : 'bg-[#101D30]/80 text-slate-300 hover:text-white hover:bg-[#17263B] border border-[#29384C]/80'
                     }`}
                   >
                     {pct}%
@@ -341,7 +341,7 @@ export function MilestoneDetailModal({
               </div>
 
               {/* Explicación de Color en el Gantt */}
-              <div className="text-[11px] font-medium pt-1 text-slate-400">
+              <div className="text-[11px] font-medium pt-1 text-[#94A3B8]">
                 {isCompleted ? (
                   <span className="text-emerald-400 font-bold flex items-center gap-1">
                     ✓ Hito completado: Se visualiza en verde esmeralda en el Gantt.
@@ -351,7 +351,7 @@ export function MilestoneDetailModal({
                     ⚡ {progress}% de avance registrado: Se verá activo en curso.
                   </span>
                 ) : (
-                  <span className="text-slate-400 flex items-center gap-1">
+                  <span className="text-[#94A3B8] flex items-center gap-1">
                     ⚠️ 0% Sin avance: Si está cerca del vencimiento, titilará en rojo como alerta crítica.
                   </span>
                 )}
@@ -370,7 +370,7 @@ export function MilestoneDetailModal({
                 onChange={(e) => setComments(e.target.value)}
                 rows={3}
                 placeholder="Escribe aquí los comentarios, bitácora de inspección, justificaciones técnicas o detalles del hito..."
-                className="w-full bg-slate-950/80 border border-slate-700/90 rounded-2xl p-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+                className="w-full bg-slate-950/80 border border-[#29384C]/90 rounded-2xl p-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
               />
             </div>
 
@@ -409,7 +409,7 @@ export function MilestoneDetailModal({
                   {photos.map((photo, idx) => (
                     <div
                       key={idx}
-                      className="group relative aspect-square rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shadow-md cursor-pointer hover:border-cyan-400 transition-all"
+                      className="group relative aspect-square rounded-2xl overflow-hidden border border-[#29384C]/80 bg-slate-950 shadow-md cursor-pointer hover:border-cyan-400 transition-all"
                       onClick={() => setPreviewImage(photo)}
                     >
                       <img
@@ -427,7 +427,7 @@ export function MilestoneDetailModal({
                             e.stopPropagation();
                             setPreviewImage(photo);
                           }}
-                          className="p-1.5 rounded-lg bg-slate-900/80 text-white hover:text-cyan-400 transition-colors"
+                          className="p-1.5 rounded-lg bg-[#101D30]/80 text-white hover:text-cyan-400 transition-colors"
                           title="Ampliar foto"
                         >
                           <Maximize2 className="w-3.5 h-3.5" />
@@ -454,10 +454,10 @@ export function MilestoneDetailModal({
               ) : (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-700/80 rounded-2xl p-6 text-center cursor-pointer hover:border-cyan-500/60 hover:bg-slate-800/30 transition-all flex flex-col items-center justify-center gap-2 text-slate-400"
+                  className="border-2 border-dashed border-[#29384C]/80 rounded-2xl p-6 text-center cursor-pointer hover:border-cyan-500/60 hover:bg-[#17263B]/30 transition-all flex flex-col items-center justify-center gap-2 text-[#94A3B8]"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500">
-                    <Camera className="w-5 h-5 text-slate-400" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#17263B] flex items-center justify-center text-slate-500">
+                    <Camera className="w-5 h-5 text-[#94A3B8]" />
                   </div>
                   <p className="text-xs font-bold text-slate-300">
                     No hay fotos adjuntas a este hito
@@ -471,7 +471,7 @@ export function MilestoneDetailModal({
           </div>
 
           {/* 3. PIE DE ACCIONES: CANCELAR, CONFIGURACIÓN AVANZADA Y GUARDAR */}
-          <div className="p-3.5 sm:p-4 border-t border-slate-800 bg-slate-900 flex items-center justify-between gap-2 shrink-0">
+          <div className="p-3.5 sm:p-4 border-t border-[#29384C] bg-[#101D30] flex items-center justify-between gap-2 shrink-0">
             <div>
               {onOpenAdvancedConfig && (
                 <button
@@ -480,7 +480,7 @@ export function MilestoneDetailModal({
                     onClose();
                     onOpenAdvancedConfig(projectId);
                   }}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-cyan-400 hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#94A3B8] hover:text-cyan-400 hover:bg-[#17263B] transition-colors flex items-center gap-1.5"
                   title="Abrir configuración general de hitos"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -493,7 +493,7 @@ export function MilestoneDetailModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-[#17263B] transition-colors"
               >
                 Cancelar
               </button>
@@ -522,7 +522,7 @@ export function MilestoneDetailModal({
             <button
               type="button"
               onClick={() => setPreviewImage(null)}
-              className="p-2.5 rounded-2xl bg-slate-800 text-white hover:bg-slate-700 transition-colors shadow-lg"
+              className="p-2.5 rounded-2xl bg-[#17263B] text-white hover:bg-[#1f324d] transition-colors shadow-lg"
               title="Cerrar vista completa"
             >
               <X className="w-6 h-6" />
@@ -530,7 +530,7 @@ export function MilestoneDetailModal({
           </div>
 
           <div
-            className="max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl"
+            className="max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[#29384C]/80 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <img

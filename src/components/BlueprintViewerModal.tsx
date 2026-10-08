@@ -204,9 +204,9 @@ export function BlueprintViewerModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4 no-print animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col h-[92vh] max-h-[95vh] overflow-hidden">
+      <div className="bg-white dark:bg-[#101D30] w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 dark:border-[#29384C] flex flex-col h-[92vh] max-h-[95vh] overflow-hidden">
         {/* Header with PINNED [X] and flexible title */}
-        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between flex-shrink-0 gap-2 select-none">
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#101D30] border-b border-[#29384C] flex items-center justify-between flex-shrink-0 gap-2 select-none">
           <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0 flex-1">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">
               <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -220,7 +220,7 @@ export function BlueprintViewerModal({
                   {unitName}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-[11px] text-[#94A3B8] truncate">
                 {projectName} • Cotejo de planos e instalaciones en terreno
               </p>
             </div>
@@ -238,7 +238,7 @@ export function BlueprintViewerModal({
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white border border-slate-700 transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
+              className="p-2 rounded-xl bg-[#17263B] hover:bg-rose-600 text-white border border-[#29384C] transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
               title="Cerrar ventana de planos"
               aria-label="Cerrar planos"
             >
@@ -249,7 +249,7 @@ export function BlueprintViewerModal({
 
         {/* Categories Bar: HORIZONTALLY SCROLLABLE WITH TOUCH (Allows finger sliding smoothly) */}
         <div
-          className="px-3 sm:px-4 py-2 border-b border-slate-800 bg-slate-900/90 flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none flex-shrink-0 scroll-smooth"
+          className="px-3 sm:px-4 py-2 border-b border-[#29384C] bg-[#101D30]/90 flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none flex-shrink-0 scroll-smooth"
           style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {categories.map(cat => (
@@ -259,7 +259,7 @@ export function BlueprintViewerModal({
               className={`shrink-0 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 activeCategory === cat.id
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  : 'bg-[#17263B] text-slate-300 hover:bg-[#1f324d]'
               }`}
             >
               {cat.label}
@@ -276,8 +276,8 @@ export function BlueprintViewerModal({
           <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-3 overflow-hidden flex flex-col items-center justify-center relative">
             {isAddingDoc ? (
               /* Add Document Form Overlay */
-              <div className="w-full max-w-lg bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 animate-scale-up max-h-[85vh] overflow-y-auto">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="w-full max-w-lg bg-white dark:bg-[#101D30] p-5 rounded-2xl shadow-xl border border-slate-200 dark:border-[#29384C] animate-scale-up max-h-[85vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-[#29384C]">
                   <h4 className="font-black text-slate-900 dark:text-white text-sm flex items-center gap-2">
                     <Compass className="w-4 h-4 text-amber-500" />
                     Cargar Nuevo Plano o Enlace CAD / 3D
@@ -288,7 +288,7 @@ export function BlueprintViewerModal({
                       setIsAddingDoc(false);
                       setNewDocUrl('');
                     }}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1 rounded-lg text-[#94A3B8] hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#17263B] transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -313,7 +313,7 @@ export function BlueprintViewerModal({
 
                 {/* SOURCE SELECTOR BUTTONS */}
                 <div className="mb-4">
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-[#94A3B8] mb-2">
                     Selecciona cómo cargar el plano:
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -325,14 +325,14 @@ export function BlueprintViewerModal({
                       className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 touch-target ${
                         newDocType === 'image' && newDocUrl
                           ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-bold shadow-sm'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-amber-500/60 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                          : 'border-slate-200 dark:border-[#29384C] hover:border-amber-500/60 bg-slate-50 dark:bg-[#17263B]/80 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
                         <Camera className="w-4 h-4" />
                       </div>
                       <span className="text-[11px] font-black leading-tight text-center">Sacar Foto</span>
-                      <span className="text-[9px] text-slate-400 font-medium text-center">Cámara directa</span>
+                      <span className="text-[9px] text-[#94A3B8] font-medium text-center">Cámara directa</span>
                     </button>
 
                     {/* Botón 2: Subir desde Dispositivo */}
@@ -343,14 +343,14 @@ export function BlueprintViewerModal({
                       className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 touch-target ${
                         newDocType === 'pdf' || (newDocType === 'image' && !newDocUrl)
                           ? 'border-cyan-500 bg-cyan-500/10 text-cyan-500 font-bold shadow-sm'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-cyan-500/60 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                          : 'border-slate-200 dark:border-[#29384C] hover:border-cyan-500/60 bg-slate-50 dark:bg-[#17263B]/80 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-500 flex items-center justify-center">
                         <Upload className="w-4 h-4" />
                       </div>
                       <span className="text-[11px] font-black leading-tight text-center">Dispositivo</span>
-                      <span className="text-[9px] text-slate-400 font-medium text-center">PDF o Imagen</span>
+                      <span className="text-[9px] text-[#94A3B8] font-medium text-center">PDF o Imagen</span>
                     </button>
 
                     {/* Botón 3: Enlace CAD / 3D */}
@@ -363,14 +363,14 @@ export function BlueprintViewerModal({
                       className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 touch-target ${
                         newDocType === 'cad' || newDocType === 'link'
                           ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400 font-bold shadow-sm'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-indigo-500/60 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                          : 'border-slate-200 dark:border-[#29384C] hover:border-indigo-500/60 bg-slate-50 dark:bg-[#17263B]/80 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <div className="w-8 h-8 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center">
                         <ExternalLink className="w-4 h-4" />
                       </div>
                       <span className="text-[11px] font-black leading-tight text-center">Enlace CAD</span>
-                      <span className="text-[9px] text-slate-400 font-medium text-center">3D / Web</span>
+                      <span className="text-[9px] text-[#94A3B8] font-medium text-center">3D / Web</span>
                     </button>
                   </div>
                 </div>
@@ -383,16 +383,16 @@ export function BlueprintViewerModal({
                       <p className="text-xs font-black text-amber-500">
                         {uploadStatusText || 'Procesando archivo...'}
                       </p>
-                      <p className="text-[10px] text-slate-400">Optimizando legibilidad y sincronizando...</p>
+                      <p className="text-[10px] text-[#94A3B8]">Optimizando legibilidad y sincronizando...</p>
                     </div>
                   </div>
                 )}
 
                 {/* PREVIEW OF CAPTURED PHOTO / LOADED FILE */}
                 {!isUploading && newDocUrl && (newDocType === 'image' || newDocType === 'pdf') && (
-                  <div className="mb-3.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                  <div className="mb-3.5 p-2.5 rounded-xl bg-slate-50 dark:bg-[#17263B]/80 border border-slate-200 dark:border-[#29384C] flex items-center gap-3">
                     {newDocType === 'image' ? (
-                      <div className="w-14 h-14 rounded-lg bg-black/10 overflow-hidden shrink-0 border border-slate-300 dark:border-slate-700 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-lg bg-black/10 overflow-hidden shrink-0 border border-slate-300 dark:border-[#29384C] flex items-center justify-center">
                         <img src={newDocUrl} alt="Vista previa plano" className="w-full h-full object-cover" />
                       </div>
                     ) : (
@@ -405,7 +405,7 @@ export function BlueprintViewerModal({
                         <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <span>{newDocType === 'image' ? 'Foto de plano lista' : 'Documento cargado'}</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate mt-0.5">
                         {newDocName || 'Documento listo para guardar'}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -440,7 +440,7 @@ export function BlueprintViewerModal({
                       placeholder="Ej: Plano Sanitario Depto 3B o Instalación Eléctrica"
                       value={newDocName}
                       onChange={(e) => setNewDocName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-[#29384C] bg-slate-50 dark:bg-[#17263B] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
                     />
                   </div>
 
@@ -452,7 +452,7 @@ export function BlueprintViewerModal({
                       <select
                         value={newDocCategory}
                         onChange={(e) => setNewDocCategory(e.target.value as any)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-300 dark:border-[#29384C] bg-slate-50 dark:bg-[#17263B] text-slate-900 dark:text-white font-medium"
                       >
                         <option value="arquitectura">Arquitectura</option>
                         <option value="estructura">Estructuras</option>
@@ -470,7 +470,7 @@ export function BlueprintViewerModal({
                       <select
                         value={newDocType}
                         onChange={(e) => setNewDocType(e.target.value as any)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-300 dark:border-[#29384C] bg-slate-50 dark:bg-[#17263B] text-slate-900 dark:text-white font-medium"
                       >
                         <option value="image">Foto / Imagen (Cámara, JPG, PNG)</option>
                         <option value="pdf">Archivo PDF</option>
@@ -491,7 +491,7 @@ export function BlueprintViewerModal({
                         placeholder="https://viewer.autodesk.com/... o enlace compartido"
                         value={newDocUrl}
                         onChange={(e) => setNewDocUrl(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-[#29384C] bg-slate-50 dark:bg-[#17263B] text-slate-900 dark:text-white font-mono"
                       />
                       <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-between gap-2">
                         <span className="text-[10px] text-slate-600 dark:text-slate-300">
@@ -516,7 +516,7 @@ export function BlueprintViewerModal({
                         setIsAddingDoc(false);
                         setNewDocUrl('');
                       }}
-                      className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-[#17263B] text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-[#1f324d] transition-colors"
                     >
                       Cancelar
                     </button>
@@ -543,14 +543,14 @@ export function BlueprintViewerModal({
                     <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">
                       {activeDoc.name}
                     </span>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-[#17263B] text-slate-700 dark:text-slate-300 shrink-0">
                       {activeDoc.category}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
                     {activeDoc.type === 'image' && (
-                      <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700 shadow-xs mr-1 shrink-0">
+                      <div className="flex items-center gap-1 bg-white dark:bg-[#17263B] rounded-lg p-0.5 border border-slate-200 dark:border-[#29384C] shadow-xs mr-1 shrink-0">
                         <button
                           onClick={handleZoomIn}
                           className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-500 touch-target"
@@ -582,7 +582,7 @@ export function BlueprintViewerModal({
                       href={activeDoc.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1 hover:text-amber-500 shadow-xs shrink-0 touch-target"
+                      className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1 hover:text-amber-500 shadow-xs shrink-0 touch-target"
                       title="Abrir en pantalla completa o visor externo"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -591,7 +591,7 @@ export function BlueprintViewerModal({
 
                     <button
                       onClick={() => onDeleteBlueprint(activeDoc.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors shrink-0 touch-target"
+                      className="p-1.5 rounded-lg text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors shrink-0 touch-target"
                       title="Eliminar este plano"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -600,7 +600,7 @@ export function BlueprintViewerModal({
                 </div>
 
                 {/* Viewer Canvas / Frame */}
-                <div className="flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-auto flex items-center justify-center relative p-2">
+                <div className="flex-1 bg-white dark:bg-[#101D30] rounded-xl border border-slate-200 dark:border-[#29384C] overflow-auto flex items-center justify-center relative p-2">
                   {activeDoc.type === 'pdf' ? (
                     <iframe
                       src={activeDoc.url}
@@ -626,7 +626,7 @@ export function BlueprintViewerModal({
                       <h5 className="font-black text-slate-900 dark:text-white text-base">
                         Modelo CAD / 3D Externo
                       </h5>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1 max-w-sm mx-auto">
                         Este archivo está configurado para visualizarse en la plataforma CAD 3D de alta precisión.
                       </p>
                       <a
@@ -649,7 +649,7 @@ export function BlueprintViewerModal({
                 <h5 className="font-black text-slate-700 dark:text-slate-300 text-sm">
                   Sin planos registrados en esta sección
                 </h5>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-[#94A3B8] dark:text-slate-500 mt-1">
                   Puedes adjuntar planos en formato PDF, imágenes de planos o enlaces CAD 3D.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
@@ -665,7 +665,7 @@ export function BlueprintViewerModal({
                   </button>
                   <button
                     onClick={() => setIsAddingDoc(true)}
-                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm border border-slate-700 active:scale-95 transition-all"
+                    className="px-3.5 py-2 bg-[#17263B] hover:bg-[#1f324d] text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm border border-[#29384C] active:scale-95 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Cargar Archivo / CAD</span>
@@ -676,13 +676,13 @@ export function BlueprintViewerModal({
           </div>
 
           {/* Lateral Document List / Thumbnails */}
-          <div className="w-full md:w-64 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 max-h-44 md:max-h-none overflow-y-auto flex-shrink-0 touch-pan-y">
-            <h5 className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+          <div className="w-full md:w-64 border-t md:border-t-0 md:border-l border-slate-200 dark:border-[#29384C] bg-white dark:bg-[#101D30] p-3 max-h-44 md:max-h-none overflow-y-auto flex-shrink-0 touch-pan-y">
+            <h5 className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] dark:text-slate-500 mb-2">
               Índice de Planos ({filteredDocs.length})
             </h5>
 
             {filteredDocs.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-600 italic">No hay planos para mostrar</p>
+              <p className="text-xs text-[#94A3B8] dark:text-slate-600 italic">No hay planos para mostrar</p>
             ) : (
               <div className="space-y-2">
                 {filteredDocs.map(doc => {
@@ -697,7 +697,7 @@ export function BlueprintViewerModal({
                       className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                         isSelected
                           ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 text-slate-900 dark:text-white shadow-xs'
-                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-850/50'
+                          : 'border-slate-200 dark:border-[#29384C] hover:border-slate-300 dark:hover:border-[#29384C] bg-slate-50/50 dark:bg-[#101D30]/50'
                       }`}
                     >
                       <div className="flex items-start gap-2">
@@ -714,7 +714,7 @@ export function BlueprintViewerModal({
                           <p className="text-xs font-bold truncate leading-tight">
                             {doc.name}
                           </p>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">
+                          <span className="text-[10px] font-bold text-[#94A3B8] uppercase">
                             {doc.category || 'General'}
                           </span>
                         </div>

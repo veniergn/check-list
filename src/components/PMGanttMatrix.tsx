@@ -518,10 +518,10 @@ export function PMGanttMatrix({
   const lastMonth = monthsList[monthsList.length - 1];
 
   return (
-    <div className="bg-white dark:bg-[#0f172a] rounded-[28px] border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-200/50 dark:shadow-black/40 p-4 sm:p-5 overflow-hidden transition-colors w-full select-none">
+    <div className="bg-white dark:bg-[#101D30] rounded-[28px] border border-slate-200/80 dark:border-[#29384C]/90 shadow-xl shadow-slate-200/50 dark:shadow-black/40 p-4 sm:p-5 overflow-hidden transition-colors w-full select-none">
       
       {/* 1. CABECERA: TÍTULO, SELECTOR DE ESTADOS, NAVEGADOR DE MESES Y ACCIONES */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-200 dark:border-slate-800/80">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-200 dark:border-[#29384C]/80">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -537,7 +537,7 @@ export function PMGanttMatrix({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium mt-0.5">
             Línea de tiempo continua ({firstMonth?.name} {firstMonth?.year} a {lastMonth?.name} {lastMonth?.year}) • Desliza con el dedo para recorrer meses y cuadrillas
           </p>
         </div>
@@ -545,7 +545,7 @@ export function PMGanttMatrix({
         {/* CONTROLES: NAVEGADOR Y FILTROS */}
         <div className="flex items-center flex-wrap gap-2">
           {/* Stepper Rápido y Botón Hoy */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1 border border-slate-200 dark:border-slate-700/60 shadow-xs">
+          <div className="flex items-center bg-slate-100 dark:bg-[#17263B]/80 rounded-2xl p-1 border border-slate-200 dark:border-[#29384C]/60 shadow-xs">
             <button
               type="button"
               onClick={() => handleScrollDelta('left')}
@@ -576,7 +576,7 @@ export function PMGanttMatrix({
           </div>
 
           {/* Selector de Escala Temporal: Semana / Mes / Anual */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1 border border-slate-200 dark:border-slate-700/60 shadow-xs">
+          <div className="flex items-center bg-slate-100 dark:bg-[#17263B]/80 rounded-2xl p-1 border border-slate-200 dark:border-[#29384C]/60 shadow-xs">
             <button
               type="button"
               onClick={() => handleScaleChange('week')}
@@ -617,11 +617,11 @@ export function PMGanttMatrix({
 
           {/* Filtro por Estado */}
           <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <Filter className="w-3.5 h-3.5 text-[#94A3B8]" />
             <select
               value={statusFilter}
               onChange={(e) => onStatusFilterChange(e.target.value)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 cursor-pointer focus:outline-none"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#17263B]/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#29384C]/60 cursor-pointer focus:outline-none"
             >
               <option value="all">Todas las tareas ({stats.total})</option>
               <option value="critical">🚨 Atrasos Críticos ({stats.critical})</option>
@@ -653,7 +653,7 @@ export function PMGanttMatrix({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`overflow-x-auto overflow-y-auto no-scrollbar scrollbar-none gantt-scroll-viewport max-h-[480px] select-none border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-[#090f1d] ${
+        className={`overflow-x-auto overflow-y-auto no-scrollbar scrollbar-none gantt-scroll-viewport max-h-[480px] select-none border border-slate-200 dark:border-[#29384C]/80 rounded-2xl bg-slate-50/50 dark:bg-[#081321] ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{
@@ -671,18 +671,18 @@ export function PMGanttMatrix({
           }}
         >
           {/* CABECERA FIJA SUPERIOR (STICKY TOP-0 Z-30) */}
-          <div className="sticky top-0 z-30 bg-slate-100 dark:bg-[#0b1220] border-b border-slate-200 dark:border-slate-800 shadow-[0_4px_10px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.6)]">
+          <div className="sticky top-0 z-30 bg-slate-100 dark:bg-[#101D30] border-b border-slate-200 dark:border-[#29384C] shadow-[0_4px_10px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.6)]">
             <div className="flex items-stretch">
               {/* Esquina Superior Izquierda Fija en Ambos Ejes (STICKY TOP-0 LEFT-0 Z-50) */}
               <div
-                className="sticky left-0 z-50 bg-slate-100 dark:bg-[#0b1220] px-3 py-1.5 flex items-center justify-between border-r border-slate-200 dark:border-slate-800 shadow-[3px_0_8px_rgba(0,0,0,0.1)] dark:shadow-[3px_0_8px_rgba(0,0,0,0.6)] shrink-0"
+                className="sticky left-0 z-50 bg-slate-100 dark:bg-[#101D30] px-3 py-1.5 flex items-center justify-between border-r border-slate-200 dark:border-[#29384C] shadow-[3px_0_8px_rgba(0,0,0,0.1)] dark:shadow-[3px_0_8px_rgba(0,0,0,0.6)] shrink-0"
                 style={{ width: `${STICKY_COL_WIDTH}px` }}
               >
                 <div>
                   <span className="text-[10.5px] font-black uppercase text-slate-600 dark:text-slate-300 tracking-wider block">
                     Responsable
                   </span>
-                  <span className="text-[9px] text-slate-400 font-bold truncate">
+                  <span className="text-[9px] text-[#94A3B8] font-bold truncate">
                     {contractorRows.length} cuadrillas {projectMilestones.length > 0 ? '• Hitos' : ''}
                   </span>
                 </div>
@@ -691,7 +691,7 @@ export function PMGanttMatrix({
                   <button
                     type="button"
                     onClick={onOpenContractorManager}
-                    className="p-1 rounded-lg text-slate-400 hover:text-cyan-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1 rounded-lg text-[#94A3B8] hover:text-cyan-500 hover:bg-slate-200 dark:hover:bg-[#17263B] transition-colors"
                     title="Editar cuadrillas"
                   >
                     <Pencil className="w-3 h-3" />
@@ -702,17 +702,17 @@ export function PMGanttMatrix({
               {/* Área de Meses y Días continuos */}
               <div className="flex flex-col flex-1">
                 {/* Fila 1: Meses */}
-                <div className="flex items-center border-b border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center border-b border-slate-200 dark:border-[#29384C]/80">
                   {monthsList.map(m => (
                     <div
                       key={`${m.year}-${m.monthIndex}`}
-                      className="border-r border-slate-200 dark:border-slate-800/80 px-2 flex items-center justify-between shrink-0 bg-slate-200/60 dark:bg-[#0d1527] h-6"
+                      className="border-r border-slate-200 dark:border-[#29384C]/80 px-2 flex items-center justify-between shrink-0 bg-slate-200/60 dark:bg-[#101D30] h-6"
                       style={{ width: `${m.daysCount * dayWidth}px` }}
                     >
                       <span className="text-[10.5px] font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-300 truncate">
                         {m.name} {m.year}
                       </span>
-                      <span className="text-[9px] text-slate-400 font-mono">
+                      <span className="text-[9px] text-[#94A3B8] font-mono">
                         {m.daysCount}d
                       </span>
                     </div>
@@ -724,19 +724,19 @@ export function PMGanttMatrix({
                   {daysList.map(d => (
                     <div
                       key={d.dateStr}
-                      className={`flex flex-col items-center justify-center border-r border-slate-200/60 dark:border-slate-800/40 text-center shrink-0 ${
+                      className={`flex flex-col items-center justify-center border-r border-slate-200/60 dark:border-[#29384C]/40 text-center shrink-0 ${
                         d.isToday
                           ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 font-black'
                           : d.isWeekend
-                          ? 'bg-slate-200/40 dark:bg-slate-900/60 text-slate-400 dark:text-slate-500'
-                          : 'text-slate-600 dark:text-slate-400'
+                          ? 'bg-slate-200/40 dark:bg-[#101D30]/60 text-[#94A3B8] dark:text-slate-500'
+                          : 'text-slate-600 dark:text-[#94A3B8]'
                       }`}
                       style={{ width: `${dayWidth}px`, height: '24px' }}
                       title={`${d.dayNum} - ${d.dateStr}`}
                     >
                       {timeScale === 'week' ? (
                         <>
-                          <span className="text-[8px] font-bold leading-none text-slate-400 dark:text-slate-500">
+                          <span className="text-[8px] font-bold leading-none text-[#94A3B8] dark:text-slate-500">
                             {d.weekdayLetter}
                           </span>
                           <span className={`text-[10px] leading-tight rounded px-1 font-bold ${d.isToday ? 'bg-cyan-500 text-slate-950 font-black' : ''}`}>
@@ -754,12 +754,12 @@ export function PMGanttMatrix({
                           ) : d.dayNum % 5 === 0 ? (
                             <span className="w-0.5 h-1.5 bg-slate-400 dark:bg-slate-600 rounded-full" />
                           ) : (
-                            <span className="w-px h-1 bg-slate-300 dark:bg-slate-800" />
+                            <span className="w-px h-1 bg-slate-300 dark:bg-[#17263B]" />
                           )}
                         </div>
                       ) : (
                         <>
-                          <span className="text-[7.5px] leading-none text-slate-400 dark:text-slate-500">
+                          <span className="text-[7.5px] leading-none text-[#94A3B8] dark:text-slate-500">
                             {d.weekdayLetter}
                           </span>
                           <span className={`text-[9.5px] leading-tight rounded px-0.5 ${d.isToday ? 'bg-cyan-500 text-slate-950 font-black' : ''}`}>
@@ -792,14 +792,14 @@ export function PMGanttMatrix({
             {/* FILA ESPECIAL DE HITOS DEL PROYECTO */}
             {projectMilestones.length > 0 && (
               <div
-                className="flex items-center hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors group relative border-b-2 border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-900/40"
+                className="flex items-center hover:bg-slate-100/60 dark:hover:bg-[#17263B]/40 transition-colors group relative border-b-2 border-slate-200 dark:border-[#29384C]/80 bg-slate-50/50 dark:bg-[#101D30]/40"
                 style={{ height: '42px' }}
               >
                 {/* Columna Izquierda Fija: Rótulo de Hitos */}
                 <div
                   onClick={() => onOpenMilestonesConfig && onOpenMilestonesConfig(project.id)}
-                  className={`sticky left-0 z-20 bg-slate-100/90 dark:bg-[#0f172a] px-3 flex items-center justify-between gap-1.5 border-r border-slate-200 dark:border-slate-800 shadow-[3px_0_6px_rgba(0,0,0,0.06)] dark:shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 ${
-                    onOpenMilestonesConfig ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800' : ''
+                  className={`sticky left-0 z-20 bg-slate-100/90 dark:bg-[#101D30] px-3 flex items-center justify-between gap-1.5 border-r border-slate-200 dark:border-[#29384C] shadow-[3px_0_6px_rgba(0,0,0,0.06)] dark:shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 ${
+                    onOpenMilestonesConfig ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-[#17263B]' : ''
                   }`}
                   style={{ width: `${STICKY_COL_WIDTH}px`, height: '42px' }}
                   title="Hitos clave de la obra (Clic para configurar)"
@@ -812,13 +812,13 @@ export function PMGanttMatrix({
                       <p className="text-[11px] font-black text-amber-600 dark:text-amber-400 truncate leading-tight">
                         Hitos de Obra
                       </p>
-                      <p className="text-[8.5px] text-slate-500 dark:text-slate-400 font-bold truncate">
+                      <p className="text-[8.5px] text-slate-500 dark:text-[#94A3B8] font-bold truncate">
                         {projectMilestones.length} hitos clave
                       </p>
                     </div>
                   </div>
                   {onOpenMilestonesConfig && (
-                    <Pencil className="w-3 h-3 text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 shrink-0" />
+                    <Pencil className="w-3 h-3 text-[#94A3B8] hover:text-amber-500 dark:hover:text-amber-400 shrink-0" />
                   )}
                 </div>
 
@@ -827,8 +827,8 @@ export function PMGanttMatrix({
                   {daysList.map(d => (
                     <div
                       key={d.dateStr}
-                      className={`h-full border-r border-slate-200/50 dark:border-slate-800/30 shrink-0 ${
-                        d.isWeekend ? 'bg-slate-100/40 dark:bg-slate-900/30' : ''
+                      className={`h-full border-r border-slate-200/50 dark:border-[#29384C]/30 shrink-0 ${
+                        d.isWeekend ? 'bg-slate-100/40 dark:bg-[#101D30]/30' : ''
                       } ${d.isToday ? 'bg-cyan-500/10' : ''}`}
                       style={{ width: `${dayWidth}px` }}
                     />
@@ -924,12 +924,12 @@ export function PMGanttMatrix({
             {contractorRows.map(row => (
               <div
                 key={row.profile.id}
-                className="flex items-center hover:bg-slate-100/60 dark:hover:bg-slate-800/30 transition-colors group relative"
+                className="flex items-center hover:bg-slate-100/60 dark:hover:bg-[#17263B]/30 transition-colors group relative"
                 style={{ height: `${row.rowHeight}px` }}
               >
                 {/* Columna Izquierda Fija: Avatar + Nombre + Cargo + Botón Editar (STICKY LEFT-0 Z-20) */}
                 <div
-                  className="sticky left-0 z-20 bg-white dark:bg-[#0f172a] px-3 flex items-center justify-between gap-2 border-r border-slate-200 dark:border-slate-800 shadow-[3px_0_6px_rgba(0,0,0,0.06)] dark:shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 group-hover:bg-slate-50 dark:group-hover:bg-slate-850"
+                  className="sticky left-0 z-20 bg-white dark:bg-[#101D30] px-3 flex items-center justify-between gap-2 border-r border-slate-200 dark:border-[#29384C] shadow-[3px_0_6px_rgba(0,0,0,0.06)] dark:shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 group-hover:bg-slate-50 dark:group-hover:bg-slate-850"
                   style={{ width: `${STICKY_COL_WIDTH}px`, height: `${row.rowHeight}px` }}
                   title={`${row.profile.name} - ${row.profile.role}`}
                 >
@@ -947,7 +947,7 @@ export function PMGanttMatrix({
                       <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 group-hover:text-cyan-500 truncate leading-tight transition-colors">
                         {row.profile.name}
                       </p>
-                      <p className="text-[9px] text-slate-400 truncate leading-tight font-medium">
+                      <p className="text-[9px] text-[#94A3B8] truncate leading-tight font-medium">
                         {row.profile.role}
                       </p>
                     </div>
@@ -960,7 +960,7 @@ export function PMGanttMatrix({
                         e.stopPropagation();
                         onEditContractor(row.profile);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-cyan-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shrink-0"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-[#94A3B8] hover:text-cyan-500 hover:bg-slate-100 dark:hover:bg-[#17263B] transition-all shrink-0"
                       title="Editar foto y rol del responsable"
                     >
                       <Pencil className="w-3 h-3" />
@@ -974,8 +974,8 @@ export function PMGanttMatrix({
                     <div
                       key={d.dateStr}
                       onClick={() => onQuickAddTask(row.profile.name, d.dateStr)}
-                      className={`h-full border-r border-slate-200/50 dark:border-slate-800/30 shrink-0 cursor-pointer hover:bg-cyan-500/10 transition-colors ${
-                        d.isWeekend ? 'bg-slate-100/40 dark:bg-slate-900/30' : ''
+                      className={`h-full border-r border-slate-200/50 dark:border-[#29384C]/30 shrink-0 cursor-pointer hover:bg-cyan-500/10 transition-colors ${
+                        d.isWeekend ? 'bg-slate-100/40 dark:bg-[#101D30]/30' : ''
                       } ${d.isToday ? 'bg-cyan-500/10' : ''}`}
                       style={{ width: `${dayWidth}px` }}
                       title={`Clic para asignar tarea a ${row.profile.name} el ${d.dayNum}/${d.monthIndex + 1}`}
@@ -1030,7 +1030,7 @@ export function PMGanttMatrix({
             ))}
 
             {contractorRows.length === 0 && (
-              <div className="py-12 text-center text-xs text-slate-400">
+              <div className="py-12 text-center text-xs text-[#94A3B8]">
                 No hay cuadrillas configuradas en esta obra.
               </div>
             )}
@@ -1039,13 +1039,13 @@ export function PMGanttMatrix({
       </div>
 
       {/* 3. FOOTER: GUÍA DE NAVEGACIÓN Y ACCIÓN */}
-      <div className="pt-3 mt-2 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+      <div className="pt-3 mt-2 border-t border-slate-200 dark:border-[#29384C]/80 flex items-center justify-between text-xs text-slate-500">
         <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-medium">
           <MoveHorizontal className="w-4 h-4 animate-pulse" />
           <span>Desliza lateralmente con el dedo para recorrer meses/semanas y verticalmente para más cuadrillas</span>
         </div>
 
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] text-[#94A3B8]">
           💡 Haz clic en cualquier casillero de día para asignar una nueva tarea
         </span>
       </div>

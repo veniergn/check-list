@@ -1277,7 +1277,7 @@ export function CroquisModal({
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-4 py-2 rounded-2xl shadow-2xl border border-amber-500/80 flex items-center gap-2 text-xs font-bold animate-in slide-in-from-top-2 backdrop-blur-md">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-[#101D30]/95 text-white px-4 py-2 rounded-2xl shadow-2xl border border-amber-500/80 flex items-center gap-2 text-xs font-bold animate-in slide-in-from-top-2 backdrop-blur-md">
           <Check className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -1298,13 +1298,13 @@ export function CroquisModal({
         <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-slate-950 relative overflow-hidden">
           {/* HEADER BAR: HIGH-CONTRAST WITH DIRECT ACCESS TO CAMERA, IMAGES & 3-DOTS */}
           {/* HEADER BAR: PINNED LEFT (X) & RIGHT (3-DOTS) WITH TOUCH-SLIDING HORIZONTAL CENTER */}
-          <div className="h-14 sm:h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between z-30 shrink-0 select-none px-2 sm:px-3 overflow-hidden">
+          <div className="h-14 sm:h-16 bg-[#101D30] border-b border-[#29384C] flex items-center justify-between z-30 shrink-0 select-none px-2 sm:px-3 overflow-hidden">
             {/* Left: PINNED Close & Obra/Depto Info - NEVER SHRUNK, ALWAYS VISIBLE */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 z-20 bg-slate-900 pr-1.5 border-r border-slate-800">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 z-20 bg-[#101D30] pr-1.5 border-r border-[#29384C]">
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 bg-slate-800 hover:bg-rose-600 text-white rounded-xl border border-slate-700 transition-all touch-target active:scale-95 shadow-xs shrink-0 flex items-center justify-center"
+                className="p-2 bg-[#17263B] hover:bg-rose-600 text-white rounded-xl border border-[#29384C] transition-all touch-target active:scale-95 shadow-xs shrink-0 flex items-center justify-center"
                 title="Cerrar croquis"
                 aria-label="Cerrar croquis"
               >
@@ -1370,7 +1370,7 @@ export function CroquisModal({
                 <button
                   type="button"
                   onClick={() => setIsBlueprintsDropdownOpen(true)}
-                  className="shrink-0 px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 rounded-xl text-xs font-bold flex items-center gap-1 transition-all touch-target whitespace-nowrap"
+                  className="shrink-0 px-2 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-amber-400 border border-amber-500/40 rounded-xl text-xs font-bold flex items-center gap-1 transition-all touch-target whitespace-nowrap"
                   title="Cargar plano técnico de la unidad"
                 >
                   <Compass className="w-3.5 h-3.5" />
@@ -1379,12 +1379,12 @@ export function CroquisModal({
               )}
 
               {/* Quick Undo / Redo */}
-              <div className="shrink-0 flex items-center bg-slate-800 rounded-xl border border-slate-700 p-0.5">
+              <div className="shrink-0 flex items-center bg-[#17263B] rounded-xl border border-[#29384C] p-0.5">
                 <button
                   type="button"
                   disabled={!canUndo}
                   onClick={handleUndo}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg disabled:opacity-25 transition-colors touch-target"
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-[#1f324d] rounded-lg disabled:opacity-25 transition-colors touch-target"
                   title="Deshacer trazo"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -1393,7 +1393,7 @@ export function CroquisModal({
                   type="button"
                   disabled={!canRedo}
                   onClick={handleRedo}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg disabled:opacity-25 transition-colors touch-target"
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-[#1f324d] rounded-lg disabled:opacity-25 transition-colors touch-target"
                   title="Rehacer trazo"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
@@ -1410,7 +1410,7 @@ export function CroquisModal({
                 className={`shrink-0 p-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all touch-target ${
                   tool === 'eraser'
                     ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                    : 'bg-slate-800 text-slate-200 border-slate-700'
+                    : 'bg-[#17263B] text-slate-200 border-[#29384C]'
                 }`}
                 title={tool === 'eraser' ? 'Borrador activo (toca para volver a dibujar)' : 'Alternar a borrador'}
               >
@@ -1428,11 +1428,11 @@ export function CroquisModal({
               </button>
 
               {/* Quick Zoom Pill */}
-              <div className="shrink-0 flex items-center bg-slate-800 rounded-xl border border-slate-700 p-0.5 text-xs font-bold">
+              <div className="shrink-0 flex items-center bg-[#17263B] rounded-xl border border-[#29384C] p-0.5 text-xs font-bold">
                 <button
                   type="button"
                   onClick={handleZoomOut}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors touch-target"
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-[#1f324d] rounded-lg transition-colors touch-target"
                   title="Alejar zoom"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
@@ -1450,7 +1450,7 @@ export function CroquisModal({
                 <button
                   type="button"
                   onClick={handleZoomIn}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors touch-target"
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-[#1f324d] rounded-lg transition-colors touch-target"
                   title="Acercar zoom"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
@@ -1463,7 +1463,7 @@ export function CroquisModal({
                   className={`p-1.5 rounded-lg transition-all touch-target ${
                     isPanMode
                       ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                      : 'text-slate-300 hover:text-white hover:bg-[#1f324d]'
                   }`}
                   title={isPanMode ? 'Modo Mover activado: arrastra para desplazarte' : 'Activar modo mover / desplazar pantalla'}
                 >
@@ -1473,7 +1473,7 @@ export function CroquisModal({
             </div>
 
             {/* Right: PINNED Guardar + 3-DOTS (⋮) BUTTON - NEVER SHRUNK, ALWAYS VISIBLE */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0 z-20 bg-slate-900 pl-1.5 border-l border-slate-800">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 z-20 bg-[#101D30] pl-1.5 border-l border-[#29384C]">
               {/* Quick Save */}
               <button
                 type="button"
@@ -1513,7 +1513,7 @@ export function CroquisModal({
               } ${
                 bgDocument
                   ? 'bg-slate-950'
-                  : 'max-w-5xl rounded-2xl shadow-2xl border border-slate-700/60'
+                  : 'max-w-5xl rounded-2xl shadow-2xl border border-[#29384C]/60'
               }`}
               style={{
                 backgroundColor: bgDocument
@@ -1583,7 +1583,7 @@ export function CroquisModal({
               {/* EMPTY STATE WELCOME CARD: If no photo loaded and no drawing yet */}
               {!bgDocument && !hasStartedDrawing && undoStackRef.current.length === 0 && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center p-3 sm:p-4 pointer-events-none">
-                  <div className="bg-slate-900/95 backdrop-blur-md border border-amber-500/50 rounded-3xl p-5 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl text-center text-white pointer-events-auto space-y-4 animate-in fade-in zoom-in-95">
+                  <div className="bg-[#101D30]/95 backdrop-blur-md border border-amber-500/50 rounded-3xl p-5 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl text-center text-white pointer-events-auto space-y-4 animate-in fade-in zoom-in-95">
                     <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
                       <PenTool className="w-7 h-7 stroke-[2.5]" />
                     </div>
@@ -1626,7 +1626,7 @@ export function CroquisModal({
                         <button
                           type="button"
                           onClick={() => setIsBlueprintsDropdownOpen(true)}
-                          className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all touch-target"
+                          className="w-full py-2.5 px-4 bg-[#17263B] hover:bg-[#1f324d] text-amber-400 border border-amber-500/30 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all touch-target"
                         >
                           <Compass className="w-4 h-4" />
                           <span>Usar Plano de la Unidad ({unitBlueprints.length})</span>
@@ -1637,7 +1637,7 @@ export function CroquisModal({
                       <button
                         type="button"
                         onClick={() => setHasStartedDrawing(true)}
-                        className="w-full py-2.5 px-4 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all touch-target border border-slate-700"
+                        className="w-full py-2.5 px-4 bg-[#17263B]/80 hover:bg-[#1f324d] text-slate-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all touch-target border border-[#29384C]"
                       >
                         <Pencil className="w-4 h-4 text-amber-400" />
                         <span>Dibujar a mano alzada en blanco</span>
@@ -1652,21 +1652,21 @@ export function CroquisModal({
           {/* UNIT BLUEPRINTS PICKER MODAL */}
           {isBlueprintsDropdownOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl text-white space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-5 max-w-md w-full shadow-2xl text-white space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-[#29384C]">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                       <Compass className="w-4 h-4" />
                     </div>
                     <div>
                       <h3 className="text-sm font-black text-white">Planos de la Unidad</h3>
-                      <p className="text-[11px] text-slate-400">{currentUnit?.name || 'Unidad'} • {activeProject?.name}</p>
+                      <p className="text-[11px] text-[#94A3B8]">{currentUnit?.name || 'Unidad'} • {activeProject?.name}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsBlueprintsDropdownOpen(false)}
-                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl"
+                    className="p-1.5 text-[#94A3B8] hover:text-white hover:bg-[#17263B] rounded-xl"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1678,10 +1678,10 @@ export function CroquisModal({
                       key={bp.id}
                       type="button"
                       onClick={() => handleLoadBlueprintAsBackground(bp)}
-                      className="w-full text-left p-3 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-white flex items-center justify-between transition-colors active:scale-95"
+                      className="w-full text-left p-3 bg-[#17263B]/80 hover:bg-[#1f324d] border border-[#29384C] rounded-xl text-xs font-bold text-white flex items-center justify-between transition-colors active:scale-95"
                     >
                       <span className="truncate">{bp.name}</span>
-                      <span className="text-[10px] text-amber-400 font-mono uppercase bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">
+                      <span className="text-[10px] text-amber-400 font-mono uppercase bg-[#101D30] px-2 py-0.5 rounded-md border border-[#29384C]">
                         {bp.type}
                       </span>
                     </button>
@@ -1691,7 +1691,7 @@ export function CroquisModal({
                 <button
                   type="button"
                   onClick={() => setIsBlueprintsDropdownOpen(false)}
-                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs"
+                  className="w-full py-2.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 font-bold rounded-xl text-xs"
                 >
                   Cancelar
                 </button>
@@ -1702,9 +1702,9 @@ export function CroquisModal({
           {/* THE 3-DOTS SETTINGS & TOOLS DRAWER / MODAL */}
           {isToolsMenuOpen && (
             <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-              <div className="w-full sm:w-[420px] max-w-full h-full bg-slate-900 border-l border-slate-800 p-4 sm:p-5 overflow-y-auto flex flex-col gap-4 shadow-2xl animate-in slide-in-from-right duration-200 text-white">
+              <div className="w-full sm:w-[420px] max-w-full h-full bg-[#101D30] border-l border-[#29384C] p-4 sm:p-5 overflow-y-auto flex flex-col gap-4 shadow-2xl animate-in slide-in-from-right duration-200 text-white">
                 {/* Drawer Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-3 border-b border-[#29384C]">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
                       <Sliders className="w-4 h-4" />
@@ -1717,7 +1717,7 @@ export function CroquisModal({
                   <button
                     type="button"
                     onClick={() => setIsToolsMenuOpen(false)}
-                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors touch-target"
+                    className="p-1.5 text-[#94A3B8] hover:text-white hover:bg-[#17263B] rounded-xl transition-colors touch-target"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1725,7 +1725,7 @@ export function CroquisModal({
 
                 {/* SECTION 1: FORMAS Y HERRAMIENTAS DE DIBUJO */}
                 <div className="space-y-2">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] flex items-center gap-1.5">
                     <PenTool className="w-3.5 h-3.5 text-amber-500" />
                     Herramienta de Trazo
                   </span>
@@ -1740,7 +1740,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'pen' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-750'
                       }`}
                     >
                       <Pencil className="w-4 h-4" />
@@ -1756,7 +1756,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'highlighter' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Highlighter className="w-4 h-4" />
@@ -1772,7 +1772,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'line' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Minus className="w-4 h-4" />
@@ -1788,7 +1788,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'arrow' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <MoveRight className="w-4 h-4" />
@@ -1804,7 +1804,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'rect' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Square className="w-4 h-4" />
@@ -1820,7 +1820,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'circle' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Circle className="w-4 h-4" />
@@ -1836,7 +1836,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'text' && !isPanMode
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Type className="w-4 h-4" />
@@ -1852,7 +1852,7 @@ export function CroquisModal({
                       className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all touch-target ${
                         tool === 'eraser' && !isPanMode
                           ? 'bg-rose-500 text-white border-rose-400 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
+                          : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-755'
                       }`}
                     >
                       <Eraser className="w-4 h-4" />
@@ -1879,7 +1879,7 @@ export function CroquisModal({
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all touch-target ${
                         isPanMode
                           ? 'bg-amber-500 text-slate-950 font-black'
-                          : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                          : 'bg-[#17263B] text-slate-300 hover:text-white border border-[#29384C]'
                       }`}
                     >
                       <Hand className="w-3.5 h-3.5" />
@@ -1889,8 +1889,8 @@ export function CroquisModal({
                 </div>
 
                 {/* SECTION 2: GROSOR DE TRAZO */}
-                <div className="space-y-2 pt-2 border-t border-slate-800">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                <div className="space-y-2 pt-2 border-t border-[#29384C]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8]">
                     Grosor del Trazo ({strokeWidth}px)
                   </span>
                   <div className="grid grid-cols-4 gap-2">
@@ -1902,7 +1902,7 @@ export function CroquisModal({
                         className={`p-2 rounded-xl flex flex-col items-center justify-center gap-1.5 border transition-all touch-target ${
                           strokeWidth === sw.value
                             ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-xs'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'
+                            : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:bg-slate-750'
                         }`}
                       >
                         <div
@@ -1919,9 +1919,9 @@ export function CroquisModal({
                 </div>
 
                 {/* SECTION 3: PALETA DE COLORES */}
-                <div className="space-y-2 pt-2 border-t border-slate-800">
+                <div className="space-y-2 pt-2 border-t border-[#29384C]">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8]">
                       Color de Trazo
                     </span>
                     <span className="text-[11px] font-mono text-amber-400">{color}</span>
@@ -1939,7 +1939,7 @@ export function CroquisModal({
                         className={`w-7 h-7 rounded-full border-2 transition-transform touch-target flex-shrink-0 ${
                           color === c.value && tool !== 'eraser'
                             ? 'scale-125 border-amber-400 ring-2 ring-amber-400/50 shadow-md'
-                            : 'border-slate-700'
+                            : 'border-[#29384C]'
                         }`}
                         style={{ backgroundColor: c.value }}
                         title={c.label}
@@ -1963,8 +1963,8 @@ export function CroquisModal({
                 </div>
 
                 {/* SECTION 4: FOTO / IMAGEN / PLANO DE FONDO */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-800">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <div className="space-y-2.5 pt-2 border-t border-[#29384C]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5 text-emerald-400" />
                     Fondo a Pantalla Completa (Foto / Imagen / PDF)
                   </span>
@@ -2011,13 +2011,13 @@ export function CroquisModal({
                       </button>
 
                       {isBlueprintsDropdownOpen && (
-                        <div className="mt-1 bg-slate-800 rounded-xl border border-slate-700 p-1 space-y-1 max-h-40 overflow-y-auto">
+                        <div className="mt-1 bg-[#17263B] rounded-xl border border-[#29384C] p-1 space-y-1 max-h-40 overflow-y-auto">
                           {unitBlueprints.map((bp) => (
                             <button
                               key={bp.id}
                               type="button"
                               onClick={() => handleLoadBlueprintAsBackground(bp)}
-                              className="w-full text-left p-2 hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-200 flex items-center justify-between"
+                              className="w-full text-left p-2 hover:bg-[#1f324d] rounded-lg text-xs font-bold text-slate-200 flex items-center justify-between"
                             >
                               <span className="truncate">{bp.name}</span>
                               <span className="text-[10px] text-amber-400 font-mono uppercase">{bp.type}</span>
@@ -2030,7 +2030,7 @@ export function CroquisModal({
 
                   {/* Active Background Document Controls */}
                   {bgDocument ? (
-                    <div className="p-3 bg-slate-800/80 rounded-xl border border-amber-500/30 space-y-2.5">
+                    <div className="p-3 bg-[#17263B]/80 rounded-xl border border-amber-500/30 space-y-2.5">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-amber-400 truncate max-w-[200px]">
                           📷 {bgDocument.name}
@@ -2045,7 +2045,7 @@ export function CroquisModal({
                       </div>
 
                       {/* Opacity slider */}
-                      <div className="flex items-center justify-between text-xs text-slate-400">
+                      <div className="flex items-center justify-between text-xs text-[#94A3B8]">
                         <span>Opacidad: {Math.round(bgDocument.opacity * 100)}%</span>
                         <input
                           type="range"
@@ -2063,14 +2063,14 @@ export function CroquisModal({
                       </div>
 
                       {/* Fit Mode Toggle */}
-                      <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-700">
+                      <div className="flex items-center justify-between text-xs text-[#94A3B8] pt-1 border-t border-[#29384C]">
                         <span>Ajuste de Pantalla:</span>
-                        <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-700">
+                        <div className="flex items-center bg-[#101D30] rounded-lg p-0.5 border border-[#29384C]">
                           <button
                             type="button"
                             onClick={() => setImageFit('contain')}
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              imageFit === 'contain' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'
+                              imageFit === 'contain' ? 'bg-amber-500 text-slate-950' : 'text-[#94A3B8]'
                             }`}
                           >
                             Ajustar
@@ -2079,7 +2079,7 @@ export function CroquisModal({
                             type="button"
                             onClick={() => setImageFit('cover')}
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              imageFit === 'cover' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'
+                              imageFit === 'cover' ? 'bg-amber-500 text-slate-950' : 'text-[#94A3B8]'
                             }`}
                           >
                             Llenar
@@ -2089,7 +2089,7 @@ export function CroquisModal({
 
                       {/* PDF Multi-page navigation */}
                       {bgDocument.totalPages && bgDocument.totalPages > 1 && (
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-700 text-xs">
+                        <div className="flex items-center justify-between pt-1 border-t border-[#29384C] text-xs">
                           <span>Página: {bgDocument.page} de {bgDocument.totalPages}</span>
                           <div className="flex items-center gap-1">
                             <button
@@ -2115,13 +2115,13 @@ export function CroquisModal({
                   ) : (
                     // Paper Type Selector when no photo/document is loaded
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase text-slate-400">Tipo de Papel (Sin foto):</span>
+                      <span className="text-[10px] font-bold uppercase text-[#94A3B8]">Tipo de Papel (Sin foto):</span>
                       <div className="grid grid-cols-4 gap-1.5 text-xs font-bold">
                         <button
                           type="button"
                           onClick={() => setPaperType('white')}
                           className={`p-2 rounded-xl border text-[11px] font-bold ${
-                            paperType === 'white' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'
+                            paperType === 'white' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-[#17263B] text-slate-300 border-[#29384C]'
                           }`}
                         >
                           Blanco
@@ -2130,7 +2130,7 @@ export function CroquisModal({
                           type="button"
                           onClick={() => setPaperType('grid')}
                           className={`p-2 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1 ${
-                            paperType === 'grid' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'
+                            paperType === 'grid' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-[#17263B] text-slate-300 border-[#29384C]'
                           }`}
                         >
                           <Grid className="w-3 h-3" />
@@ -2140,7 +2140,7 @@ export function CroquisModal({
                           type="button"
                           onClick={() => setPaperType('lines')}
                           className={`p-2 rounded-xl border text-[11px] font-bold ${
-                            paperType === 'lines' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'
+                            paperType === 'lines' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-[#17263B] text-slate-300 border-[#29384C]'
                           }`}
                         >
                           Rayado
@@ -2149,7 +2149,7 @@ export function CroquisModal({
                           type="button"
                           onClick={() => setPaperType('dark')}
                           className={`p-2 rounded-xl border text-[11px] font-bold ${
-                            paperType === 'dark' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'
+                            paperType === 'dark' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-[#17263B] text-slate-300 border-[#29384C]'
                           }`}
                         >
                           Oscuro
@@ -2160,8 +2160,8 @@ export function CroquisModal({
                 </div>
 
                 {/* SECTION 5: DATOS DE LA OBRA Y ESPACIO */}
-                <div className="space-y-2 pt-2 border-t border-slate-800">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <div className="space-y-2 pt-2 border-t border-[#29384C]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-amber-500" />
                     Destino del Croquis
                   </span>
@@ -2169,14 +2169,14 @@ export function CroquisModal({
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {/* Project select */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 mb-0.5">Obra:</label>
+                      <label className="block text-[10px] font-bold text-[#94A3B8] mb-0.5">Obra:</label>
                       <select
                         value={selectedProjectId}
                         onChange={(e) => handleSelectProject(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 font-bold text-xs text-white outline-none cursor-pointer"
+                        className="w-full bg-[#17263B] border border-[#29384C] rounded-xl p-2 font-bold text-xs text-white outline-none cursor-pointer"
                       >
                         {projects.map((p) => (
-                          <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                          <option key={p.id} value={p.id} className="bg-[#101D30] text-white">
                             {p.name}
                           </option>
                         ))}
@@ -2185,14 +2185,14 @@ export function CroquisModal({
 
                     {/* Unit select */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 mb-0.5">Depto / Espacio:</label>
+                      <label className="block text-[10px] font-bold text-[#94A3B8] mb-0.5">Depto / Espacio:</label>
                       <select
                         value={selectedUnitId}
                         onChange={(e) => setSelectedUnitId(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 font-bold text-xs text-white outline-none cursor-pointer"
+                        className="w-full bg-[#17263B] border border-[#29384C] rounded-xl p-2 font-bold text-xs text-white outline-none cursor-pointer"
                       >
                         {(activeProject?.units || []).map((u) => (
-                          <option key={u.id} value={u.id} className="bg-slate-900 text-white">
+                          <option key={u.id} value={u.id} className="bg-[#101D30] text-white">
                             {u.name} {u.type === 'common_area' ? '(Común)' : ''}
                           </option>
                         ))}
@@ -2201,20 +2201,20 @@ export function CroquisModal({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 mb-0.5">Referencia / Título:</label>
+                    <label className="block text-[10px] font-bold text-[#94A3B8] mb-0.5">Referencia / Título:</label>
                     <input
                       type="text"
                       value={sketchTitle}
                       onChange={(e) => setSketchTitle(e.target.value)}
                       placeholder="Ej: Modificación tabique baño"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 font-medium text-xs text-white outline-none focus:border-amber-500"
+                      className="w-full bg-[#17263B] border border-[#29384C] rounded-xl px-3 py-1.5 font-medium text-xs text-white outline-none focus:border-amber-500"
                     />
                   </div>
                 </div>
 
                 {/* SECTION 6: GUARDADO Y ACCIONES */}
-                <div className="space-y-2 pt-2 border-t border-slate-800">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <div className="space-y-2 pt-2 border-t border-[#29384C]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] flex items-center gap-1.5">
                     <Save className="w-3.5 h-3.5 text-amber-500" />
                     Guardar y Compartir
                   </span>
@@ -2250,7 +2250,7 @@ export function CroquisModal({
                         handleDownload();
                         setIsToolsMenuOpen(false);
                       }}
-                      className="p-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 rounded-xl flex items-center justify-center gap-1.5 transition-all touch-target"
+                      className="p-2.5 bg-[#17263B] hover:bg-[#1f324d] text-amber-400 border border-amber-500/40 rounded-xl flex items-center justify-center gap-1.5 transition-all touch-target"
                     >
                       <Download className="w-4 h-4 text-amber-400" />
                       <span>Descargar PNG</span>
@@ -2262,7 +2262,7 @@ export function CroquisModal({
                         setActiveTab('history');
                         setIsToolsMenuOpen(false);
                       }}
-                      className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl flex items-center justify-center gap-1.5 transition-all touch-target"
+                      className="p-2.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-200 border border-[#29384C] rounded-xl flex items-center justify-center gap-1.5 transition-all touch-target"
                     >
                       <Layers className="w-4 h-4 text-amber-400" />
                       <span>Ver Historial ({unitSketches.length})</span>
@@ -2291,7 +2291,7 @@ export function CroquisModal({
       {activeTab === 'history' && (
         <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-slate-950 overflow-hidden">
           {/* Top Bar for Gallery */}
-          <div className="bg-slate-900 border-b border-slate-800 p-3 sm:p-4 shrink-0 flex flex-col gap-3">
+          <div className="bg-[#101D30] border-b border-[#29384C] p-3 sm:p-4 shrink-0 flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
@@ -2301,7 +2301,7 @@ export function CroquisModal({
                   <h2 className="text-sm sm:text-base font-black text-white leading-tight">
                     Galería de Croquis y Anotaciones
                   </h2>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[#94A3B8]">
                     Planos, relevamientos y fotos técnicas registradas
                   </p>
                 </div>
@@ -2320,7 +2320,7 @@ export function CroquisModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors touch-target"
+                  className="p-2 text-[#94A3B8] hover:text-white hover:bg-[#17263B] rounded-xl transition-colors touch-target"
                   title="Cerrar modal"
                   aria-label="Cerrar modal"
                 >
@@ -2330,10 +2330,10 @@ export function CroquisModal({
             </div>
 
             {/* Filter selectors toolbar */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#29384C]/80">
               {/* Project selector if multiple projects */}
               {projects.length > 1 && (
-                <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800 px-2.5 py-1.5 rounded-xl">
+                <div className="flex items-center gap-1.5 bg-slate-950/60 border border-[#29384C] px-2.5 py-1.5 rounded-xl">
                   <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <select
                     value={selectedProjectId}
@@ -2349,7 +2349,7 @@ export function CroquisModal({
                     className="bg-transparent text-xs text-white font-medium focus:outline-none cursor-pointer max-w-[150px] truncate"
                   >
                     {projects.map(p => (
-                      <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                      <option key={p.id} value={p.id} className="bg-[#101D30] text-white">
                         {p.name}
                       </option>
                     ))}
@@ -2358,7 +2358,7 @@ export function CroquisModal({
               )}
 
               {/* Unit Filter Dropdown */}
-              <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800 px-2.5 py-1.5 rounded-xl">
+              <div className="flex items-center gap-1.5 bg-slate-950/60 border border-[#29384C] px-2.5 py-1.5 rounded-xl">
                 <DoorOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <select
                   value={galleryUnitFilter}
@@ -2371,11 +2371,11 @@ export function CroquisModal({
                   }}
                   className="bg-transparent text-xs text-white font-medium focus:outline-none cursor-pointer max-w-[200px] truncate"
                 >
-                  <option value="all" className="bg-slate-900 text-white">
+                  <option value="all" className="bg-[#101D30] text-white">
                     Todas las unidades ({allProjectSketches.length})
                   </option>
                   {(activeProject?.units || []).map(u => (
-                    <option key={u.id} value={u.id} className="bg-slate-900 text-white">
+                    <option key={u.id} value={u.id} className="bg-[#101D30] text-white">
                       {u.name} ({u.sketches?.length || 0})
                     </option>
                   ))}
@@ -2391,14 +2391,14 @@ export function CroquisModal({
           {/* Main Gallery Scroll Area */}
           <div className="flex-1 p-3 sm:p-5 overflow-y-auto">
             {displayedSketches.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-slate-900/60 rounded-3xl border border-slate-800/80 max-w-xl mx-auto my-6">
+              <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-[#101D30]/60 rounded-3xl border border-[#29384C]/80 max-w-xl mx-auto my-6">
                 <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
                   <PenTool className="w-8 h-8" />
                 </div>
                 <h3 className="text-base font-bold text-white mb-1">
                   No hay croquis guardados
                 </h3>
-                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                <p className="text-xs text-[#94A3B8] max-w-sm mb-6 leading-relaxed">
                   {galleryUnitFilter === 'all'
                     ? `Aún no se han guardado croquis en la obra ${activeProject?.name}.`
                     : `No hay croquis para la unidad ${currentUnit?.name || ''}.`}
@@ -2419,7 +2419,7 @@ export function CroquisModal({
                       setActiveTab('draw');
                       setTimeout(() => cameraInputRef.current?.click(), 100);
                     }}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex items-center gap-2 active:scale-95 transition-all touch-target"
+                    className="px-4 py-2.5 bg-[#17263B] hover:bg-[#1f324d] text-white font-bold text-xs rounded-xl border border-[#29384C] flex items-center gap-2 active:scale-95 transition-all touch-target"
                   >
                     <Camera className="w-4 h-4 text-amber-400" />
                     <span>Tomar Foto con Cámara</span>
@@ -2431,7 +2431,7 @@ export function CroquisModal({
                 {/* Quick Add Card */}
                 <div
                   onClick={() => setActiveTab('draw')}
-                  className="bg-slate-900/40 hover:bg-slate-900/80 border-2 border-dashed border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all group min-h-[220px]"
+                  className="bg-[#101D30]/40 hover:bg-[#101D30]/80 border-2 border-dashed border-[#29384C] hover:border-amber-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all group min-h-[220px]"
                 >
                   <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 flex items-center justify-center transition-all mb-3">
                     <Plus className="w-6 h-6 stroke-[3]" />
@@ -2448,7 +2448,7 @@ export function CroquisModal({
                 {displayedSketches.map((sketch) => (
                   <div
                     key={sketch.id}
-                    className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-lg flex flex-col hover:border-slate-700 transition-all"
+                    className="bg-[#101D30] rounded-2xl border border-[#29384C] overflow-hidden shadow-lg flex flex-col hover:border-[#29384C] transition-all"
                   >
                     {/* Thumbnail / Image container */}
                     <div
@@ -2456,7 +2456,7 @@ export function CroquisModal({
                         setPreviewSketchUrl(sketch.dataUrl);
                         setPreviewSketchTitle(sketch.title);
                       }}
-                      className="relative aspect-[16/10] bg-slate-950 overflow-hidden border-b border-slate-800 cursor-pointer group"
+                      className="relative aspect-[16/10] bg-slate-950 overflow-hidden border-b border-[#29384C] cursor-pointer group"
                       title="Haz clic para ampliar"
                     >
                       <img
@@ -2466,17 +2466,17 @@ export function CroquisModal({
                         loading="lazy"
                       />
                       <div className="absolute top-2 left-2 flex items-center gap-1">
-                        <span className="text-[10px] font-bold bg-slate-900/90 backdrop-blur-xs text-slate-200 px-2 py-0.5 rounded-lg border border-slate-700">
+                        <span className="text-[10px] font-bold bg-[#101D30]/90 backdrop-blur-xs text-slate-200 px-2 py-0.5 rounded-lg border border-[#29384C]">
                           {sketch.unitName || currentUnit?.name}
                         </span>
                       </div>
                       <div className="absolute top-2 right-2 flex items-center gap-1">
-                        <span className="text-[10px] font-bold bg-slate-900/90 backdrop-blur-xs text-amber-400 px-2 py-0.5 rounded-lg border border-amber-500/30">
+                        <span className="text-[10px] font-bold bg-[#101D30]/90 backdrop-blur-xs text-amber-400 px-2 py-0.5 rounded-lg border border-amber-500/30">
                           {sketch.createdAt}
                         </span>
                       </div>
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 text-amber-400 text-xs font-bold flex items-center gap-1.5 border border-amber-500/30 shadow-lg">
+                        <span className="px-3 py-1.5 rounded-xl bg-[#101D30]/90 text-amber-400 text-xs font-bold flex items-center gap-1.5 border border-amber-500/30 shadow-lg">
                           <Eye className="w-3.5 h-3.5" />
                           <span>Ver en grande</span>
                         </span>
@@ -2489,7 +2489,7 @@ export function CroquisModal({
                         <h4 className="text-xs font-black text-white truncate" title={sketch.title}>
                           {sketch.title}
                         </h4>
-                        <p className="text-[11px] text-slate-400 truncate">
+                        <p className="text-[11px] text-[#94A3B8] truncate">
                           {sketch.unitName || currentUnit?.name} • {sketch.projectName || activeProject?.name}
                         </p>
 
@@ -2505,7 +2505,7 @@ export function CroquisModal({
                       </div>
 
                       {/* Card Actions Footer */}
-                      <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-800">
+                      <div className="flex items-center justify-between gap-1 pt-2 border-t border-[#29384C]">
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
@@ -2520,7 +2520,7 @@ export function CroquisModal({
                           <button
                             type="button"
                             onClick={() => handleDownload(sketch.dataUrl, sketch.title)}
-                            className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors touch-target"
+                            className="p-1.5 text-slate-300 hover:text-white hover:bg-[#17263B] rounded-lg transition-colors touch-target"
                             title="Descargar imagen"
                             aria-label="Descargar imagen"
                           >
@@ -2568,9 +2568,9 @@ export function CroquisModal({
       {/* DESTINATION SELECTION MODAL (WHEN PRESSING SAVE ON CANVAS) */}
       {isSaveLocationModalOpen && (
         <div className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+          <div className="bg-[#101D30] border border-[#29384C]/80 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-[#29384C] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Save className="w-4 h-4" />
@@ -2579,7 +2579,7 @@ export function CroquisModal({
                   <h3 className="text-sm font-black text-white">
                     Guardar Croquis de Obra
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[#94A3B8]">
                     {activeProject?.name} • {currentUnit?.name}
                   </p>
                 </div>
@@ -2587,7 +2587,7 @@ export function CroquisModal({
               <button
                 type="button"
                 onClick={() => setIsSaveLocationModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-[#94A3B8] hover:text-white rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2597,7 +2597,7 @@ export function CroquisModal({
             <div className="p-5 overflow-y-auto space-y-4">
               {/* Thumbnail Preview */}
               {pendingCompositeDataUrl && (
-                <div className="aspect-[16/9] w-full rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center p-2">
+                <div className="aspect-[16/9] w-full rounded-2xl bg-slate-950 border border-[#29384C] overflow-hidden flex items-center justify-center p-2">
                   <img
                     src={pendingCompositeDataUrl}
                     alt="Vista previa del croquis"
@@ -2616,7 +2616,7 @@ export function CroquisModal({
                   value={sketchTitle}
                   onChange={(e) => setSketchTitle(e.target.value)}
                   placeholder="Ej: Relevamiento viga PB, Croquis cañería cocina..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[#29384C] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -2632,7 +2632,7 @@ export function CroquisModal({
                     className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
                       saveDestinationType === 'unit'
                         ? 'bg-amber-500/10 border-amber-500/80 text-white'
-                        : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                        : 'bg-slate-950/60 border-[#29384C] text-slate-300 hover:border-[#29384C]'
                     }`}
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
@@ -2645,7 +2645,7 @@ export function CroquisModal({
                         <DoorOpen className="w-3.5 h-3.5 text-amber-400" />
                         <span>A nivel general del departamento</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-[#94A3B8] mt-0.5">
                         Se guardará en la galería de {currentUnit?.name} y actualizará el contador de croquis general.
                       </p>
                     </div>
@@ -2657,7 +2657,7 @@ export function CroquisModal({
                     className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
                       saveDestinationType === 'item'
                         ? 'bg-amber-500/10 border-amber-500/80 text-white'
-                        : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                        : 'bg-slate-950/60 border-[#29384C] text-slate-300 hover:border-[#29384C]'
                     }`}
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
@@ -2670,7 +2670,7 @@ export function CroquisModal({
                         <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
                         <span>Asociar a un Ítem específico del Checklist</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-[#94A3B8] mt-0.5">
                         Se vinculará a la tarea seleccionada y se añadirá automáticamente a sus fotos de inspección.
                       </p>
                     </div>
@@ -2680,9 +2680,9 @@ export function CroquisModal({
 
               {/* Trade & Item Dropdowns (If Option 2 Selected) */}
               {saveDestinationType === 'item' && (
-                <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3 animate-in fade-in duration-150">
+                <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-[#29384C] space-y-3 animate-in fade-in duration-150">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
                       1. Selecciona el Rubro
                     </label>
                     <select
@@ -2693,10 +2693,10 @@ export function CroquisModal({
                         const trade = currentUnit?.trades?.find(t => t.id === newTradeId);
                         setSaveItemId(trade?.items?.[0]?.id || '');
                       }}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                      className="w-full px-3 py-2 bg-[#101D30] border border-[#29384C] rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                     >
                       {(currentUnit?.trades || []).map(trade => (
-                        <option key={trade.id} value={trade.id} className="bg-slate-900 text-white">
+                        <option key={trade.id} value={trade.id} className="bg-[#101D30] text-white">
                           {trade.name} ({trade.items?.length || 0} ítems)
                         </option>
                       ))}
@@ -2704,16 +2704,16 @@ export function CroquisModal({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
                       2. Selecciona el Ítem de Inspección
                     </label>
                     <select
                       value={saveItemId}
                       onChange={(e) => setSaveItemId(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                      className="w-full px-3 py-2 bg-[#101D30] border border-[#29384C] rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                     >
                       {(currentUnit?.trades?.find(t => t.id === saveTradeId)?.items || []).map(item => (
-                        <option key={item.id} value={item.id} className="bg-slate-900 text-white">
+                        <option key={item.id} value={item.id} className="bg-[#101D30] text-white">
                           {item.name}
                         </option>
                       ))}
@@ -2724,11 +2724,11 @@ export function CroquisModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-5 py-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end gap-2.5">
+            <div className="px-5 py-4 border-t border-[#29384C] bg-[#101D30]/90 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsSaveLocationModalOpen(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors touch-target"
+                className="px-4 py-2 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 font-bold text-xs rounded-xl transition-colors touch-target"
               >
                 Cancelar
               </button>
@@ -2750,7 +2750,7 @@ export function CroquisModal({
       {previewSketchUrl && (
         <div className="fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex flex-col animate-in fade-in duration-150">
           {/* Lightbox Header */}
-          <div className="h-14 bg-slate-900/90 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+          <div className="h-14 bg-[#101D30]/90 border-b border-[#29384C] px-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-white truncate max-w-[260px] sm:max-w-md">
                 {previewSketchTitle || 'Croquis'}
@@ -2770,7 +2770,7 @@ export function CroquisModal({
               <button
                 type="button"
                 onClick={() => handleDownload(previewSketchUrl, previewSketchTitle)}
-                className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors touch-target"
+                className="p-2 text-slate-300 hover:text-white hover:bg-[#17263B] rounded-xl transition-colors touch-target"
                 title="Descargar imagen"
               >
                 <Download className="w-5 h-5" />
@@ -2779,7 +2779,7 @@ export function CroquisModal({
               <button
                 type="button"
                 onClick={() => setPreviewSketchUrl(null)}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors touch-target"
+                className="p-2 text-[#94A3B8] hover:text-white hover:bg-[#17263B] rounded-xl transition-colors touch-target"
                 title="Cerrar vista previa"
               >
                 <X className="w-5 h-5" />

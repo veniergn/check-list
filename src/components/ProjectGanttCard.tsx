@@ -516,11 +516,11 @@ export function ProjectGanttCard({
         // Evitar que hacer clic en el Gantt active la selección de la obra entera
         e.stopPropagation();
       }}
-      className={`bg-slate-900/40 backdrop-blur-md rounded-2xl ${large ? 'p-3.5 sm:p-4' : 'p-2.5 sm:p-3'} border border-white/10 flex flex-col justify-between select-none shadow-inner min-w-0 overflow-hidden w-full`}
+      className={`bg-[#101D30]/40 backdrop-blur-md rounded-2xl ${large ? 'p-3.5 sm:p-4' : 'p-2.5 sm:p-3'} border border-white/10 flex flex-col justify-between select-none shadow-inner min-w-0 overflow-hidden w-full`}
     >
       {/* 1. HEADER: Título Continuo, Controles de Desplazamiento y Acceso a PM */}
       <div>
-        <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-800/80 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-[#29384C]/80 flex-wrap sm:flex-nowrap">
           {/* Título & Rango de Meses Continuos */}
           <div className="flex items-center gap-1.5 min-w-0">
             <Layers className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />
@@ -533,7 +533,7 @@ export function ProjectGanttCard({
               <button
                 type="button"
                 onClick={() => handleScrollDelta('left')}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
                 title="Deslizar meses anteriores"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -541,7 +541,7 @@ export function ProjectGanttCard({
               <button
                 type="button"
                 onClick={handleScrollToToday}
-                className="px-2 py-0.5 rounded text-[9.5px] font-black text-cyan-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors border border-cyan-500/30"
+                className="px-2 py-0.5 rounded text-[9.5px] font-black text-cyan-300 hover:text-white bg-[#17263B] hover:bg-[#1f324d] transition-colors border border-cyan-500/30"
                 title="Centrar en el día de hoy"
               >
                 Hoy
@@ -549,7 +549,7 @@ export function ProjectGanttCard({
               <button
                 type="button"
                 onClick={() => handleScrollDelta('right')}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
                 title="Deslizar meses siguientes"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -557,14 +557,14 @@ export function ProjectGanttCard({
             </div>
 
             {/* Selector de Escala Temporal: Semana / Mes / Anual */}
-            <div className="inline-flex items-center rounded-lg bg-slate-950/80 p-0.5 border border-slate-700/80 ml-1.5 shadow-inner shrink-0">
+            <div className="inline-flex items-center rounded-lg bg-[#081321]/80 p-0.5 border border-[#29384C]/80 ml-1.5 shadow-inner shrink-0">
               <button
                 type="button"
                 onClick={() => handleScaleChange('week')}
                 className={`px-2 py-0.5 rounded text-[9px] sm:text-[9.5px] font-black tracking-wide transition-all ${
                   timeScale === 'week'
                     ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                    : 'text-[#94A3B8] hover:text-white hover:bg-[#17263B]/80'
                 }`}
                 title="Vista Semanal (zoom en días con alto detalle)"
               >
@@ -576,7 +576,7 @@ export function ProjectGanttCard({
                 className={`px-2 py-0.5 rounded text-[9px] sm:text-[9.5px] font-black tracking-wide transition-all ${
                   timeScale === 'month'
                     ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                    : 'text-[#94A3B8] hover:text-white hover:bg-[#17263B]/80'
                 }`}
                 title="Vista Mensual estándar"
               >
@@ -588,7 +588,7 @@ export function ProjectGanttCard({
                 className={`px-2 py-0.5 rounded text-[9px] sm:text-[9.5px] font-black tracking-wide transition-all ${
                   timeScale === 'year'
                     ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                    : 'text-[#94A3B8] hover:text-white hover:bg-[#17263B]/80'
                 }`}
                 title="Vista Anual macro (panorama del año completo)"
               >
@@ -618,7 +618,7 @@ export function ProjectGanttCard({
                 </span>
               )}
 
-              <span className="text-slate-400 font-medium">
+              <span className="text-[#94A3B8] font-medium">
                 <span className="text-white font-bold">{stats.total}</span> tareas
               </span>
             </div>
@@ -644,7 +644,7 @@ export function ProjectGanttCard({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`overflow-x-auto overflow-y-auto no-scrollbar scrollbar-none gantt-scroll-viewport flex-1 ${viewportMaxHeight} my-1 select-none border border-slate-800/80 rounded-xl bg-slate-950/40 backdrop-blur-md ${
+        className={`overflow-x-auto overflow-y-auto no-scrollbar scrollbar-none gantt-scroll-viewport flex-1 ${viewportMaxHeight} my-1 select-none border border-[#29384C]/80 rounded-xl bg-[#081321]/40 backdrop-blur-md ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{
@@ -662,11 +662,11 @@ export function ProjectGanttCard({
           }}
         >
           {/* CABECERA FIJA SUPERIOR (STICKY TOP-0 Z-30) */}
-          <div className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+          <div className="sticky top-0 z-30 bg-[#101D30]/80 backdrop-blur-md border-b border-[#29384C] shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
             <div className="flex items-stretch">
               {/* Esquina Superior Izquierda: Fija tanto en X como en Y (STICKY TOP-0 LEFT-0 Z-50) */}
               <div
-                className="sticky left-0 z-50 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 flex flex-col justify-center border-r border-slate-800 shadow-[3px_0_8px_rgba(0,0,0,0.6)] shrink-0"
+                className="sticky left-0 z-50 bg-[#101D30]/90 backdrop-blur-md px-2.5 py-1.5 flex flex-col justify-center border-r border-[#29384C] shadow-[3px_0_8px_rgba(0,0,0,0.6)] shrink-0"
                 style={{ width: `${STICKY_COL_WIDTH}px` }}
               >
                 <span className="text-[10px] font-black uppercase text-slate-300 tracking-wider block">
@@ -680,11 +680,11 @@ export function ProjectGanttCard({
               {/* Área de Meses y Días continuos */}
               <div className="flex flex-col flex-1">
                 {/* Fila 1: Meses */}
-                <div className="flex items-center border-b border-slate-800/80">
+                <div className="flex items-center border-b border-[#29384C]/80">
                   {monthsList.map(m => (
                     <div
                       key={`${m.year}-${m.monthIndex}`}
-                      className="border-r border-slate-800/80 px-2 flex items-center justify-between shrink-0 bg-slate-900/60 h-6"
+                      className="border-r border-[#29384C]/80 px-2 flex items-center justify-between shrink-0 bg-[#101D30]/60 h-6"
                       style={{ width: `${m.daysCount * dayWidth}px` }}
                     >
                       <span className="text-[10px] font-black uppercase tracking-wider text-cyan-300 truncate">
@@ -702,19 +702,19 @@ export function ProjectGanttCard({
                   {daysList.map(d => (
                     <div
                       key={d.dateStr}
-                      className={`flex flex-col items-center justify-center border-r border-slate-800/40 text-center shrink-0 ${
+                      className={`flex flex-col items-center justify-center border-r border-[#29384C]/40 text-center shrink-0 ${
                         d.isToday
                           ? 'bg-cyan-500/20 text-cyan-300 font-black'
                           : d.isWeekend
-                          ? 'bg-slate-900/60 text-slate-500'
-                          : 'text-slate-400'
+                          ? 'bg-[#101D30]/60 text-slate-500'
+                          : 'text-[#94A3B8]'
                       }`}
                       style={{ width: `${dayWidth}px`, height: '24px' }}
                       title={`${d.dayNum} - ${d.dateStr}`}
                     >
                       {timeScale === 'week' ? (
                         <>
-                          <span className="text-[8px] font-bold leading-none text-slate-400">
+                          <span className="text-[8px] font-bold leading-none text-[#94A3B8]">
                             {d.weekdayLetter}
                           </span>
                           <span className={`text-[10px] leading-tight rounded px-1 ${d.isToday ? 'bg-cyan-400 text-slate-950 font-black' : 'font-bold'}`}>
@@ -732,7 +732,7 @@ export function ProjectGanttCard({
                           ) : d.dayNum % 5 === 0 ? (
                             <span className="w-0.5 h-1.5 bg-slate-600 rounded-full" />
                           ) : (
-                            <span className="w-px h-1 bg-slate-800" />
+                            <span className="w-px h-1 bg-[#17263B]" />
                           )}
                         </div>
                       ) : (
@@ -770,13 +770,13 @@ export function ProjectGanttCard({
             {/* FILA ESPECIAL DE HITOS DEL PROYECTO */}
             {projectMilestones.length > 0 && (
               <div
-                className="flex items-center hover:bg-slate-800/40 transition-colors group relative border-b-2 border-slate-700/80 bg-slate-900/40"
+                className="flex items-center hover:bg-[#17263B]/40 transition-colors group relative border-b-2 border-[#29384C]/80 bg-[#101D30]/40"
                 style={{ height: '42px' }}
               >
                 {/* Columna Izquierda Fija: Rótulo de Hitos */}
                 <div
                   onClick={() => onOpenMilestonesConfig && onOpenMilestonesConfig(project.id)}
-                  className="sticky left-0 z-20 bg-slate-900/85 backdrop-blur-md px-2 flex items-center justify-between gap-1.5 border-r border-slate-800 shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 cursor-pointer hover:bg-slate-800"
+                  className="sticky left-0 z-20 bg-[#101D30]/85 backdrop-blur-md px-2 flex items-center justify-between gap-1.5 border-r border-[#29384C] shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 cursor-pointer hover:bg-[#17263B]"
                   style={{ width: `${STICKY_COL_WIDTH}px`, height: '42px' }}
                   title="Hitos clave de la obra (Clic para configurar)"
                 >
@@ -788,7 +788,7 @@ export function ProjectGanttCard({
                       <p className="text-[10px] font-black text-amber-300 truncate leading-tight">
                         Hitos de Obra
                       </p>
-                      <p className="text-[8px] text-slate-400 font-bold truncate">
+                      <p className="text-[8px] text-[#94A3B8] font-bold truncate">
                         {projectMilestones.length} hitos
                       </p>
                     </div>
@@ -803,8 +803,8 @@ export function ProjectGanttCard({
                   {daysList.map(d => (
                     <div
                       key={d.dateStr}
-                      className={`h-full border-r border-slate-800/30 shrink-0 ${
-                        d.isWeekend ? 'bg-slate-900/30' : ''
+                      className={`h-full border-r border-[#29384C]/30 shrink-0 ${
+                        d.isWeekend ? 'bg-[#101D30]/30' : ''
                       } ${d.isToday ? 'bg-cyan-500/10' : ''}`}
                       style={{ width: `${dayWidth}px` }}
                     />
@@ -901,13 +901,13 @@ export function ProjectGanttCard({
             {contractorRows.map(row => (
               <div
                 key={row.profile.id}
-                className="flex items-center hover:bg-slate-800/30 transition-colors group relative"
+                className="flex items-center hover:bg-[#17263B]/30 transition-colors group relative"
                 style={{ height: `${row.rowHeight}px` }}
               >
                 {/* Columna Izquierda Fija: Avatar + Nombre + Cargo (STICKY LEFT-0 Z-20) */}
                 <div
                   onClick={() => handleOpenPM(undefined, todayStr)}
-                  className="sticky left-0 z-20 bg-slate-900/85 backdrop-blur-md px-2 flex items-center gap-2 border-r border-slate-800 shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 cursor-pointer group-hover:bg-slate-850"
+                  className="sticky left-0 z-20 bg-[#101D30]/85 backdrop-blur-md px-2 flex items-center gap-2 border-r border-[#29384C] shadow-[3px_0_6px_rgba(0,0,0,0.6)] shrink-0 cursor-pointer group-hover:bg-[#101D30]"
                   style={{ width: `${STICKY_COL_WIDTH}px`, height: `${row.rowHeight}px` }}
                   title={`${row.profile.name} - ${row.profile.role} (Clic para abrir PM)`}
                 >
@@ -935,8 +935,8 @@ export function ProjectGanttCard({
                   {daysList.map(d => (
                     <div
                       key={d.dateStr}
-                      className={`h-full border-r border-slate-800/30 shrink-0 ${
-                        d.isWeekend ? 'bg-slate-900/30' : ''
+                      className={`h-full border-r border-[#29384C]/30 shrink-0 ${
+                        d.isWeekend ? 'bg-[#101D30]/30' : ''
                       } ${d.isToday ? 'bg-cyan-500/10' : ''}`}
                       style={{ width: `${dayWidth}px` }}
                     />
@@ -1010,7 +1010,7 @@ export function ProjectGanttCard({
       </div>
 
       {/* 3. FOOTER: Indicador de Navegación 2D y Acción Rápida */}
-      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+      <div className="pt-2 border-t border-[#29384C]/80 flex items-center justify-between text-[10px] text-[#94A3B8]">
         <div className="flex items-center gap-1.5 text-cyan-400/90 font-medium">
           <MoveHorizontal className="w-3.5 h-3.5 animate-pulse" />
           <span>Desliza lateralmente para ver meses/semanas y hacia abajo para más cuadrillas</span>
@@ -1034,10 +1034,10 @@ export function ProjectGanttCard({
           onClick={() => setQuickProgressTask(null)}
         >
           <div
-            className="w-full max-w-sm bg-slate-900 border border-slate-700/90 rounded-3xl p-5 shadow-2xl space-y-4"
+            className="w-full max-w-sm bg-[#101D30] border border-[#29384C]/90 rounded-3xl p-5 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-2 border-b border-[#29384C]">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
                   <Percent className="w-4 h-4 text-cyan-400" />
@@ -1046,7 +1046,7 @@ export function ProjectGanttCard({
                   <h4 className="text-xs font-black text-white uppercase tracking-wider">
                     Avance de Tarea
                   </h4>
-                  <p className="text-[11px] text-slate-400 font-bold truncate">
+                  <p className="text-[11px] text-[#94A3B8] font-bold truncate">
                     {quickProgressTask.task.title}
                   </p>
                 </div>
@@ -1054,7 +1054,7 @@ export function ProjectGanttCard({
               <button
                 type="button"
                 onClick={() => setQuickProgressTask(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#17263B]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1062,7 +1062,7 @@ export function ProjectGanttCard({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-bold">Porcentaje de Avance</span>
+                <span className="text-xs text-[#94A3B8] font-bold">Porcentaje de Avance</span>
                 <span className={`text-sm font-black px-2.5 py-0.5 rounded-xl border ${
                   quickProgressTask.progress >= 100
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
@@ -1086,7 +1086,7 @@ export function ProjectGanttCard({
                   const val = Number(e.target.value);
                   setQuickProgressTask(prev => prev ? { ...prev, progress: val } : null);
                 }}
-                className="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                className="w-full accent-cyan-400 cursor-pointer h-2 bg-[#17263B] rounded-lg"
               />
 
               {/* Botones rápidos */}
@@ -1099,7 +1099,7 @@ export function ProjectGanttCard({
                     className={`px-2.5 py-1 rounded-xl text-[10px] font-black transition-all ${
                       quickProgressTask.progress === pct
                         ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
-                        : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        : 'bg-[#17263B] text-slate-300 hover:text-white border border-[#29384C]'
                     }`}
                   >
                     {pct}%
@@ -1108,7 +1108,7 @@ export function ProjectGanttCard({
               </div>
 
               {/* Explicación de impacto en Gantt */}
-              <div className="text-[10px] font-medium p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+              <div className="text-[10px] font-medium p-2.5 rounded-xl bg-[#17263B]/60 border border-[#29384C]/60">
                 {quickProgressTask.progress >= 100 ? (
                   <span className="text-emerald-400 font-bold flex items-center gap-1">
                     ✓ 100% Finalizada (Se verá verde en Gantt)
@@ -1125,11 +1125,11 @@ export function ProjectGanttCard({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#29384C]">
               <button
                 type="button"
                 onClick={() => setQuickProgressTask(null)}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#94A3B8] hover:text-white hover:bg-[#17263B]"
               >
                 Cancelar
               </button>

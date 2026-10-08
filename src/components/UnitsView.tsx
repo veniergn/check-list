@@ -256,13 +256,13 @@ export function UnitsView({
           borderColor: neonColor,
           boxShadow: `0 0 30px ${hexToRgba(neonColor, 0.28)}`
         }}
-        className="rounded-3xl p-5 sm:p-6 border-2 bg-[#131b2c] text-white transition-all relative overflow-hidden"
+        className="rounded-3xl p-5 sm:p-6 border-2 bg-[#101D30] text-white transition-all relative overflow-hidden"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5 flex-1 min-w-0 pr-1">
             {/* Deptos & Comunes Tag */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8]">
                 {countDeptos} DEPTOS - {countCommon} COMUNES
               </span>
               <span className="text-[11px] font-bold" style={{ color: neonColor }}>
@@ -276,7 +276,7 @@ export function UnitsView({
             </h2>
 
             {/* Location with Pin */}
-            <p className="text-xs text-slate-400 flex items-center gap-1.5 truncate">
+            <p className="text-xs text-[#94A3B8] flex items-center gap-1.5 truncate">
               <Building2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />
               <span>{project.location || 'Calle Agustín Alvarez 315'}</span>
               {typeFilter !== 'all' && (
@@ -287,19 +287,19 @@ export function UnitsView({
             </p>
 
             {/* Separator */}
-            <div className="w-full h-px bg-slate-800/80 my-2" />
+            <div className="w-full h-px bg-[#17263B] my-2" />
 
             {/* Avance General Technical Details */}
             <div className="pt-0.5 text-xs text-slate-300 space-y-1">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                <p className="text-[10px] font-black uppercase text-[#94A3B8] tracking-wider">
                   Avance General
                 </p>
                 {onEditProject && (
                   <button
                     type="button"
                     onClick={() => onEditProject(project)}
-                    className="px-1.5 py-0.5 -mr-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1 text-[10px] font-bold border border-transparent hover:border-slate-700"
+                    className="px-1.5 py-0.5 -mr-1 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors flex items-center gap-1 text-[10px] font-bold border border-transparent hover:border-[#29384C]"
                     title="Editar datos de Avance General"
                   >
                     <Pencil className="w-3 h-3" style={{ color: neonColor }} />
@@ -308,19 +308,19 @@ export function UnitsView({
                 )}
               </div>
               <div className="flex items-center gap-2 truncate text-slate-300">
-                <FileCheck className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <FileCheck className="w-3.5 h-3.5 text-[#94A3B8] flex-shrink-0" />
                 <span className="truncate">{project.technicalNotes || 'Toda la información del Expediente'}</span>
               </div>
               <div className="flex items-center gap-2 truncate text-slate-300">
-                <Building2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <Building2 className="w-3.5 h-3.5 text-[#94A3B8] flex-shrink-0" />
                 <span className="truncate">{project.director || 'Msc. Arq. Agustín Arrieta'}</span>
               </div>
               <div className="flex items-center gap-2 truncate text-slate-300">
-                <Zap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <Zap className="w-3.5 h-3.5 text-[#94A3B8] flex-shrink-0" />
                 <span className="truncate">{project.computoSubtitle || 'Cómputo, Certificaciones y Rubros'}</span>
               </div>
               {project.expedienteMunicipal && (
-                <div className="flex items-center gap-2 truncate text-slate-400 text-[11px]">
+                <div className="flex items-center gap-2 truncate text-[#94A3B8] text-[11px]">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Exp:</span>
                   <span className="truncate">{project.expedienteMunicipal}</span>
                 </div>
@@ -341,7 +341,7 @@ export function UnitsView({
         </div>
 
         {/* Action buttons inside project summary */}
-        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-slate-800/80">
+        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-[#29384C]">
           {onOpenProjectManager && (
             <button
               type="button"
@@ -406,7 +406,7 @@ export function UnitsView({
             <button
               type="button"
               onClick={() => onEditProject(project)}
-              className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 border border-[#29384C] rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
             >
               <Pencil className="w-3.5 h-3.5 text-[#00c2fe]" />
               <span>Editar Datos</span>
@@ -426,7 +426,7 @@ export function UnitsView({
         </div>
 
         {/* Diagrama de Gantt Continuo e Hitos de la Obra (Vista Ampliada) */}
-        <div className="mt-3.5 pt-2 border-t border-slate-800/80">
+        <div className="mt-3.5 pt-2 border-t border-[#29384C]">
           <ErrorBoundary fallbackTitle="Error al visualizar el diagrama de Gantt">
             <ProjectGanttCard
               project={project}
@@ -442,17 +442,17 @@ export function UnitsView({
       </div>
 
       {/* Specialty / Trade Filter & Management Bar */}
-      <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
+      <div className="bg-[#101D30] p-3 rounded-2xl border border-slate-200 dark:border-[#29384C] shadow-sm space-y-3 transition-colors">
         {/* Navigation Tabs Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#29384C] pb-2">
+          <div className="flex items-center gap-1.5 p-1 bg-[#17263B] rounded-xl">
             <button
               type="button"
               onClick={() => setTradeSectionTab('filter')}
               className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all touch-target ${
                 tradeSectionTab === 'filter'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-[#101D30] text-slate-900 dark:text-amber-400 shadow-xs'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Layers className="w-3.5 h-3.5 text-amber-500" />
@@ -464,8 +464,8 @@ export function UnitsView({
               onClick={() => setTradeSectionTab('manage')}
               className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all touch-target ${
                 tradeSectionTab === 'manage'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-[#101D30] text-slate-900 dark:text-amber-400 shadow-xs'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Plus className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" />
@@ -489,7 +489,7 @@ export function UnitsView({
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                   tradeFilter === 'all'
                     ? 'bg-slate-900 dark:bg-amber-500 text-amber-400 dark:text-slate-950 border-amber-500 shadow-sm ring-1 ring-amber-500'
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+                    : 'bg-slate-50 dark:bg-[#17263B] text-slate-600 dark:text-slate-300 border-slate-300 dark:border-[#29384C] hover:border-slate-400 dark:hover:border-slate-600'
                 }`}
               >
                 <span>Todos</span>
@@ -504,7 +504,7 @@ export function UnitsView({
                     className={`flex-shrink-0 px-3 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                       isActive
                         ? 'bg-slate-900 dark:bg-amber-500 text-amber-400 dark:text-slate-950 border-amber-500 shadow-sm ring-1 ring-amber-500'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+                        : 'bg-slate-50 dark:bg-[#17263B] text-slate-600 dark:text-slate-300 border-slate-300 dark:border-[#29384C] hover:border-slate-400 dark:hover:border-slate-600'
                     }`}
                   >
                     {getTradeIcon(trade.id)}
@@ -520,7 +520,7 @@ export function UnitsView({
         {tradeSectionTab === 'manage' && (
           <div className="space-y-4 pt-1 animate-in fade-in duration-200">
             {/* Form to Add New Trade */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <div className="p-3 bg-slate-50 dark:bg-[#17263B] rounded-xl border border-slate-200 dark:border-[#29384C] space-y-2.5">
               <label className="block text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Plus className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" />
                 Agregar Nuevo Gremio al Complejo ({project.name})
@@ -532,7 +532,7 @@ export function UnitsView({
                   value={newTradeNameDraft}
                   onChange={(e) => setNewTradeNameDraft(e.target.value)}
                   placeholder="Ej: Pintura, Instalación de Gas, Herrería..."
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-[#101D30] text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
 
                 <button
@@ -553,7 +553,7 @@ export function UnitsView({
 
               {/* Quick Preset Badges */}
               <div className="pt-1">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-slate-500 dark:text-[#94A3B8] font-bold uppercase tracking-wider block mb-1">
                   Sugerencias rápidas:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -570,7 +570,7 @@ export function UnitsView({
                       key={preset}
                       type="button"
                       onClick={() => setNewTradeNameDraft(preset)}
-                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition-colors active:scale-95"
+                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-[#101D30] hover:bg-slate-100 dark:hover:bg-[#1f324d] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#29384C] transition-colors active:scale-95"
                     >
                       + {preset}
                     </button>
@@ -588,7 +588,7 @@ export function UnitsView({
                 {availableTrades.map(trade => (
                   <div
                     key={trade.id}
-                    className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs"
+                    className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-[#29384C] flex items-center justify-between shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0 pr-2">
                       <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
@@ -635,7 +635,7 @@ export function UnitsView({
                 <Layers className="w-4 h-4 text-[#00c2fe]" />
                 Pisos de la Obra
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#94A3B8]">
                 Selecciona un piso para ver sus departamentos ({floorGroups.filter(f => !f.isCommon).length} pisos • {countDeptos} deptos)
               </p>
             </div>
@@ -644,7 +644,7 @@ export function UnitsView({
               <button
                 type="button"
                 onClick={() => setSelectedFloorKey('all_units')}
-                className="px-3 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold transition-all touch-target"
+                className="px-3 py-1.5 rounded-full bg-[#17263B] hover:bg-[#1f324d] text-slate-300 hover:text-white border border-[#29384C] text-xs font-bold transition-all touch-target"
                 title="Ver todos los departamentos juntos"
               >
                 Ver Todos ({countAll})
@@ -676,8 +676,8 @@ export function UnitsView({
                   } : undefined}
                   className={`rounded-3xl p-5 sm:p-6 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between group touch-target ${
                     isFloorActive
-                      ? 'border-2 scale-[1.01] bg-[#162238]'
-                      : 'border border-slate-700/80 hover:border-slate-500 bg-[#131b2c]'
+                      ? 'border-2 scale-[1.01] bg-[#17263B]'
+                      : 'border border-[#29384C] hover:border-slate-500 bg-[#101D30]'
                   } text-white`}
                 >
                   <div className="space-y-3.5">
@@ -710,7 +710,7 @@ export function UnitsView({
                           >
                             {grp.label}
                           </h4>
-                          <p className="text-xs text-slate-400 font-medium truncate mt-0.5">
+                          <p className="text-xs text-[#94A3B8] font-medium truncate mt-0.5">
                             {grp.totalUnits} {grp.isCommon ? 'espacios comunes' : 'departamentos'}
                           </p>
                         </div>
@@ -739,7 +739,7 @@ export function UnitsView({
                             className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded-lg border truncate max-w-[110px] ${
                               uDone
                                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                : 'bg-slate-800/90 text-slate-300 border-slate-700'
+                                : 'bg-[#17263B] text-slate-300 border-[#29384C]'
                             }`}
                           >
                             {shortUnit}
@@ -747,7 +747,7 @@ export function UnitsView({
                         );
                       })}
                       {grp.units.length > 6 && (
-                        <span className="text-[10px] font-bold text-slate-400 self-center">
+                        <span className="text-[10px] font-bold text-[#94A3B8] self-center">
                           +{grp.units.length - 6} más
                         </span>
                       )}
@@ -755,8 +755,8 @@ export function UnitsView({
                   </div>
 
                   {/* Bottom of Floor Card */}
-                  <div className="mt-5 pt-3.5 border-t border-slate-800/80 space-y-2">
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700/60">
+                  <div className="mt-5 pt-3.5 border-t border-[#29384C] space-y-2">
+                    <div className="w-full bg-[#17263B] h-1.5 rounded-full overflow-hidden border border-[#29384C]">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -767,7 +767,7 @@ export function UnitsView({
                     </div>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400 font-bold text-[11px]">
+                      <span className="text-[#94A3B8] font-bold text-[11px]">
                         {grp.completedUnits} de {grp.totalUnits} terminados ({grp.progress}%)
                       </span>
                       <span
@@ -787,13 +787,13 @@ export function UnitsView({
         /* SECTION 2: UNITS OF SELECTED FLOOR (OR ALL UNITS) */
         <div className="space-y-4 pt-1">
           {/* Floor Header with Back Button and Quick Switcher */}
-          <div className="bg-[#131b2c] border border-slate-700/80 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
+          <div className="bg-[#101D30] border border-[#29384C] rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedFloorKey(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-black flex items-center gap-1.5 border border-slate-700 transition-all active:scale-95 shadow-xs touch-target"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#17263B] hover:bg-[#1f324d] text-slate-200 hover:text-white text-xs font-black flex items-center gap-1.5 border border-[#29384C] transition-all active:scale-95 shadow-xs touch-target"
                 >
                   <ArrowLeft className="w-4 h-4 text-[#00c2fe]" />
                   <span>Volver a Pisos</span>
@@ -806,11 +806,11 @@ export function UnitsView({
                     <span style={{ color: neonColor }}>
                       {selectedFloorKey === 'all_units' ? 'Todos los Departamentos' : activeFloorGroup?.label}
                     </span>
-                    <span className="text-xs font-bold text-slate-400">
+                    <span className="text-xs font-bold text-[#94A3B8]">
                       ({tabTotalCount} {typeFilter === 'unit' ? 'deptos' : typeFilter === 'common_area' ? 'comunes' : 'unidades'})
                     </span>
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[#94A3B8]">
                     {tabCompletedCount} de {tabTotalCount} unidades terminadas ({tabTotalCount > 0 ? Math.round((tabCompletedCount / tabTotalCount) * 100) : 0}%)
                   </p>
                 </div>
@@ -826,11 +826,11 @@ export function UnitsView({
             </div>
 
             {/* Quick Floor Switcher Pills */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pt-1 text-xs border-t border-slate-800/80">
+            <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pt-1 text-xs border-t border-[#29384C]">
               <button
                 type="button"
                 onClick={() => setSelectedFloorKey(null)}
-                className="px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 flex-shrink-0 bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500 touch-target"
+                className="px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 flex-shrink-0 bg-[#17263B] text-slate-300 border border-[#29384C] hover:border-slate-500 touch-target"
               >
                 <ArrowLeft className="w-3 h-3" style={{ color: neonColor }} />
                 <span>Pisos</span>
@@ -852,12 +852,12 @@ export function UnitsView({
                     className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 border touch-target ${
                       isSelected
                         ? 'font-black'
-                        : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
+                        : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:border-slate-500'
                     }`}
                   >
                     <span>{grp.label}</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-slate-400'
+                      isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-[#94A3B8]'
                     }`}>
                       {grp.totalUnits}
                     </span>
@@ -877,12 +877,12 @@ export function UnitsView({
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 border touch-target ${
                   selectedFloorKey === 'all_units'
                     ? 'font-black'
-                    : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
+                    : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:border-slate-500'
                 }`}
               >
                 <span>Todos</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  selectedFloorKey === 'all_units' ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-slate-400'
+                  selectedFloorKey === 'all_units' ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-[#94A3B8]'
                 }`}>
                   {countAll}
                 </span>
@@ -892,7 +892,7 @@ export function UnitsView({
 
           {/* Space Category Filter Tabs only when viewing All Units */}
           {selectedFloorKey === 'all_units' && (
-            <div className="flex items-center gap-1.5 bg-[#151f33]/90 border border-slate-700/80 p-1.5 rounded-2xl text-xs transition-colors select-none">
+            <div className="flex items-center gap-1.5 bg-[#17263B]/90 border border-[#29384C] p-1.5 rounded-2xl text-xs transition-colors select-none">
               <button
                 onClick={() => setTypeFilter('all')}
                 className={`flex-1 py-1.5 px-3 rounded-xl font-bold transition-all text-center ${
@@ -935,7 +935,7 @@ export function UnitsView({
               className={`px-3.5 sm:px-4 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                 statusFilter === 'all'
                   ? 'bg-[#00c2ff] text-slate-950 border-[#00c2ff] shadow-[0_0_15px_rgba(0,194,255,0.45)]'
-                  : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                  : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -950,7 +950,7 @@ export function UnitsView({
               className={`px-3.5 sm:px-4 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                 statusFilter === 'completed'
                   ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.45)]'
-                  : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                  : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
               }`}
             >
               <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -965,7 +965,7 @@ export function UnitsView({
               className={`px-3.5 sm:px-4 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                 statusFilter === 'in_progress'
                   ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.45)]'
-                  : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                  : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
               }`}
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -980,7 +980,7 @@ export function UnitsView({
               className={`px-3.5 sm:px-4 py-1.5 rounded-full font-bold transition-all border text-xs flex items-center gap-1.5 touch-target ${
                 statusFilter === 'pending'
                   ? 'bg-rose-500 text-white border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.45)]'
-                  : 'bg-[#151f33]/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                  : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
@@ -994,10 +994,10 @@ export function UnitsView({
           {/* Units Grid - Responsive with Interactive Neon Line on Cursor / Touch */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-1">
             {filteredUnits.length === 0 ? (
-              <div className="col-span-full text-center py-12 bg-[#131b2c]/80 rounded-3xl border border-dashed border-slate-800 p-4">
+              <div className="col-span-full text-center py-12 bg-[#101D30]/80 rounded-3xl border border-dashed border-[#29384C] p-4">
                 <DoorOpen className="w-10 h-10 text-slate-600 mx-auto mb-2" />
                 <p className="text-sm font-bold text-white">Sin unidades con este criterio</p>
-                <p className="text-xs text-slate-400 mt-0.5">Prueba cambiando el filtro de estado o espacio arriba.</p>
+                <p className="text-xs text-[#94A3B8] mt-0.5">Prueba cambiando el filtro de estado o espacio arriba.</p>
                 <button
                   onClick={() => {
                     setStatusFilter('all');
@@ -1030,8 +1030,8 @@ export function UnitsView({
                     } : undefined}
                     className={`rounded-2xl p-4 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between touch-target group ${
                       isUnitActive
-                        ? 'border-2 scale-[1.02] bg-[#162238]'
-                        : 'border border-slate-700/80 hover:border-slate-500 bg-[#131b2c]'
+                        ? 'border-2 scale-[1.02] bg-[#17263B]'
+                        : 'border border-[#29384C] hover:border-slate-500 bg-[#101D30]'
                     } text-white`}
                   >
                     <div>
@@ -1079,7 +1079,7 @@ export function UnitsView({
                           {isCommonArea ? 'Común' : 'Depto'}
                         </span>
                         {unit.floorLabel && (
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 truncate max-w-[90px]">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#17263B] text-slate-300 border border-[#29384C] truncate max-w-[90px]">
                             {unit.floorLabel}
                           </span>
                         )}
@@ -1111,7 +1111,7 @@ export function UnitsView({
                               e.stopPropagation();
                               onEditUnit(unit);
                             }}
-                            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                            className="p-1 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
                             title="Editar denominación"
                           >
                             <Pencil className="w-3.5 h-3.5" style={{ color: neonColor }} />
@@ -1124,7 +1124,7 @@ export function UnitsView({
                                 e.stopPropagation();
                                 onRequestDeleteUnit(unit.id, unit.name);
                               }}
-                              className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                              className="p-1 rounded-lg text-[#94A3B8] hover:text-rose-400 hover:bg-[#17263B] transition-colors"
                               title="Eliminar este espacio"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1133,14 +1133,14 @@ export function UnitsView({
                         </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-400 mt-1">
+                      <p className="text-[11px] text-[#94A3B8] mt-1">
                         {counts.completed}/{counts.total} {tradeFilter === 'all' ? 'ítems validados' : 'tareas'} ({progress}%)
                       </p>
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-slate-800/80">
+                    <div className="mt-3 pt-2 border-t border-[#29384C]">
                       {/* Horizontal Capsule Progress Bar */}
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700/60">
+                      <div className="w-full bg-[#17263B] h-1.5 rounded-full overflow-hidden border border-[#29384C]">
                         <div
                           className="h-full rounded-full transition-all duration-300"
                           style={{

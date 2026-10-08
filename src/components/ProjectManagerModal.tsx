@@ -427,11 +427,11 @@ export function ProjectManagerModal({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-[#f8fafc] dark:bg-[#0b1120] border border-slate-200/80 dark:border-slate-800/90 rounded-[36px] w-full max-w-7xl h-[94vh] flex flex-col shadow-2xl overflow-hidden transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#081321]/80 backdrop-blur-md animate-fade-in">
+      <div className="bg-[#f8fafc] dark:bg-[#101D30] border border-slate-200/80 dark:border-[#29384C] rounded-[36px] w-full max-w-7xl h-[94vh] flex flex-col shadow-2xl overflow-hidden transition-colors">
         
         {/* TOP DRIBBBLE-STYLE NAVBAR */}
-        <div className="px-6 py-4 border-b border-slate-200/80 dark:border-slate-800/90 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md flex items-center justify-between gap-4 shrink-0">
+        <div className="px-6 py-4 border-b border-slate-200/80 dark:border-[#29384C] bg-white/90 bg-[#101D30]/95 backdrop-blur-md flex items-center justify-between gap-4 shrink-0">
           
           {/* LEFT: ICON & SEGMENTED TABS */}
           <div className="flex items-center gap-4">
@@ -443,14 +443,14 @@ export function ProjectManagerModal({
             </div>
 
             {/* Segmented Pill Tabs */}
-            <div className="bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-2xl flex items-center gap-1 border border-slate-200/80 dark:border-slate-700/60 shadow-inner">
+            <div className="bg-slate-100 dark:bg-[#17263B] p-1.5 rounded-2xl flex items-center gap-1 border border-slate-200/80 dark:border-[#29384C] shadow-inner">
               <button
                 type="button"
                 onClick={() => setActiveTab('dashboard')}
                 className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
                   activeTab === 'dashboard'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#101D30] text-white dark:bg-white dark:text-slate-950 shadow-sm'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -462,8 +462,8 @@ export function ProjectManagerModal({
                 onClick={() => setActiveTab('tasks')}
                 className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all relative ${
                   activeTab === 'tasks'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#101D30] text-white dark:bg-white dark:text-slate-950 shadow-sm'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <ListTodo className="w-4 h-4" />
@@ -478,8 +478,8 @@ export function ProjectManagerModal({
                 onClick={() => setActiveTab('calendar')}
                 className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
                   activeTab === 'calendar'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#101D30] text-white dark:bg-white dark:text-slate-950 shadow-sm'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <CalendarDays className="w-4 h-4" />
@@ -509,7 +509,7 @@ export function ProjectManagerModal({
                 />
               ))}
               {contractorList.length > 4 && (
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-[10.5px] font-black text-slate-700 dark:text-slate-300 ring-2 ring-white dark:ring-slate-900 flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-[#17263B] text-[10.5px] font-black text-slate-700 dark:text-slate-300 ring-2 ring-white dark:ring-slate-900 flex items-center justify-center shadow-xs">
                   +{contractorList.length - 4}
                 </div>
               )}
@@ -519,7 +519,7 @@ export function ProjectManagerModal({
             <button
               type="button"
               onClick={() => setIsContractorManagerOpen(true)}
-              className="px-3 py-2 rounded-2xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+              className="px-3 py-2 rounded-2xl font-bold text-xs bg-slate-100 dark:bg-[#17263B] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#29384C] hover:bg-slate-200 dark:hover:bg-[#1f324d] transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
               title="Gestionar responsables y fotos de cuadrillas"
             >
               <Users className="w-3.5 h-3.5 text-cyan-500" />
@@ -541,7 +541,7 @@ export function ProjectManagerModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2.5 rounded-2xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2.5 rounded-2xl text-[#94A3B8] hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#17263B] transition-colors"
               title="Cerrar Project Manager"
             >
               <X className="w-5 h-5" />
@@ -580,7 +580,7 @@ export function ProjectManagerModal({
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* COLUMN 1: FUTURE EVENTS / PRÓXIMOS HITOS (Matching reference image) */}
-                <div className="bg-white dark:bg-[#0f172a] rounded-[28px] border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between">
+                <div className="bg-white dark:bg-[#101D30] rounded-[28px] border border-slate-200/80 dark:border-[#29384C] shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -589,7 +589,7 @@ export function ProjectManagerModal({
                       <button
                         type="button"
                         onClick={() => setActiveTab('tasks')}
-                        className="text-xs font-bold text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                        className="text-xs font-bold text-[#94A3B8] hover:text-slate-700 dark:hover:text-white transition-colors"
                       >
                         Ver todos
                       </button>
@@ -612,7 +612,7 @@ export function ProjectManagerModal({
                         <h5 className="text-sm font-black text-slate-900 dark:text-white mb-1 line-clamp-1">
                           {upcomingEvents[0].title}
                         </h5>
-                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3 line-clamp-1 font-medium">
+                        <p className="text-[11px] text-slate-600 dark:text-[#94A3B8] mb-3 line-clamp-1 font-medium">
                           {upcomingEvents[0].description || 'Coordinación en obra con la dirección técnica.'}
                         </p>
 
@@ -642,13 +642,13 @@ export function ProjectManagerModal({
                         <div
                           key={evt.id}
                           onClick={() => handleEditTask(evt)}
-                          className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 cursor-pointer transition-all flex items-center justify-between gap-3"
+                          className="p-3 rounded-2xl bg-slate-50 dark:bg-[#17263B]/40 border border-slate-100 dark:border-[#29384C] hover:bg-slate-100/80 dark:hover:bg-[#17263B]/80 cursor-pointer transition-all flex items-center justify-between gap-3"
                         >
                           <div className="min-w-0">
                             <h6 className="text-xs font-black text-slate-800 dark:text-white truncate">
                               {evt.title}
                             </h6>
-                            <div className="flex items-center gap-2 mt-0.5 text-[10.5px] text-slate-400 font-medium">
+                            <div className="flex items-center gap-2 mt-0.5 text-[10.5px] text-[#94A3B8] font-medium">
                               <span>{formatPMDate(evt.date)}</span>
                               {evt.time && <span>• {evt.time} hs</span>}
                             </div>
@@ -669,14 +669,14 @@ export function ProjectManagerModal({
                       ))}
 
                       {upcomingEvents.length === 0 && (
-                        <p className="text-xs text-slate-400 py-6 text-center font-medium">
+                        <p className="text-xs text-[#94A3B8] py-6 text-center font-medium">
                           No hay eventos ni tareas programadas en esta obra.
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-[#29384C]/80 text-[11px] text-[#94A3B8] flex items-center justify-between">
                     <span>{stats.upcomingDeadlineCount} tareas con vencimiento próximo</span>
                     <button
                       type="button"
@@ -689,7 +689,7 @@ export function ProjectManagerModal({
                 </div>
 
                 {/* COLUMN 2: TEAM & CONTRACTORS / ONBOARDING (Matching 2x2 grid in reference) */}
-                <div className="bg-white dark:bg-[#0f172a] rounded-[28px] border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between">
+                <div className="bg-white dark:bg-[#101D30] rounded-[28px] border border-slate-200/80 dark:border-[#29384C] shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -715,7 +715,7 @@ export function ProjectManagerModal({
                             setAssigneeFilter(item.contractor.name);
                             setActiveTab('tasks');
                           }}
-                          className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 hover:bg-slate-100/80 dark:hover:bg-slate-800 cursor-pointer transition-all flex flex-col justify-between"
+                          className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#17263B]/40 border border-slate-100 dark:border-[#29384C]/80 hover:bg-slate-100/80 dark:hover:bg-[#17263B] cursor-pointer transition-all flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2.5 min-w-0">
@@ -731,7 +731,7 @@ export function ProjectManagerModal({
                                 <h6 className="text-xs font-black text-slate-800 dark:text-white truncate">
                                   {item.contractor.name}
                                 </h6>
-                                <p className="text-[10px] text-slate-400 truncate font-medium">
+                                <p className="text-[10px] text-[#94A3B8] truncate font-medium">
                                   {item.contractor.role}
                                 </p>
                               </div>
@@ -743,7 +743,7 @@ export function ProjectManagerModal({
                                 e.stopPropagation();
                                 setIsContractorManagerOpen(true);
                               }}
-                              className="p-1 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              className="p-1 rounded-lg text-[#94A3B8] hover:text-cyan-400 hover:bg-slate-200 dark:hover:bg-[#1f324d] transition-colors"
                               title="Editar foto y rol"
                             >
                               <Pencil className="w-3 h-3" />
@@ -751,7 +751,7 @@ export function ProjectManagerModal({
                           </div>
 
                           <div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-[#94A3B8] font-bold mb-1">
                               <span>{item.doneCount}/{item.totalCount} tareas listas</span>
                               <span>{item.progressPct}%</span>
                             </div>
@@ -770,14 +770,14 @@ export function ProjectManagerModal({
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-[#29384C]/80 text-[11px] text-[#94A3B8] flex items-center justify-between">
                     <span>{stats.completedTasks} de {stats.totalTasks} tareas concluidas</span>
                     <span className="font-black text-slate-700 dark:text-slate-300">{stats.completionRatePct}% total</span>
                   </div>
                 </div>
 
                 {/* COLUMN 3: EXECUTIVE COMMAND CENTER WITH 3D GLASS ORB (Matching "Welcome Emily") */}
-                <div className="bg-white dark:bg-[#0f172a] rounded-[28px] border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between text-center">
+                <div className="bg-white dark:bg-[#101D30] rounded-[28px] border border-slate-200/80 dark:border-[#29384C] shadow-xl shadow-slate-200/40 dark:shadow-black/30 p-5 flex flex-col justify-between text-center">
                   <div>
                     {/* 3D Glassmorphic Orb Graphic */}
                     <div className="relative w-28 h-28 mx-auto my-2 flex items-center justify-center">
@@ -792,7 +792,7 @@ export function ProjectManagerModal({
                     <h4 className="text-base font-black text-slate-900 dark:text-white tracking-tight">
                       {project.name}
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 max-w-xs mx-auto">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium mt-0.5 max-w-xs mx-auto">
                       {stats.criticalDelayCount > 0
                         ? `Hay ${stats.criticalDelayCount} atraso(s) crítico(s) que requieren atención inmediata.`
                         : 'El cronograma de obra se encuentra al día y en sincronización activa.'}
@@ -803,21 +803,21 @@ export function ProjectManagerModal({
                       <button
                         type="button"
                         onClick={() => handleOpenNewTask()}
-                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 transition-all active:scale-95"
+                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-[#17263B] hover:bg-slate-200 dark:hover:bg-[#1f324d] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#29384C] transition-all active:scale-95"
                       >
                         + Crear Tarea
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveTab('calendar')}
-                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 transition-all active:scale-95"
+                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-[#17263B] hover:bg-slate-200 dark:hover:bg-[#1f324d] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#29384C] transition-all active:scale-95"
                       >
                         Ver Calendario
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveTab('tasks')}
-                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 transition-all active:scale-95"
+                        className="px-3 py-1.5 rounded-full text-xs font-black bg-slate-100 dark:bg-[#17263B] hover:bg-slate-200 dark:hover:bg-[#1f324d] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#29384C] transition-all active:scale-95"
                       >
                         Subtareas ({stats.subtaskProgressPct}%)
                       </button>
@@ -825,8 +825,8 @@ export function ProjectManagerModal({
                   </div>
 
                   {/* Quick Note Input Bar at Bottom (matching reference input) */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-1.5 border border-slate-200 dark:border-slate-700/60 focus-within:ring-2 focus-within:ring-cyan-500/30">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[#29384C]/80">
+                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#17263B] rounded-2xl p-1.5 border border-slate-200 dark:border-[#29384C] focus-within:ring-2 focus-within:ring-cyan-500/30">
                       <input
                         type="text"
                         placeholder="Escribe una observación rápida..."
@@ -843,7 +843,7 @@ export function ProjectManagerModal({
                       <button
                         type="button"
                         onClick={() => handleOpenNewTask()}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1.5 rounded-xl text-[#94A3B8] hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1f324d] transition-colors"
                         title="Adjuntar archivo o crear tarea"
                       >
                         <Paperclip className="w-3.5 h-3.5" />
@@ -869,16 +869,16 @@ export function ProjectManagerModal({
           {activeTab === 'tasks' && (
             <div className="space-y-4 animate-fade-in">
               {/* FILTERS & SEARCH BAR */}
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+              <div className="p-4 rounded-3xl bg-white dark:bg-[#101D30] border border-slate-200 dark:border-[#29384C] flex flex-wrap items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-2 flex-1 min-w-[240px]">
                   <div className="relative flex-1">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Buscar por título, gremio, responsable o subtarea..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -887,7 +887,7 @@ export function ProjectManagerModal({
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white"
+                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-800 dark:text-white"
                   >
                     <option value="all">Todos los estados</option>
                     <option value="critical">🚨 Retraso Crítico</option>
@@ -900,7 +900,7 @@ export function ProjectManagerModal({
                   <select
                     value={assigneeFilter}
                     onChange={(e) => setAssigneeFilter(e.target.value)}
-                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white"
+                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-800 dark:text-white"
                   >
                     <option value="all">Todos los responsables</option>
                     {availableAssignees.map(a => (
@@ -911,7 +911,7 @@ export function ProjectManagerModal({
                   <select
                     value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value)}
-                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white"
+                    className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-800 dark:text-white"
                   >
                     <option value="all">Todas las prioridades</option>
                     <option value="urgent">Urgente</option>
@@ -943,12 +943,12 @@ export function ProjectManagerModal({
                   return (
                     <div
                       key={task.id}
-                      className={`p-4 rounded-3xl bg-white dark:bg-slate-900 border transition-all hover:shadow-md ${
+                      className={`p-4 rounded-3xl bg-white dark:bg-[#101D30] border transition-all hover:shadow-md ${
                         alarms.isCriticalDelay
                           ? 'border-rose-400 dark:border-rose-500/60 shadow-xs shadow-rose-950/20'
                           : alarms.isUpcomingDeadline
                           ? 'border-amber-300 dark:border-amber-500/50'
-                          : 'border-slate-200 dark:border-slate-800'
+                          : 'border-slate-200 dark:border-[#29384C]'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -965,7 +965,7 @@ export function ProjectManagerModal({
                             {isDone ? (
                               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                             ) : (
-                              <Circle className="w-5 h-5 text-slate-400 hover:text-emerald-400 transition-colors" />
+                              <Circle className="w-5 h-5 text-[#94A3B8] hover:text-emerald-400 transition-colors" />
                             )}
                           </button>
 
@@ -987,7 +987,7 @@ export function ProjectManagerModal({
                                 </span>
                               )}
 
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-[#17263B] text-slate-600 dark:text-slate-300">
                                 {task.priority?.toUpperCase() || 'MEDIA'}
                               </span>
 
@@ -996,19 +996,19 @@ export function ProjectManagerModal({
                                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                                   : (task.progress ?? 0) > 0
                                   ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                                  : 'bg-slate-500/20 text-slate-400 border-slate-500/40'
+                                  : 'bg-slate-500/20 text-[#94A3B8] border-slate-500/40'
                               }`}>
                                 {task.progress ?? (isDone ? 100 : 0)}% avance
                               </span>
                             </div>
 
                             {task.description && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-2">
+                              <p className="text-xs text-slate-500 dark:text-[#94A3B8] line-clamp-1 mb-2">
                                 {task.description}
                               </p>
                             )}
 
-                            <div className="flex items-center flex-wrap gap-3 text-[11px] text-slate-400">
+                            <div className="flex items-center flex-wrap gap-3 text-[11px] text-[#94A3B8]">
                               <span className="flex items-center gap-1 font-bold text-slate-600 dark:text-slate-300">
                                 <CalendarIcon className="w-3 h-3 text-cyan-500" />
                                 {task.startDate ? `${formatPMDate(task.startDate)} al ` : 'Hasta: '}
@@ -1025,7 +1025,7 @@ export function ProjectManagerModal({
                                     className="shrink-0"
                                   />
                                   <span>{task.assignedTo}</span>
-                                  {task.assignedRole && <span className="text-slate-400">({task.assignedRole})</span>}
+                                  {task.assignedRole && <span className="text-[#94A3B8]">({task.assignedRole})</span>}
                                 </span>
                               )}
                             </div>
@@ -1035,7 +1035,7 @@ export function ProjectManagerModal({
                         {/* Task Action Buttons */}
                         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                           {subtaskList.length > 0 && (
-                            <span className="px-2 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            <span className="px-2 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#17263B] text-slate-600 dark:text-slate-300">
                               {subtasksDone}/{subtaskList.length} subtareas
                             </span>
                           )}
@@ -1043,7 +1043,7 @@ export function ProjectManagerModal({
                           <button
                             type="button"
                             onClick={() => handleEditTask(task)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 rounded-xl text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#17263B] transition-colors"
                             title="Editar tarea"
                           >
                             <Pencil className="w-4 h-4" />
@@ -1052,7 +1052,7 @@ export function ProjectManagerModal({
                           <button
                             type="button"
                             onClick={() => handleDelete(task)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                            className="p-2 rounded-xl text-[#94A3B8] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                             title="Eliminar tarea"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1062,7 +1062,7 @@ export function ProjectManagerModal({
 
                       {/* Interactive Subtasks Accordion / Checklist */}
                       {subtaskList.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 pl-8 space-y-1.5">
+                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#29384C]/80 pl-8 space-y-1.5">
                           {subtaskList.map(sub => (
                             <div
                               key={sub.id}
@@ -1076,9 +1076,9 @@ export function ProjectManagerModal({
                               {sub.completed ? (
                                 <CheckSquare className="w-4 h-4 text-emerald-500 shrink-0" />
                               ) : (
-                                <Square className="w-4 h-4 text-slate-400 shrink-0" />
+                                <Square className="w-4 h-4 text-[#94A3B8] shrink-0" />
                               )}
-                              <span className={sub.completed ? 'line-through text-slate-400' : ''}>
+                              <span className={sub.completed ? 'line-through text-[#94A3B8]' : ''}>
                                 {sub.title}
                               </span>
                             </div>
@@ -1090,8 +1090,8 @@ export function ProjectManagerModal({
                 })}
 
                 {filteredTasks.length === 0 && (
-                  <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-                    <p className="text-sm font-bold text-slate-400">
+                  <div className="p-8 text-center bg-white dark:bg-[#101D30] rounded-3xl border border-slate-200 dark:border-[#29384C]">
+                    <p className="text-sm font-bold text-[#94A3B8]">
                       No se encontraron tareas con los filtros seleccionados.
                     </p>
                   </div>
@@ -1102,16 +1102,16 @@ export function ProjectManagerModal({
 
           {/* TAB 3: CALENDAR MONTHLY GRID */}
           {activeTab === 'calendar' && (
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 animate-fade-in shadow-sm">
+            <div className="p-5 rounded-3xl bg-white dark:bg-[#101D30] border border-slate-200 dark:border-[#29384C] space-y-4 animate-fade-in shadow-sm">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-cyan-500" /> Agenda Mensual Integrada
                 </h3>
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-[#17263B] p-1 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#1f324d]"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -1121,7 +1121,7 @@ export function ProjectManagerModal({
                   <button
                     type="button"
                     onClick={() => setCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#1f324d]"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -1131,7 +1131,7 @@ export function ProjectManagerModal({
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-1.5 text-center">
                 {WEEKDAYS_ES.map((d, idx) => (
-                  <div key={idx} className="text-[10px] font-black text-slate-400 uppercase py-1">
+                  <div key={idx} className="text-[10px] font-black text-[#94A3B8] uppercase py-1">
                     {d}
                   </div>
                 ))}
@@ -1163,7 +1163,7 @@ export function ProjectManagerModal({
                         className={`h-14 p-1.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                           isSelected
                             ? 'border-blue-500 bg-blue-500/10 font-black'
-                            : 'border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                            : 'border-slate-100 dark:border-[#29384C]/80 bg-slate-50/60 dark:bg-[#17263B]/20 hover:bg-slate-100 dark:hover:bg-[#17263B]/60'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -1194,7 +1194,7 @@ export function ProjectManagerModal({
               </div>
 
               {/* Daily Agenda Detail for Selected Day */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-3 border-t border-slate-100 dark:border-[#29384C]">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-black text-slate-800 dark:text-white">
                     Tareas para el {formatPMDate(calSelectedDateStr)}
@@ -1215,13 +1215,13 @@ export function ProjectManagerModal({
                       <div
                         key={e.id}
                         onClick={() => handleEditTask(e)}
-                        className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#17263B]/60 border border-slate-100 dark:border-[#29384C] flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-[#17263B]"
                       >
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${e.completed ? 'bg-emerald-500' : 'bg-blue-500'}`} />
                           <span className="text-xs font-bold text-slate-800 dark:text-white">{e.title}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-[10px] text-[#94A3B8] font-medium">
                           {e.assignedTo || 'Sin asignar'}
                         </span>
                       </div>
@@ -1236,10 +1236,10 @@ export function ProjectManagerModal({
         {/* DRAWER / MODAL FOR CREATING AND EDITING TASKS */}
         {isEditorOpen && (
           <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-end animate-fade-in">
-            <div className="w-full max-w-lg h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shadow-2xl overflow-y-auto custom-scrollbar">
+            <div className="w-full max-w-lg h-full bg-white dark:bg-[#101D30] border-l border-slate-200 dark:border-[#29384C] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto custom-scrollbar">
               
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[#29384C] mb-5">
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-slate-950 text-xs"
@@ -1255,7 +1255,7 @@ export function ProjectManagerModal({
                   <button
                     type="button"
                     onClick={() => setIsEditorOpen(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="p-1.5 rounded-xl text-[#94A3B8] hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#17263B]"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1264,7 +1264,7 @@ export function ProjectManagerModal({
                 <form onSubmit={handleSaveForm} className="space-y-4">
                   {/* Título */}
                   <div>
-                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                       Título de la Tarea / Evento *
                     </label>
                     <input
@@ -1273,14 +1273,14 @@ export function ProjectManagerModal({
                       placeholder="Ej. Llenado de Losa de Hormigón, Inspección AYSAM..."
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold placeholder-slate-400 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold placeholder-slate-400 focus:outline-none"
                     />
                   </div>
 
                   {/* Responsable y Rol */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Responsable / Cuadrilla
                       </label>
                       <select
@@ -1291,7 +1291,7 @@ export function ProjectManagerModal({
                           const prof = getContractorProfile(val);
                           setAssignedRole(prof.role);
                         }}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-medium"
                       >
                         {availableAssignees.map(a => (
                           <option key={a} value={a}>{a}</option>
@@ -1300,7 +1300,7 @@ export function ProjectManagerModal({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Especialidad / Rol
                       </label>
                       <input
@@ -1308,7 +1308,7 @@ export function ProjectManagerModal({
                         placeholder="Ej. Capataz General, Estructura..."
                         value={assignedRole}
                         onChange={(e) => setAssignedRole(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -1316,19 +1316,19 @@ export function ProjectManagerModal({
                   {/* Fechas: Inicio y Límite */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Fecha Inicio
                       </label>
                       <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Fecha Límite (Deadline) *
                       </label>
                       <input
@@ -1336,7 +1336,7 @@ export function ProjectManagerModal({
                         required
                         value={deadlineDate}
                         onChange={(e) => setDeadlineDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold"
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
                       />
                     </div>
                   </div>
@@ -1344,13 +1344,13 @@ export function ProjectManagerModal({
                   {/* Tipo, Prioridad y Estado */}
                   <div className="grid grid-cols-3 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Tipo
                       </label>
                       <select
                         value={type}
                         onChange={(e) => setType(e.target.value as any)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                       >
                         <option value="task">Tarea Técnica</option>
                         <option value="alarm">Alarma</option>
@@ -1359,13 +1359,13 @@ export function ProjectManagerModal({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Prioridad
                       </label>
                       <select
                         value={priority}
                         onChange={(e) => setPriority(e.target.value as any)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                       >
                         <option value="urgent">Urgente</option>
                         <option value="high">Alta</option>
@@ -1375,7 +1375,7 @@ export function ProjectManagerModal({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Estado
                       </label>
                       <select
@@ -1391,7 +1391,7 @@ export function ProjectManagerModal({
                             setProgress(25);
                           }
                         }}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
                       >
                         <option value="pending">Pendiente</option>
                         <option value="in_progress">En Curso</option>
@@ -1401,7 +1401,7 @@ export function ProjectManagerModal({
                   </div>
 
                   {/* SECTOR DE PORCENTAJE DE AVANCE (%) */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#17263B]/70 border border-slate-200 dark:border-[#29384C]/80 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-black uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <Percent className="w-3.5 h-3.5 text-cyan-500" />
@@ -1435,7 +1435,7 @@ export function ProjectManagerModal({
                               setStatus('pending');
                             }
                           }}
-                          className="w-14 px-1.5 py-0.5 text-center text-xs font-black rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white"
+                          className="w-14 px-1.5 py-0.5 text-center text-xs font-black rounded-lg bg-white dark:bg-[#101D30] border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -1482,7 +1482,7 @@ export function ProjectManagerModal({
                           className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${
                             progress === pct
                               ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
-                              : 'bg-white dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 hover:text-white border border-slate-200 dark:border-slate-700/60'
+                              : 'bg-white dark:bg-[#101D30]/90 text-slate-600 dark:text-[#94A3B8] hover:text-white border border-slate-200 dark:border-[#29384C]'
                           }`}
                         >
                           {pct}%
@@ -1509,8 +1509,8 @@ export function ProjectManagerModal({
                   </div>
 
                   {/* Subtareas Checklist Manager */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-2">
+                  <div className="pt-2 border-t border-slate-200 dark:border-[#29384C]">
+                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-2">
                       Subtareas / Checklist ({subtasks.length})
                     </label>
 
@@ -1526,7 +1526,7 @@ export function ProjectManagerModal({
                             handleAddSubtask();
                           }
                         }}
-                        className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                       />
                       <button
                         type="button"
@@ -1541,7 +1541,7 @@ export function ProjectManagerModal({
                       {subtasks.map(sub => (
                         <div
                           key={sub.id}
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60"
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-[#17263B]/60 border border-slate-200 dark:border-[#29384C]"
                         >
                           <button
                             type="button"
@@ -1551,16 +1551,16 @@ export function ProjectManagerModal({
                             {sub.completed ? (
                               <CheckSquare className="w-4 h-4 text-emerald-500 shrink-0" />
                             ) : (
-                              <Square className="w-4 h-4 text-slate-400 shrink-0" />
+                              <Square className="w-4 h-4 text-[#94A3B8] shrink-0" />
                             )}
-                            <span className={`text-xs truncate ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                            <span className={`text-xs truncate ${sub.completed ? 'line-through text-[#94A3B8]' : 'text-slate-700 dark:text-slate-200'}`}>
                               {sub.title}
                             </span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleRemoveSubtask(sub.id)}
-                            className="p-1 text-slate-400 hover:text-rose-500"
+                            className="p-1 text-[#94A3B8] hover:text-rose-500"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1571,7 +1571,7 @@ export function ProjectManagerModal({
 
                   {/* Descripción / Notas */}
                   <div>
-                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                       Descripción o Instrucciones Técnicas
                     </label>
                     <textarea
@@ -1579,12 +1579,12 @@ export function ProjectManagerModal({
                       placeholder="Detalles sobre materiales, condiciones o especificaciones..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
                     />
                   </div>
 
                   {/* Form Actions */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                  <div className="pt-4 border-t border-slate-200 dark:border-[#29384C] flex items-center justify-between gap-3">
                     {editingTaskId && (
                       <button
                         type="button"
@@ -1602,7 +1602,7 @@ export function ProjectManagerModal({
                       <button
                         type="button"
                         onClick={() => setIsEditorOpen(false)}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-[#17263B]"
                       >
                         Cancelar
                       </button>

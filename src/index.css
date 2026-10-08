@@ -80,6 +80,39 @@ html.font-bold-mode .font-black {
   --color-brand-gold-light: #eab308;
   --color-brand-gold-bg: #fef9c3;
   --color-brand-accent: #b48316;
+
+  /* Rediseño Control de Avance - Paleta Oficial de Referencia */
+  --color-navy-bg: #081321;
+  --color-navy-panel: #101D30;
+  --color-navy-surface: #17263B;
+  --color-navy-border: #29384C;
+  --color-accent-blue: #3B82F6;
+  --color-accent-green: #10B981;
+  --color-accent-yellow: #FBBF24;
+  --color-accent-red: #EF4444;
+  --color-accent-purple: #A855F7;
+}
+
+/* Clases de utilidad para el rediseño naval de alta gama */
+.bg-navy-bg { background-color: #081321 !important; }
+.bg-navy-panel { background-color: #101D30 !important; }
+.bg-navy-surface { background-color: #17263B !important; }
+.border-navy-border { border-color: #29384C !important; }
+
+.panel-card {
+  background-color: #101D30;
+  border: 1px solid #29384C;
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.panel-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.surface-card {
+  background-color: #17263B;
+  border: 1px solid #29384C;
+  border-radius: 0.875rem;
 }
 
 .border-neon {

@@ -131,9 +131,9 @@ export function ItemObservationModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print overflow-y-auto">
-      <div className="bg-slate-900 text-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden my-auto">
+      <div className="bg-[#101D30] text-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden my-auto">
         {/* Header */}
-        <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-3 bg-slate-950 border-b border-[#29384C] flex items-center justify-between">
           <div className="min-w-0 flex-1 pr-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded">
@@ -193,7 +193,7 @@ export function ItemObservationModal({
                 <button
                   type="button"
                   onClick={() => setIsEditingTitle(false)}
-                  className="p-1 text-slate-400 hover:text-white"
+                  className="p-1 text-[#94A3B8] hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -210,7 +210,7 @@ export function ItemObservationModal({
                       setTitleDraft(currentName);
                       setIsEditingTitle(true);
                     }}
-                    className="p-1 rounded-md text-slate-400 hover:text-[#00f2fe] hover:bg-slate-800 transition-colors"
+                    className="p-1 rounded-md text-[#94A3B8] hover:text-[#00f2fe] hover:bg-[#17263B] transition-colors"
                     title="Editar nombre de la tarea"
                   >
                     <Pencil className="w-3 h-3" />
@@ -223,7 +223,7 @@ export function ItemObservationModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white border border-slate-700 transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
+            className="p-2 rounded-xl bg-[#17263B] hover:bg-rose-600 text-white border border-[#29384C] transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
             title="Cerrar ventana de observación"
             aria-label="Cerrar observación"
           >
@@ -232,7 +232,7 @@ export function ItemObservationModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-4 overflow-y-auto space-y-4 flex-1 bg-slate-900">
+        <div className="p-4 overflow-y-auto space-y-4 flex-1 bg-[#101D30]">
           {/* Severity Selector */}
           <div>
             <label className="block text-xs font-black text-slate-300 mb-2 flex items-center gap-1.5">
@@ -246,14 +246,14 @@ export function ItemObservationModal({
                 className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${
                   severityDraft === 'low'
                     ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 ring-2 ring-emerald-500/50 shadow-sm'
-                    : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600'
+                    : 'bg-[#17263B]/80 border-[#29384C] text-[#94A3B8] hover:border-slate-600'
                 }`}
               >
                 <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-black">Leve</span>
-                <span className="text-[9px] text-slate-400 leading-tight">Detalle estético</span>
+                <span className="text-[9px] text-[#94A3B8] leading-tight">Detalle estético</span>
               </button>
 
               <button
@@ -262,14 +262,14 @@ export function ItemObservationModal({
                 className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${
                   severityDraft === 'medium'
                     ? 'bg-amber-950/80 border-amber-400 text-amber-300 ring-2 ring-amber-500/50 shadow-sm'
-                    : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600'
+                    : 'bg-[#17263B]/80 border-[#29384C] text-[#94A3B8] hover:border-slate-600'
                 }`}
               >
                 <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
                   <AlertTriangle className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-black">Medio</span>
-                <span className="text-[9px] text-slate-400 leading-tight">Falta terminación</span>
+                <span className="text-[9px] text-[#94A3B8] leading-tight">Falta terminación</span>
               </button>
 
               <button
@@ -278,14 +278,14 @@ export function ItemObservationModal({
                 className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${
                   severityDraft === 'high'
                     ? 'bg-rose-950/80 border-rose-500 text-rose-300 ring-2 ring-rose-500/60 shadow-sm'
-                    : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600'
+                    : 'bg-[#17263B]/80 border-[#29384C] text-[#94A3B8] hover:border-slate-600'
                 }`}
               >
                 <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400">
                   <Flame className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-black">Crítico</span>
-                <span className="text-[9px] text-slate-400 leading-tight">Riesgo o falla</span>
+                <span className="text-[9px] text-[#94A3B8] leading-tight">Riesgo o falla</span>
               </button>
             </div>
           </div>
@@ -317,12 +317,12 @@ export function ItemObservationModal({
               value={commentDraft}
               onChange={(e) => setCommentDraft(e.target.value)}
               placeholder="Ej: Falta sellar zócalo perimetral, revoque con fisura en vértice o pendiente de pintura final..."
-              className="w-full text-xs p-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
+              className="w-full text-xs p-3 rounded-xl bg-slate-950 border border-[#29384C] text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
             />
 
             {/* Quick Suggestions Chips */}
             <div className="mt-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">
+              <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wide block mb-1">
                 Sugerencias rápidas:
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -345,7 +345,7 @@ export function ItemObservationModal({
                         setSeverityDraft('medium');
                       }
                     }}
-                    className="text-[11px] px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 font-medium transition-colors select-none active:scale-95"
+                    className="text-[11px] px-2.5 py-1 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 hover:text-white rounded-lg border border-[#29384C] font-medium transition-colors select-none active:scale-95"
                   >
                     + {preset}
                   </button>
@@ -355,13 +355,13 @@ export function ItemObservationModal({
           </div>
 
           {/* Photographic Evidence Section */}
-          <div className="pt-2 border-t border-slate-800">
+          <div className="pt-2 border-t border-[#29384C]">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-black text-slate-300 flex items-center gap-1.5">
                 <Camera className="w-3.5 h-3.5 text-amber-400" />
                 Evidencia Fotográfica ({photos.length})
               </label>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-[#94A3B8] font-mono">
                 Compresión automática en Base64
               </span>
             </div>
@@ -400,7 +400,7 @@ export function ItemObservationModal({
                 type="button"
                 disabled={isCompressing}
                 onClick={() => galleryInputRef.current?.click()}
-                className="p-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700 transition-all active:scale-95 touch-target"
+                className="p-3 bg-[#17263B] hover:bg-[#1f324d] disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-[#29384C] transition-all active:scale-95 touch-target"
               >
                 <Upload className="w-4 h-4 text-amber-400" />
                 <span>{isMobileDevice ? 'Subir de Galería' : 'Examinar Archivos'}</span>
@@ -409,8 +409,8 @@ export function ItemObservationModal({
 
             {/* Photos List Grid */}
             {photos.length === 0 ? (
-              <div className="mt-3 p-4 bg-slate-950/60 rounded-xl border border-dashed border-slate-800 text-center">
-                <p className="text-xs text-slate-400">
+              <div className="mt-3 p-4 bg-slate-950/60 rounded-xl border border-dashed border-[#29384C] text-center">
+                <p className="text-xs text-[#94A3B8]">
                   Sin fotos registradas. Puedes capturar fallas o avances como evidencia visual.
                 </p>
               </div>
@@ -419,7 +419,7 @@ export function ItemObservationModal({
                 {photos.map((photo, index) => (
                   <div
                     key={photo.id}
-                    className="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800 group shadow-sm flex flex-col"
+                    className="relative bg-slate-950 rounded-xl overflow-hidden border border-[#29384C] group shadow-sm flex flex-col"
                   >
                     <div
                       onClick={() => setActivePhotoPreview(photo.dataUrl)}
@@ -432,7 +432,7 @@ export function ItemObservationModal({
                       />
                     </div>
 
-                    <div className="p-1.5 flex items-center justify-between bg-slate-950 text-[10px] text-slate-400 border-t border-slate-800/80">
+                    <div className="p-1.5 flex items-center justify-between bg-slate-950 text-[10px] text-[#94A3B8] border-t border-[#29384C]/80">
                       <span className="font-mono truncate">{photo.timestamp || `#${index + 1}`}</span>
                       <div className="flex items-center gap-1">
                         <button
@@ -467,7 +467,7 @@ export function ItemObservationModal({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2">
+        <div className="p-3 bg-slate-950 border-t border-[#29384C] flex items-center justify-between gap-2">
           {item.comment ? (
             <button
               type="button"
@@ -485,7 +485,7 @@ export function ItemObservationModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors touch-target"
+              className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-[#17263B] hover:bg-[#1f324d] rounded-xl transition-colors touch-target"
             >
               Cancelar
             </button>
@@ -512,7 +512,7 @@ export function ItemObservationModal({
             <button
               type="button"
               onClick={() => handleDownloadPhoto(activePhotoPreview)}
-              className="text-amber-400 hover:text-amber-300 bg-slate-900/90 hover:bg-slate-800 border border-amber-500/40 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg active:scale-95 transition-all"
+              className="text-amber-400 hover:text-amber-300 bg-[#101D30]/90 hover:bg-[#17263B] border border-amber-500/40 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg active:scale-95 transition-all"
               title="Descargar esta fotografía"
             >
               <Download className="w-4 h-4" />
@@ -521,7 +521,7 @@ export function ItemObservationModal({
             <button
               type="button"
               onClick={() => setActivePhotoPreview(null)}
-              className="text-white p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 shadow-lg active:scale-95 transition-all"
+              className="text-white p-2 rounded-xl bg-[#101D30]/90 hover:bg-[#17263B] border border-[#29384C] shadow-lg active:scale-95 transition-all"
             >
               <X className="w-5 h-5" />
             </button>

@@ -444,7 +444,7 @@ export function ReportModal({
     <div className="report-modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-3 overflow-y-auto">
       <div className="report-modal-dialog bg-white w-full max-w-6xl rounded-t-2xl sm:rounded-2xl max-h-[96vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden">
         {/* Non-Printable Header Bar */}
-        <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 no-print">
+        <div className="px-4 py-3 bg-[#101D30] text-white flex items-center justify-between border-b border-[#29384C] no-print">
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
               <FileText className="w-5 h-5 text-rose-400" />
@@ -469,7 +469,7 @@ export function ReportModal({
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white border border-slate-700 transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
+              className="p-2 rounded-xl bg-[#17263B] hover:bg-rose-600 text-white border border-[#29384C] transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
               title="Cerrar informe"
               aria-label="Cerrar informe"
             >
@@ -583,7 +583,7 @@ export function ReportModal({
                 onClick={() => setPaperSize('a4')}
                 className={`px-2 py-1 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
                   paperSize === 'a4'
-                    ? 'bg-slate-900 text-amber-400 shadow-xs'
+                    ? 'bg-[#101D30] text-amber-400 shadow-xs'
                     : 'text-slate-700 hover:text-slate-950'
                 }`}
                 title="Adaptar para imprimir en hoja A4 Apaisada"
@@ -595,7 +595,7 @@ export function ReportModal({
                 onClick={() => setPaperSize('a3')}
                 className={`px-2 py-1 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
                   paperSize === 'a3'
-                    ? 'bg-slate-900 text-amber-400 shadow-xs'
+                    ? 'bg-[#101D30] text-amber-400 shadow-xs'
                     : 'text-slate-700 hover:text-slate-950'
                 }`}
                 title="Adaptar para imprimir en hoja A3 Apaisada (Formato Grande)"
@@ -780,7 +780,7 @@ export function ReportModal({
                   />
                 </div>
                 <div>
-                  <span className="text-[9px] font-black tracking-widest uppercase bg-slate-900 text-amber-400 px-2 py-0.5 rounded">
+                  <span className="text-[9px] font-black tracking-widest uppercase bg-[#101D30] text-amber-400 px-2 py-0.5 rounded">
                     {onlyGanttLandscape ? 'Cronograma Técnico & Diagrama de Gantt' : 'Acta de Inspección Técnica'}
                   </span>
                   <h2 className="text-base font-black text-slate-900 uppercase mt-0.5">
@@ -916,7 +916,7 @@ export function ReportModal({
                               key={idx}
                               style={{ width: `${d.widthPct}%` }}
                               className={`py-0.5 text-center border-r border-slate-200/80 shrink-0 flex flex-col justify-center items-center ${
-                                d.isWeekend ? 'bg-slate-200/60 text-slate-400' : 'bg-slate-50 text-slate-800'
+                                d.isWeekend ? 'bg-slate-200/60 text-[#94A3B8]' : 'bg-slate-50 text-slate-800'
                               }`}
                               title={`${d.weekdayLetter} ${d.dayNum} (${d.dateStr})`}
                             >
@@ -1238,7 +1238,7 @@ export function ReportModal({
                                 </div>
                                 <div className="text-right">
                                   <span className={`font-mono font-black text-sm ${
-                                    isComplete ? 'text-emerald-700' : isPartial ? 'text-amber-700' : 'text-slate-400'
+                                    isComplete ? 'text-emerald-700' : isPartial ? 'text-amber-700' : 'text-[#94A3B8]'
                                   }`}>
                                     {pct}%
                                   </span>
@@ -1266,7 +1266,7 @@ export function ReportModal({
                                     <Check className="w-3 h-3 stroke-[3]" /> Firmado
                                   </span>
                                 ) : (
-                                  <span className="text-slate-400">Sin firmar</span>
+                                  <span className="text-[#94A3B8]">Sin firmar</span>
                                 )}
                               </div>
                             </div>
@@ -1288,7 +1288,7 @@ export function ReportModal({
 
               {tradeSummaries.map(ts => (
                 <div key={ts.id} className="mb-3 page-break-inside-avoid">
-                  <div className="bg-slate-800 text-white px-2.5 py-1 rounded-lg text-xs font-bold flex justify-between items-center mb-1.5">
+                  <div className="bg-[#17263B] text-white px-2.5 py-1 rounded-lg text-xs font-bold flex justify-between items-center mb-1.5">
                     <span>{ts.name}</span>
                     <span className="text-amber-400 font-mono">{ts.pct}%</span>
                   </div>
@@ -1320,7 +1320,7 @@ export function ReportModal({
                                   ? 'text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded' 
                                   : isPartial
                                   ? 'text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded'
-                                  : 'text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded'
+                                  : 'text-[#94A3B8] bg-slate-100 px-1.5 py-0.5 rounded'
                               }`}>
                                 {isComplete ? '✔ APROBADO (100%)' : isPartial ? `⏳ EN CURSO (${itemPct}%)` : '○ PENDIENTE (0%)'}
                               </span>
@@ -1431,7 +1431,7 @@ export function ReportModal({
                       {/* Direction / Contractor Block */}
                       <div className="text-center">
                         <div className="border-b border-slate-900 h-16 mb-1 flex items-end justify-center pb-1">
-                          <span className="text-[10px] text-slate-400 italic">Sello / Rúbrica Dirección</span>
+                          <span className="text-[10px] text-[#94A3B8] italic">Sello / Rúbrica Dirección</span>
                         </div>
                         <p className="font-bold text-slate-900">Dirección de Obra / Ejecución</p>
                         <p className="text-[10px] text-slate-500">Constatación y Cierre de Tareas</p>
@@ -1459,7 +1459,7 @@ export function ReportModal({
         </div>
 
         {/* Non-Printable Bottom Actions */}
-        <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center justify-between no-print">
+        <div className="p-3 bg-[#101D30] border-t border-[#29384C] flex items-center justify-between no-print">
           <button
             onClick={onExportJSON}
             className="text-xs text-slate-300 hover:text-white flex items-center gap-1.5 touch-target font-medium"
@@ -1471,7 +1471,7 @@ export function ReportModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold touch-target"
+              className="px-3 py-2 rounded-xl bg-[#17263B] text-slate-300 text-xs font-semibold touch-target"
             >
               Cerrar
             </button>

@@ -755,7 +755,7 @@ export function MonthlyWorkReportModal({
       />
 
       {/* TOP CONFIGURATION APP BAR (NO-PRINT) */}
-      <header className="h-16 bg-slate-900 border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between shrink-0 no-print z-30 select-none shadow-lg">
+      <header className="h-16 bg-[#101D30] border-b border-[#29384C] px-4 sm:px-6 flex items-center justify-between shrink-0 no-print z-30 select-none shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black">
             <FileCheck className="w-5 h-5 stroke-[2.5]" />
@@ -767,21 +767,21 @@ export function MonthlyWorkReportModal({
                 Logos Oficiales Protegidos
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-md">
+            <p className="text-[11px] text-[#94A3B8] truncate max-w-[200px] sm:max-w-md">
               {project.name}
             </p>
           </div>
         </div>
 
         {/* Center: Template Selector */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs">
+        <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-[#29384C] text-xs">
           <button
             type="button"
             onClick={() => setActiveTemplate('parque_agustin')}
             className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
               activeTemplate === 'parque_agustin'
                 ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                : 'text-slate-400 hover:text-white'
+                : 'text-[#94A3B8] hover:text-white'
             }`}
           >
             Parque Agustín (2 Págs)
@@ -792,7 +792,7 @@ export function MonthlyWorkReportModal({
             className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
               activeTemplate === 'parque_andes'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                : 'text-slate-400 hover:text-white'
+                : 'text-[#94A3B8] hover:text-white'
             }`}
           >
             Parque de los Andes ({andesGalleryChunks.length + 2} Págs)
@@ -804,7 +804,7 @@ export function MonthlyWorkReportModal({
           <button
             type="button"
             onClick={handleResetTemplate}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-slate-700 transition-colors"
+            className="px-3 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-[#29384C] transition-colors"
             title="Restablecer textos e imágenes a la plantilla original"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -824,7 +824,7 @@ export function MonthlyWorkReportModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors touch-target"
+            className="p-2 text-[#94A3B8] hover:text-white hover:bg-[#17263B] rounded-xl transition-colors touch-target"
             title="Cerrar modal"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
@@ -833,20 +833,20 @@ export function MonthlyWorkReportModal({
       </header>
 
       {/* HELPER SUB-BAR (NO-PRINT) */}
-      <div className="bg-slate-900/90 border-b border-slate-800/80 px-4 sm:px-6 py-2 flex items-center justify-between text-xs text-slate-300 no-print">
+      <div className="bg-[#101D30]/90 border-b border-[#29384C]/80 px-4 sm:px-6 py-2 flex items-center justify-between text-xs text-slate-300 no-print">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-cyan-400" />
           <span>
             <b>Edición Directa:</b> Haz clic en cualquier imagen para cambiarla/subirla y en los campos de texto para redactar el informe del mes sin scrollbars.
           </span>
         </div>
-        <span className="text-[11px] text-slate-400 hidden sm:inline">
+        <span className="text-[11px] text-[#94A3B8] hidden sm:inline">
           Formato A4 vertical idéntico al PDF oficial
         </span>
       </div>
 
       {/* MAIN SCROLL CONTAINER: USA DIV (NO MAIN) PARA NO SER BLOQUEADO POR INDEX.CSS */}
-      <div id="monthly-report-printable-area" className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-900/60 flex flex-col items-center gap-10 monthly-report-sheet-wrapper">
+      <div id="monthly-report-printable-area" className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#101D30]/60 flex flex-col items-center gap-10 monthly-report-sheet-wrapper">
         {/* ========================================================================= */}
         {/* 1. PLANTILLA PARQUE AGUSTÍN (2 PÁGINAS A4 VERTICALES)                     */}
         {/* ========================================================================= */}
@@ -866,7 +866,7 @@ export function MonthlyWorkReportModal({
                           type="text"
                           value={agustinData.year}
                           onChange={(e) => updateAgustinData({ year: e.target.value })}
-                          className="bg-transparent text-xs font-bold text-slate-400 tracking-wider focus:outline-none w-20"
+                          className="bg-transparent text-xs font-bold text-[#94A3B8] tracking-wider focus:outline-none w-20"
                         />
                         <input
                           type="text"
@@ -954,7 +954,7 @@ export function MonthlyWorkReportModal({
                     </div>
 
                     {/* Zócalo de Tarjeta: Doble Marca Oficial con Protagonismo (Parque Agustín + Tierra Firme) */}
-                    <div className="pt-3 border-t border-slate-700/80 mt-2 flex items-center justify-between gap-4 shrink-0">
+                    <div className="pt-3 border-t border-[#29384C]/80 mt-2 flex items-center justify-between gap-4 shrink-0">
                       <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm flex items-center justify-center">
                         <img
                           src="/report_assets/logo_parque_agustin_official.jpg"
@@ -984,7 +984,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-3 py-1.5 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md">
+                        <span className="px-3 py-1.5 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md">
                           <Upload className="w-3.5 h-3.5" />
                           <span>Cambiar Foto</span>
                         </span>
@@ -1003,7 +1003,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-3 py-1.5 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md">
+                        <span className="px-3 py-1.5 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md">
                           <Upload className="w-3.5 h-3.5" />
                           <span>Cambiar Foto</span>
                         </span>
@@ -1042,7 +1042,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                        <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                           <Upload className="w-3 h-3" />
                           <span>Cambiar</span>
                         </span>
@@ -1078,7 +1078,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                        <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                           <Upload className="w-3 h-3" />
                           <span>Cambiar</span>
                         </span>
@@ -1114,7 +1114,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                        <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                           <Upload className="w-3 h-3" />
                           <span>Cambiar</span>
                         </span>
@@ -1171,7 +1171,7 @@ export function MonthlyWorkReportModal({
                     </div>
 
                     {/* Zócalo de Tarjeta: Doble Marca Oficial con Protagonismo (Parque Agustín + Tierra Firme) */}
-                    <div className="pt-3 border-t border-slate-700/80 mt-3 flex items-center justify-between gap-4 shrink-0">
+                    <div className="pt-3 border-t border-[#29384C]/80 mt-3 flex items-center justify-between gap-4 shrink-0">
                       <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm flex items-center justify-center">
                         <img
                           src="/report_assets/logo_parque_agustin_official.jpg"
@@ -1202,7 +1202,7 @@ export function MonthlyWorkReportModal({
                           className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                         />
                         <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                          <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                          <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                             <Upload className="w-3 h-3" />
                             <span>Cambiar</span>
                           </span>
@@ -1220,7 +1220,7 @@ export function MonthlyWorkReportModal({
                           className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                         />
                         <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                          <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                          <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                             <Upload className="w-3 h-3" />
                             <span>Cambiar</span>
                           </span>
@@ -1239,7 +1239,7 @@ export function MonthlyWorkReportModal({
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="px-2.5 py-1 bg-slate-900/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
+                        <span className="px-2.5 py-1 bg-[#101D30]/90 text-cyan-300 text-xs font-bold rounded-md flex items-center gap-1">
                           <Upload className="w-3 h-3" />
                           <span>Cambiar</span>
                         </span>
@@ -1274,7 +1274,7 @@ export function MonthlyWorkReportModal({
                     >
                       <img src={agustinData.p2Item4Photo} alt="Item 04" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="p-1 bg-slate-900/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
+                        <span className="p-1 bg-[#101D30]/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
                       </div>
                     </div>
                   </div>
@@ -1303,7 +1303,7 @@ export function MonthlyWorkReportModal({
                     >
                       <img src={agustinData.p2Item5Photo} alt="Item 05" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="p-1 bg-slate-900/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
+                        <span className="p-1 bg-[#101D30]/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
                       </div>
                     </div>
                   </div>
@@ -1332,7 +1332,7 @@ export function MonthlyWorkReportModal({
                     >
                       <img src={agustinData.p2Item6Photo} alt="Item 06" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="p-1 bg-slate-900/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
+                        <span className="p-1 bg-[#101D30]/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
                       </div>
                     </div>
                   </div>
@@ -1361,7 +1361,7 @@ export function MonthlyWorkReportModal({
                     >
                       <img src={agustinData.p2Item7Photo} alt="Item 07" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                        <span className="p-1 bg-slate-900/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
+                        <span className="p-1 bg-[#101D30]/90 text-cyan-300 rounded text-[10px] font-bold">Cambiar</span>
                       </div>
                     </div>
                   </div>
@@ -1434,7 +1434,7 @@ export function MonthlyWorkReportModal({
                   >
                     <img src={andesData.p1Photo1} alt="Fachada 1" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                      <span className="px-3 py-1.5 bg-slate-900/90 text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1 shadow-md">
+                      <span className="px-3 py-1.5 bg-[#101D30]/90 text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1 shadow-md">
                         <Upload className="w-3.5 h-3.5" />
                         <span>Cambiar Foto</span>
                       </span>
@@ -1447,7 +1447,7 @@ export function MonthlyWorkReportModal({
                   >
                     <img src={andesData.p1Photo2} alt="Fachada 2" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                      <span className="px-3 py-1.5 bg-slate-900/90 text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1 shadow-md">
+                      <span className="px-3 py-1.5 bg-[#101D30]/90 text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1 shadow-md">
                         <Upload className="w-3.5 h-3.5" />
                         <span>Cambiar Foto</span>
                       </span>
@@ -1584,7 +1584,7 @@ export function MonthlyWorkReportModal({
                       {chunk.map((item) => (
                         <div key={item.id} className="flex flex-col space-y-1">
                           {/* Encabezado con Títulos Subrayados */}
-                          <div className="border-b border-slate-700 pb-0.5 flex items-center justify-between">
+                          <div className="border-b border-[#29384C] pb-0.5 flex items-center justify-between">
                             <div className="flex-1 min-w-0 pr-2">
                               <input
                                 type="text"
@@ -1606,7 +1606,7 @@ export function MonthlyWorkReportModal({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveGalleryItem(item.id)}
-                                className="no-print p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                className="no-print p-1 text-[#94A3B8] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                 title="Eliminar esta foto"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1621,7 +1621,7 @@ export function MonthlyWorkReportModal({
                           >
                             <img src={item.photo} alt={item.title1} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity no-print">
-                              <span className="p-1.5 bg-slate-900/90 text-amber-300 rounded text-xs font-bold flex items-center gap-1 shadow-md">
+                              <span className="p-1.5 bg-[#101D30]/90 text-amber-300 rounded text-xs font-bold flex items-center gap-1 shadow-md">
                                 <Upload className="w-3.5 h-3.5" />
                                 <span>Cambiar Foto</span>
                               </span>

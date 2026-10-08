@@ -55,7 +55,7 @@ export function ExecutiveTimeline({
   return (
     <div className={`space-y-2 select-none ${className}`}>
       {/* Top Labels Row */}
-      <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-400 px-1">
+      <div className="flex items-center justify-between text-[10px] font-black uppercase text-[#94A3B8] px-1">
         <span>Inicio</span>
         <span className="text-white flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
@@ -67,7 +67,7 @@ export function ExecutiveTimeline({
       {/* Horizontal Bar with Nodes */}
       <div className="relative pt-6 pb-2.5 flex items-center">
         {/* Base Track */}
-        <div className="absolute inset-x-0 h-1 bg-slate-800 rounded-full" />
+        <div className="absolute inset-x-0 h-1 bg-[#17263B] rounded-full" />
 
         {/* Progress Track (Inicio to Hoy) in Cyan/Emerald */}
         <div
@@ -116,12 +116,12 @@ export function ExecutiveTimeline({
             >
               {/* Floating micro badge on hover */}
               <div className="absolute -top-5 hidden group-hover/ms:flex flex-col items-center pointer-events-none z-20">
-                <span className="bg-[#162238] border border-[#00f2fe] text-[#00f2fe] px-1.5 py-0.2 rounded text-[8px] font-black whitespace-nowrap shadow-lg">
+                <span className="bg-[#17263B] border border-[#00f2fe] text-[#00f2fe] px-1.5 py-0.2 rounded text-[8px] font-black whitespace-nowrap shadow-lg">
                   {m.name}
                 </span>
               </div>
               {/* Diamond Node */}
-              <div className="w-3 h-3 rotate-45 bg-[#0e1422] border-2 border-[#00f2fe] shadow-[0_0_8px_rgba(0,242,254,0.5)] flex items-center justify-center transition-transform group-hover/ms:scale-125">
+              <div className="w-3 h-3 rotate-45 bg-[#101D30] border-2 border-[#00f2fe] shadow-[0_0_8px_rgba(0,242,254,0.5)] flex items-center justify-center transition-transform group-hover/ms:scale-125">
                 <div className="w-1 h-1 bg-[#00f2fe]" />
               </div>
             </div>
@@ -135,14 +135,14 @@ export function ExecutiveTimeline({
       </div>
 
       {/* Dates Row */}
-      <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 px-0.5">
+      <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] px-0.5">
         <span>{startLabel}</span>
         <span className="text-slate-300 font-black">{currentYear}</span>
         <span>{endLabel}</span>
       </div>
 
       {/* Dedicated "Hitos por empezar" Capsule Row */}
-      <div className="pt-2 border-t border-slate-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[10px]">
+      <div className="pt-2 border-t border-[#29384C]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[10px]">
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#00f2fe] shadow-[0_0_6px_rgba(0,242,254,0.8)] animate-pulse" />
           <span className="text-[#00f2fe] font-black uppercase tracking-wider text-[9.5px]">
@@ -153,7 +153,7 @@ export function ExecutiveTimeline({
           {upcomingMilestones.slice(0, 2).map((m, idx) => (
             <span
               key={m.id || idx}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#162238] border border-[#00f2fe]/40 text-slate-200 font-bold truncate max-w-[170px]"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#17263B] border border-[#00f2fe]/40 text-slate-200 font-bold truncate max-w-[170px]"
               title={m.name}
             >
               <span className="text-[#00f2fe]">📌</span>

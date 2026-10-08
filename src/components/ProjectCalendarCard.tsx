@@ -173,10 +173,10 @@ export function ProjectCalendarCard({
         // Evitar que hacer clic dentro del calendario dispare la navegación a la obra
         e.stopPropagation();
       }}
-      className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-white/10 select-none shadow-inner w-full"
+      className="bg-[#101D30]/40 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-white/10 select-none shadow-inner w-full"
     >
       {/* 1. Cabecera Compacta: Navegación + Badges + Botón PM */}
-      <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-800/80 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-[#29384C]/80 flex-wrap sm:flex-nowrap">
         {/* Título de Mes & Botones de Navegación */}
         <div className="flex items-center gap-1.5 min-w-0">
           <CalendarIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: neonColor }} />
@@ -188,7 +188,7 @@ export function ProjectCalendarCard({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
               title="Mes anterior"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export function ProjectCalendarCard({
             <button
               type="button"
               onClick={handleResetToToday}
-              className="px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
+              className="px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-300 hover:text-white bg-[#17263B] hover:bg-[#1f324d] transition-colors"
               title="Ir a hoy"
             >
               Hoy
@@ -204,7 +204,7 @@ export function ProjectCalendarCard({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
               title="Mes siguiente"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ export function ProjectCalendarCard({
               </span>
             )}
 
-            <span className="text-slate-400 font-medium">
+            <span className="text-[#94A3B8] font-medium">
               <span className="text-white font-bold">{monthStats.taskCount}</span> tareas
             </span>
           </div>
@@ -256,7 +256,7 @@ export function ProjectCalendarCard({
         {/* Columna Izquierda (Grilla Mensual Súper Compacta) */}
         <div className="sm:col-span-7 lg:col-span-8">
           {/* Fila de Días de la Semana */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-slate-400 mb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-[#94A3B8] mb-1">
             {WEEKDAYS.map((wd, i) => (
               <div key={i} className="py-0.2">
                 {wd}
@@ -297,8 +297,8 @@ export function ProjectCalendarCard({
                     isSelected
                       ? 'bg-slate-700/90 text-white ring-1 ring-amber-400 shadow-sm'
                       : isToday
-                      ? 'bg-slate-800/90 text-white border border-slate-600 font-black'
-                      : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                      ? 'bg-[#17263B]/90 text-white border border-slate-600 font-black'
+                      : 'text-slate-300 hover:bg-[#17263B]/60 hover:text-white'
                   }`}
                   style={
                     isSelected
@@ -337,11 +337,11 @@ export function ProjectCalendarCard({
         </div>
 
         {/* Columna Derecha (Resumen del Día Seleccionado y Próximos Eventos) */}
-        <div className="sm:col-span-5 lg:col-span-4 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-2.5 flex flex-col justify-between self-stretch min-h-[95px]">
+        <div className="sm:col-span-5 lg:col-span-4 border-t sm:border-t-0 sm:border-l border-[#29384C]/80 pt-2 sm:pt-0 sm:pl-2.5 flex flex-col justify-between self-stretch min-h-[95px]">
           <div>
             {/* Cabecera del día */}
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-300 mb-1">
-              <span className="text-slate-400 uppercase text-[9px] font-black truncate">
+              <span className="text-[#94A3B8] uppercase text-[9px] font-black truncate">
                 Día {selectedDayNum} {MONTH_NAMES[selectedMonthNum]?.slice(0, 3)}
               </span>
 
@@ -362,7 +362,7 @@ export function ProjectCalendarCard({
                   <div
                     key={evt.id}
                     onClick={() => handleOpenPM(selectedDateStr, evt.id)}
-                    className="p-1 px-1.5 rounded-lg bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-between gap-1 cursor-pointer group"
+                    className="p-1 px-1.5 rounded-lg bg-[#081321]/70 hover:bg-[#17263B]/80 border border-[#29384C] hover:border-[#29384C] transition-all flex items-center justify-between gap-1 cursor-pointer group"
                   >
                     <div className="flex items-center gap-1 min-w-0">
                       {evt.type === 'alarm' ? (
@@ -386,7 +386,7 @@ export function ProjectCalendarCard({
                 ))}
 
                 {selectedDayEvents.length > 2 && (
-                  <p className="text-[8.5px] text-slate-400 text-center font-medium">
+                  <p className="text-[8.5px] text-[#94A3B8] text-center font-medium">
                     +{selectedDayEvents.length - 2} tareas más
                   </p>
                 )}
@@ -409,11 +409,11 @@ export function ProjectCalendarCard({
             ) : nextUpcomingEvent ? (
               <div
                 onClick={() => handleOpenPM(nextUpcomingEvent.date, nextUpcomingEvent.id)}
-                className="p-1.5 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 transition-all flex items-center justify-between gap-1.5 cursor-pointer group"
+                className="p-1.5 rounded-lg bg-[#081321]/50 border border-[#29384C]/80 hover:border-[#29384C] transition-all flex items-center justify-between gap-1.5 cursor-pointer group"
               >
                 <div className="flex items-center gap-1 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  <span className="text-[9.5px] text-slate-400 truncate">
+                  <span className="text-[9.5px] text-[#94A3B8] truncate">
                     Próx: <span className="font-bold text-slate-200 group-hover:text-white">{nextUpcomingEvent.title}</span>
                   </span>
                 </div>
@@ -435,7 +435,7 @@ export function ProjectCalendarCard({
             <button
               type="button"
               onClick={() => handleOpenPM(selectedDateStr)}
-              className="text-[9px] text-slate-400 hover:text-white font-bold bg-slate-800/80 hover:bg-slate-700 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1"
+              className="text-[9px] text-[#94A3B8] hover:text-white font-bold bg-[#17263B]/80 hover:bg-[#1f324d] px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1"
             >
               <span>+ Programar Tarea</span>
             </button>

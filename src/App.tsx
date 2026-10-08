@@ -4,6 +4,8 @@ import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument,
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
 import { compressImageFile, calculateUnitProgress, hexToRgba } from './utils/calculations';
 import { Header } from './components/Header';
+import { SidebarNav } from './components/SidebarNav';
+import { TopHeader } from './components/TopHeader';
 import { DashboardView } from './components/DashboardView';
 import { UnitsView } from './components/UnitsView';
 import { ChecklistView } from './components/ChecklistView';
@@ -565,6 +567,68 @@ export default function App() {
   }, []);
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeNavTab, setActiveNavTab] = useState('inicio');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const handleSelectNav = (tabId: string) => {
+    setActiveNavTab(tabId);
+    setIsMobileSidebarOpen(false);
+    if (tabId === 'inicio') {
+      setCurrentView('dashboard');
+    } else if (tabId === 'proyectos') {
+      if (selectedProject) {
+        setCurrentView('units');
+      } else if (projects.length > 0) {
+        setSelectedProjectId(projects[0].id);
+        setCurrentView('units');
+      } else {
+        setIsNewProjectModalOpen(true);
+      }
+    } else if (tabId === 'tareas') {
+      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+      if (projId) {
+        handleOpenProjectManager(projId, 'tasks');
+      } else {
+        showToast('Selecciona o crea una obra primero');
+      }
+    } else if (tabId === 'calendario') {
+      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+      if (projId) {
+        handleOpenProjectManager(projId, 'calendar');
+      } else {
+        showToast('Selecciona o crea una obra primero');
+      }
+    } else if (tabId === 'gantt') {
+      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+      if (projId) {
+        handleOpenProjectManager(projId, 'dashboard');
+      } else {
+        showToast('Selecciona o crea una obra primero');
+      }
+    } else if (tabId === 'documentos') {
+      const proj = selectedProject || (projects.length > 0 ? projects[0] : null);
+      if (proj && proj.units.length > 0) {
+        setActiveBlueprintViewerUnit(proj.units[0]);
+      } else {
+        showToast('Selecciona una obra con planos');
+      }
+    } else if (tabId === 'fotos') {
+      cameraInputRef.current?.click();
+    } else if (tabId === 'materiales') {
+      showToast('M?dulo de gesti?n y solicitud de materiales');
+    } else if (tabId === 'equipo') {
+      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+      if (projId) {
+        handleOpenProjectManager(projId, 'dashboard');
+      } else {
+        showToast('Gesti?n de cuadrillas y contratistas');
+      }
+    } else if (tabId === 'reportes') {
+      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+      handleOpenReportModal('project', projId);
+    }
+  };
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [dashboardActiveProjectId, setDashboardActiveProjectId] = useState<string>('');
@@ -2383,7 +2447,7 @@ export default function App() {
           ? localColors.appBackground
           : theme === 'theme-glass'
           ? '#f0f3f8'
-          : '#090e1a',
+          : '#081321',
         backgroundImage: localColors.appBackgroundImage
           ? 'none'
           : localColors.appBackground
@@ -2441,29 +2505,41 @@ export default function App() {
         className="hidden"
       />
 
-      {/* Global Header */}
-      <Header
+      {/* Left Sidebar Navigation (Matching Reference Screenshot) */}
+      <SidebarNav
         currentView={currentView}
-        selectedProject={selectedProject}
-        selectedUnit={selectedUnit}
-        unitProgress={currentUnitProgress}
-        logoUrl={logos.header}
-        onNavigate={handleNavigate}
-        onBack={handleBack}
-        onOpenLogoEditor={() => {
+        activeNavTab={activeNavTab}
+        onSelectNav={handleSelectNav}
+        onOpenSettings={() => {
           setLogoEditorTarget('header');
           setIsLogoEditorOpen(true);
         }}
-        onOpenReportModal={handleOpenReportModal}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-        onLogoChange={handleUpdateHeaderLogo}
-        cloudStatus={cloudStatus}
-        onOpenCloudSetup={() => setIsCloudSetupModalOpen(true)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        directorName={selectedProject?.director || 'Arq. Venier Gast?n'}
+        directorRole="Director T?cnico"
+        avatarUrl="/avatar_venier.png"
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 pb-24 overflow-y-auto relative z-10">
+      {/* Main Column Wrapper (Shifted by Sidebar Width on Desktop) */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10 ${
+        isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-60'
+      }`}>
+        {/* Top Header Bar */}
+        <TopHeader
+          currentView={currentView}
+          selectedProject={selectedProject}
+          selectedUnit={selectedUnit}
+          onBack={handleBack}
+          onOpenReportModal={handleOpenReportModal}
+          cloudStatus={cloudStatus}
+          onOpenCloudSetup={() => setIsCloudSetupModalOpen(true)}
+          onToggleMobileSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          isSidebarCollapsed={isSidebarCollapsed}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 w-full max-w-[1560px] mx-auto p-3 sm:p-6 pb-24 overflow-y-auto relative z-10">
         {currentView === 'dashboard' && (
           <DashboardView
             projects={projects}
@@ -2569,9 +2645,10 @@ export default function App() {
           </ErrorBoundary>
         )}
       </main>
+      </div>
 
       {/* Executive Floating Bottom Navigation Dock - Matches Reference Screenshot */}
-      <nav className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-dock rounded-2xl px-5 py-2 flex justify-around items-center z-40 no-print transition-all">
+      <nav className="lg:hidden fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-dock rounded-2xl px-5 py-2 flex justify-around items-center z-40 no-print transition-all">
         <button
           onClick={() => handleNavigate('dashboard')}
           style={currentView === 'dashboard' ? {

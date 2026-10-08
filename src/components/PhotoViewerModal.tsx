@@ -88,15 +88,15 @@ export function PhotoViewerModal({
         className="hidden"
       />
 
-      <div className="bg-slate-900 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden">
+      <div className="bg-[#101D30] w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden">
         {/* Modal Header */}
-        <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div className="px-4 py-3 border-b border-[#29384C] flex items-center justify-between bg-slate-950">
           <div className="min-w-0 flex-1 pr-2">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded">
                 {tradeName}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-[#94A3B8] font-mono">
                 {photos.length} {photos.length === 1 ? 'Foto' : 'Fotos'}
               </span>
             </div>
@@ -107,7 +107,7 @@ export function PhotoViewerModal({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white border border-slate-700 transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
+            className="p-2 rounded-xl bg-[#17263B] hover:bg-rose-600 text-white border border-[#29384C] transition-all touch-target shrink-0 z-20 flex items-center justify-center active:scale-95 shadow-xs"
             title="Cerrar visor de fotos"
             aria-label="Cerrar fotos"
           >
@@ -116,7 +116,7 @@ export function PhotoViewerModal({
         </div>
 
         {/* Modal Scrollable Photo Content */}
-        <div className="p-4 overflow-y-auto space-y-4 flex-1 bg-slate-900">
+        <div className="p-4 overflow-y-auto space-y-4 flex-1 bg-[#101D30]">
           {/* Observation Note if exists */}
           {item.comment && (
             <div className="bg-emerald-950/20 border border-emerald-500/40 rounded-xl p-3 text-xs text-emerald-200 flex items-start gap-2 shadow-xs">
@@ -135,12 +135,12 @@ export function PhotoViewerModal({
             </div>
           )}
           {photos.length === 0 ? (
-            <div className="text-center py-10 px-4 bg-slate-800/60 rounded-2xl border border-dashed border-slate-700">
-              <div className="w-14 h-14 mx-auto rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 mb-3">
+            <div className="text-center py-10 px-4 bg-[#17263B]/60 rounded-2xl border border-dashed border-[#29384C]">
+              <div className="w-14 h-14 mx-auto rounded-full bg-[#17263B] border border-[#29384C] flex items-center justify-center text-amber-400 mb-3">
                 <Camera className="w-7 h-7" />
               </div>
               <h4 className="text-white font-bold text-sm">Sin fotografías de registro</h4>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+              <p className="text-xs text-[#94A3B8] mt-1 max-w-xs mx-auto">
                 Toma una foto en terreno con la cámara o sube desde la galería de tu celular o notebook para guardar evidencia en la nube.
               </p>
               <div className="grid grid-cols-2 gap-2 mt-4 max-w-xs mx-auto">
@@ -155,7 +155,7 @@ export function PhotoViewerModal({
                 <button
                   disabled={isProcessing}
                   onClick={() => galleryInputRef.current?.click()}
-                  className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 touch-target active:scale-95 transition-all"
+                  className="px-3 py-2.5 bg-[#17263B] hover:bg-[#1f324d] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-[#29384C] touch-target active:scale-95 transition-all"
                 >
                   <Upload className="w-4 h-4 text-amber-400" />
                   <span>{isMobileDevice ? 'Galería' : 'Examinar PC'}</span>
@@ -166,7 +166,7 @@ export function PhotoViewerModal({
             photos.map((photo, index) => (
               <div
                 key={photo.id}
-                className="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 shadow-md flex flex-col"
+                className="bg-[#17263B] rounded-2xl overflow-hidden border border-[#29384C] shadow-md flex flex-col"
               >
                 <div className="relative bg-black flex items-center justify-center max-h-72 overflow-hidden group">
                   <img
@@ -180,15 +180,15 @@ export function PhotoViewerModal({
                   <button
                     type="button"
                     onClick={() => handleDownloadPhoto(photo.dataUrl, index)}
-                    className="absolute top-2 right-2 bg-slate-950/80 hover:bg-slate-900 text-amber-400 border border-amber-500/40 p-1.5 rounded-full shadow-lg backdrop-blur-xs active:scale-95 transition-all"
+                    className="absolute top-2 right-2 bg-slate-950/80 hover:bg-[#101D30] text-amber-400 border border-amber-500/40 p-1.5 rounded-full shadow-lg backdrop-blur-xs active:scale-95 transition-all"
                     title="Descargar esta foto"
                   >
                     <Download className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="p-3 bg-slate-950 flex items-center justify-between border-t border-slate-800">
-                  <div className="flex items-center text-slate-400 text-xs gap-1.5">
+                <div className="p-3 bg-slate-950 flex items-center justify-between border-t border-[#29384C]">
+                  <div className="flex items-center text-[#94A3B8] text-xs gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-400" />
                     <span className="font-mono text-[11px] text-slate-300">
                       {photo.timestamp || 'Fecha no registrada'}
@@ -219,7 +219,7 @@ export function PhotoViewerModal({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2 items-center">
+        <div className="p-3 bg-slate-950 border-t border-[#29384C] flex gap-2 items-center">
           <button
             disabled={isProcessing}
             onClick={() => cameraInputRef.current ? cameraInputRef.current.click() : onTriggerCamera()}
@@ -231,14 +231,14 @@ export function PhotoViewerModal({
           <button
             disabled={isProcessing}
             onClick={() => galleryInputRef.current?.click()}
-            className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700 touch-target transition-all"
+            className="flex-1 py-2.5 bg-[#17263B] hover:bg-[#1f324d] active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-[#29384C] touch-target transition-all"
           >
             <Upload className="w-4 h-4 text-amber-400" />
             <span>{isMobileDevice ? 'Subir Galería' : 'Examinar PC'}</span>
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl touch-target"
+            className="px-4 py-2.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 text-xs font-semibold rounded-xl touch-target"
           >
             Listo
           </button>

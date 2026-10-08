@@ -189,9 +189,9 @@ export function SignatureModal({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print overflow-y-auto">
-      <div className="bg-white text-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[94vh] flex flex-col shadow-2xl border-t-4 border-amber-500 overflow-hidden my-auto">
+      <div className="bg-[#101D30] text-[#F8FAFC] w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[94vh] flex flex-col shadow-2xl border border-[#29384C] border-t-4 border-t-amber-500 overflow-hidden my-auto">
         {/* Header */}
-        <div className="px-4 py-3 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+        <div className="px-4 py-3 bg-[#17263B] text-white flex items-center justify-between border-b border-[#29384C]">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
               <FileCheck2 className="w-4 h-4" />
@@ -209,7 +209,7 @@ export function SignatureModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg touch-target flex items-center justify-center"
+            className="text-[#94A3B8] hover:text-white p-2 rounded-lg touch-target flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -218,16 +218,16 @@ export function SignatureModal({
         {/* Scrollable Body */}
         <div className="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
           {/* Unit Status Banner */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+          <div className="p-3 bg-[#17263B] border border-[#29384C] rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black uppercase text-slate-500 block">
+              <span className="text-[10px] font-black uppercase text-[#94A3B8] block">
                 Estado Actual de la Unidad
               </span>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-black text-sm text-slate-900 font-mono">
+                <span className="font-black text-sm text-white font-mono">
                   {unitProgress}% Avance Global
                 </span>
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-[#94A3B8]">
                   ({itemCounts.completed}/{itemCounts.total} ítems listos)
                 </span>
               </div>
@@ -256,7 +256,7 @@ export function SignatureModal({
                 <p className="font-bold text-slate-900 mt-0.5">
                   Firmado por {unit.signedBy || 'Inspector'} ({unit.signRole})
                 </p>
-                <p className="text-[10px] text-slate-500 font-mono">
+                <p className="text-[10px] text-[#94A3B8] font-mono">
                   Fecha: {unit.signedAt || 'Registrada'}
                 </p>
               </div>
@@ -281,7 +281,7 @@ export function SignatureModal({
           {/* Signatory Fields */}
           <div className="space-y-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
+              <label className="block font-bold text-[#94A3B8] mb-1">
                 Nombre y Apellido del Firmante / Responsable:
               </label>
               <input
@@ -289,19 +289,19 @@ export function SignatureModal({
                 value={signedBy}
                 onChange={(e) => setSignedBy(e.target.value)}
                 placeholder="Ej: Ing. Carlos Mendoza"
-                className="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full p-2.5 border border-[#29384C] bg-[#17263B] text-white rounded-xl font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#94A3B8] mb-1">
                   Rol / Cargo en Obra:
                 </label>
                 <select
                   value={signRole}
                   onChange={(e) => setSignRole(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-[#17263B] text-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
                 >
                   <option value="Supervisor Técnico de Obra">Supervisor Técnico de Obra</option>
                   <option value="Jefe de Producción / Obra">Jefe de Producción / Obra</option>
@@ -313,7 +313,7 @@ export function SignatureModal({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#94A3B8] mb-1">
                   DNI / Matrícula Profesional:
                 </label>
                 <input
@@ -321,7 +321,7 @@ export function SignatureModal({
                   value={signDni}
                   onChange={(e) => setSignDni(e.target.value)}
                   placeholder="Ej: Mat. 14.892 / DNI 28.432.110"
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full p-2.5 border border-[#29384C] bg-[#17263B] text-white rounded-xl font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -338,7 +338,7 @@ export function SignatureModal({
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-[11px] font-bold text-slate-500 hover:text-rose-600 flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-100 transition-colors"
+                className="text-[11px] font-bold text-[#94A3B8] hover:text-rose-600 flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-100 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 Limpiar trazo
@@ -361,7 +361,7 @@ export function SignatureModal({
               />
 
               {!hasDrawn && !unit.signature && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-400">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-[#94A3B8]">
                   <PenTool className="w-6 h-6 mb-1 opacity-40 animate-pulse" />
                   <span className="text-[11px] font-medium">
                     Firma aquí directamente con el dedo
@@ -369,13 +369,13 @@ export function SignatureModal({
                 </div>
               )}
 
-              <div className="absolute bottom-1.5 right-2 pointer-events-none text-[9px] font-mono text-slate-400">
+              <div className="absolute bottom-1.5 right-2 pointer-events-none text-[9px] font-mono text-[#94A3B8]">
                 Línea de firma técnica
               </div>
             </div>
 
             {unit.signature && !hasDrawn && (
-              <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
+              <div className="mt-1.5 flex items-center justify-between text-[11px] text-[#94A3B8] bg-slate-50 p-2 rounded-lg border border-slate-200">
                 <span>Firma anterior almacenada correctamente.</span>
                 <span className="font-bold text-amber-700">Dibuja para actualizar trazo</span>
               </div>
@@ -405,11 +405,11 @@ export function SignatureModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-3 bg-slate-950 text-white border-t border-slate-800 flex items-center justify-between">
+        <div className="p-3 bg-[#17263B] text-white border-t border-[#29384C] flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl touch-target transition-colors"
+            className="px-4 py-2 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 text-xs font-semibold rounded-xl touch-target transition-colors"
           >
             Cerrar
           </button>

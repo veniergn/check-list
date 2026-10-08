@@ -91,10 +91,10 @@ export function AddItemScopeModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] transition-colors"
+        className="bg-white dark:bg-[#101D30] text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-[#29384C] w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] transition-colors"
       >
         {/* Header */}
-        <div className="p-4 bg-slate-900 text-white border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+        <div className="p-4 bg-[#101D30] text-white border-b border-[#29384C] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center flex-shrink-0">
               <Layers className="w-5 h-5" />
@@ -103,7 +103,7 @@ export function AddItemScopeModal({
               <h3 className="text-sm sm:text-base font-black tracking-tight leading-tight">
                 ¿Dónde deseas incorporar este ítem?
               </h3>
-              <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
                 Selector inteligente de replicación en obra
               </p>
             </div>
@@ -111,14 +111,14 @@ export function AddItemScopeModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Item & Trade Summary Banner */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+        <div className="bg-slate-50 dark:bg-[#17263B]/60 p-3.5 border-b border-slate-200 dark:border-[#29384C] flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <span className="text-[10px] font-black tracking-wider uppercase text-amber-600 dark:text-amber-400 block">
@@ -129,7 +129,7 @@ export function AddItemScopeModal({
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">
+              <span className="text-[10px] text-slate-500 dark:text-[#94A3B8] block font-medium">
                 Unidad Actual:
               </span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -152,7 +152,7 @@ export function AddItemScopeModal({
               className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
                 scope === 'current_unit'
                   ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-500 text-slate-900 dark:text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300'
+                  : 'bg-white dark:bg-[#17263B]/40 border-slate-200 dark:border-[#29384C] hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300'
               }`}
             >
               <input
@@ -172,7 +172,7 @@ export function AddItemScopeModal({
                     {currentUnit.name}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5 leading-snug">
                   Se creará como una tarea exclusiva para {currentUnit.name} de {currentProject.name} con 0% de avance inicial.
                 </p>
               </div>
@@ -183,7 +183,7 @@ export function AddItemScopeModal({
               className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
                 scope === 'selected_projects'
                   ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-500 text-slate-900 dark:text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300'
+                  : 'bg-white dark:bg-[#17263B]/40 border-slate-200 dark:border-[#29384C] hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300'
               }`}
             >
               <input
@@ -203,7 +203,7 @@ export function AddItemScopeModal({
                     Replicar en todos sus departamentos
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5 leading-snug">
                   Se incorporará automáticamente a cada departamento/espacio de las obras marcadas con 0% de avance (desmarcado).
                 </p>
               </div>
@@ -212,9 +212,9 @@ export function AddItemScopeModal({
 
           {/* Sub-panel for Selected Projects (only if Option B is active) */}
           {scope === 'selected_projects' && (
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 animate-in fade-in duration-150">
+            <div className="p-3 bg-slate-50 dark:bg-[#17263B]/50 rounded-xl border border-slate-200 dark:border-[#29384C] space-y-3 animate-in fade-in duration-150">
               {/* Toolbar: Select All / Deselect All */}
-              <div className="flex items-center justify-between gap-2 flex-wrap pb-1.5 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between gap-2 flex-wrap pb-1.5 border-b border-slate-200 dark:border-[#29384C]">
                 <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5 text-amber-500" />
                   Obras en curso ({selectedProjectIds.length} seleccionada{selectedProjectIds.length === 1 ? '' : 's'}):
@@ -241,7 +241,7 @@ export function AddItemScopeModal({
               {/* Active Projects List */}
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                 {activeProjects.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-2">
+                  <p className="text-xs text-[#94A3B8] text-center py-2">
                     No hay otras obras activas disponibles.
                   </p>
                 ) : (
@@ -256,7 +256,7 @@ export function AddItemScopeModal({
                         className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
                           isSelected
                             ? 'bg-amber-500/10 border-amber-400 dark:border-amber-500 text-slate-900 dark:text-white'
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                            : 'bg-white dark:bg-[#17263B] border-slate-200 dark:border-[#29384C] text-slate-600 dark:text-slate-300 hover:border-slate-300'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -267,7 +267,7 @@ export function AddItemScopeModal({
                             {isSelected ? (
                               <CheckSquare className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                             ) : (
-                              <Square className="w-4 h-4 text-slate-400" />
+                              <Square className="w-4 h-4 text-[#94A3B8]" />
                             )}
                           </button>
                           <div className="min-w-0">
@@ -276,12 +276,12 @@ export function AddItemScopeModal({
                                 {p.name}
                               </span>
                               {isCurrent && (
-                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-slate-900 dark:bg-slate-700 text-amber-400">
+                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-[#101D30] dark:bg-slate-700 text-amber-400">
                                   Actual
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                            <span className="text-[10px] text-slate-500 dark:text-[#94A3B8] block truncate">
                               {p.units.length} departamentos / espacios
                             </span>
                           </div>
@@ -306,19 +306,19 @@ export function AddItemScopeModal({
 
                 {/* Finished (100%) Projects - Disabled block */}
                 {finishedProjects.length > 0 && (
-                  <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                  <div className="pt-2 mt-2 border-t border-slate-200 dark:border-[#29384C]">
+                    <span className="text-[10px] font-bold text-[#94A3B8] dark:text-slate-500 uppercase tracking-wider block mb-1">
                       Obras Culminadas (100% - No seleccionables):
                     </span>
                     {finishedProjects.map(({ project: p }) => (
                       <div
                         key={p.id}
-                        className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 opacity-60 flex items-center justify-between text-xs cursor-not-allowed mb-1"
+                        className="p-2 rounded-lg bg-slate-100 dark:bg-[#17263B]/40 border border-slate-200 dark:border-[#29384C]/60 opacity-60 flex items-center justify-between text-xs cursor-not-allowed mb-1"
                         title="Esta obra ya se encuentra finalizada al 100%"
                       >
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                          <span className="font-bold text-slate-600 dark:text-slate-400 truncate">
+                          <span className="font-bold text-slate-600 dark:text-[#94A3B8] truncate">
                             {p.name}
                           </span>
                         </div>
@@ -349,11 +349,11 @@ export function AddItemScopeModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-[#29384C]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-[#94A3B8] hover:bg-slate-100 dark:hover:bg-[#17263B] rounded-xl transition-colors"
             >
               Cancelar
             </button>
