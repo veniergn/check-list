@@ -123,7 +123,7 @@ export function subscribeToCloudData(
   onLogosChange: (logos: CustomLogos) => void
 ) {
   const channel = supabase
-    .channel('realtime_app_data')
+    .channel(`realtime_app_data_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'app_data' },

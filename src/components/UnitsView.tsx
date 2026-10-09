@@ -27,16 +27,19 @@ import {
   AlertTriangle,
   Briefcase
 } from 'lucide-react';
-import { Project, Unit, StatusFilter, ProjectCalendarEvent } from '../types';
+import { Project, Unit, StatusFilter, ProjectCalendarEvent, Milestone } from '../types';
 import { calculateUnitProgress, getUnitItemCounts, calculateProjectProgress, isUnitCommonArea, parseUnitFloor, hexToRgba } from '../utils/calculations';
 import { MASTER_TRADES_TEMPLATE } from '../data/initialData';
 import { ProjectGanttCard } from './ProjectGanttCard';
 import { ErrorBoundary } from './ErrorBoundary';
 import { AnimatedCircularProgress } from './AnimatedCircularProgress';
 import { ExecutiveDonutChart } from './ExecutiveDonutChart';
+import { ProjectCoverModal } from './ProjectCoverModal';
 
 interface UnitsViewProps {
   project: Project;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
   presentationBg?: string;
   neonColor?: string;
   onSelectUnit: (unitId: string) => void;
@@ -64,10 +67,13 @@ interface UnitsViewProps {
   onDeleteTrade?: (tradeId: string, tradeName: string, scope?: 'current_unit' | 'all_units') => void;
   onOpenCroquis?: (unitId?: string) => void;
   onOpenMonthlyReport?: (projectId: string) => void;
+  onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
 }
 
 export function UnitsView({
   project,
+  projects = [],
+  onSelectProject,
   presentationBg,
   neonColor = '#00f2fe',
   onSelectUnit,
@@ -89,8 +95,10 @@ export function UnitsView({
   onAddTrade,
   onDeleteTrade,
   onOpenCroquis,
-  onOpenMonthlyReport
+  onOpenMonthlyReport,
+  onSaveProjectCover
 }: UnitsViewProps) {
+  const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
   const [tradeFilter, setTradeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'unit' | 'common_area'>('all');
@@ -248,6 +256,43 @@ export function UnitsView({
 
   return (
     <section className="space-y-4">
+      {/* Selector de Obras / Proyectos (Permite alternar entre Portillo, Parque Los Andes, Parque Agustín) */}
+      {projects && projects.length > 1 && (
+        <div className="bg-[#101D30]/90 border border-[#29384C] backdrop-blur-md rounded-2xl p-2.5 flex items-center gap-2 overflow-x-auto shadow-lg">
+          <span className="text-[11px] font-black uppercase tracking-wider text-[#94A3B8] px-2 flex items-center gap-1.5 whitespace-nowrap">
+            <Building2 className="w-4 h-4 text-cyan-400" />
+            Obras:
+          </span>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {projects.map(p => {
+              const isSelected = p.id === project.id;
+              const pProgress = calculateProjectProgress(p);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => onSelectProject && onSelectProject(p.id)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                    isSelected
+                      ? 'bg-blue-600/30 text-cyan-300 border border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.35)]'
+                      : 'bg-[#17263B]/70 text-slate-300 hover:text-white hover:bg-[#17263B] border border-[#29384C]'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]' : 'bg-slate-500'}`} />
+                  <span className="truncate max-w-[150px] sm:max-w-none">{p.name}</span>
+                  <span className="text-[10px] font-mono text-slate-400">({p.units?.length || 0}u)</span>
+                  <span
+                    className="text-[10px] font-black px-1.5 py-0.5 rounded bg-black/40 text-cyan-400 border border-cyan-500/20"
+                  >
+                    {pProgress}%
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Executive Project Summary Card */}
       <div
         onMouseEnter={() => setCardHoverTrigger(prev => prev + 1)}
@@ -295,17 +340,30 @@ export function UnitsView({
                 <p className="text-[10px] font-black uppercase text-[#94A3B8] tracking-wider">
                   Avance General
                 </p>
-                {onEditProject && (
-                  <button
-                    type="button"
-                    onClick={() => onEditProject(project)}
-                    className="px-1.5 py-0.5 -mr-1 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors flex items-center gap-1 text-[10px] font-bold border border-transparent hover:border-[#29384C]"
-                    title="Editar datos de Avance General"
-                  >
-                    <Pencil className="w-3 h-3" style={{ color: neonColor }} />
-                    <span>Editar</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {onSaveProjectCover && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCoverModalOpen(true)}
+                      className="px-1.5 py-0.5 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors flex items-center gap-1 text-[10px] font-bold border border-transparent hover:border-[#29384C]"
+                      title="Cambiar fotografía de presentación de la obra"
+                    >
+                      <Camera className="w-3 h-3 text-cyan-400" />
+                      <span>Foto Portada</span>
+                    </button>
+                  )}
+                  {onEditProject && (
+                    <button
+                      type="button"
+                      onClick={() => onEditProject(project)}
+                      className="px-1.5 py-0.5 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#17263B] transition-colors flex items-center gap-1 text-[10px] font-bold border border-transparent hover:border-[#29384C]"
+                      title="Editar datos de Avance General"
+                    >
+                      <Pencil className="w-3 h-3" style={{ color: neonColor }} />
+                      <span>Editar</span>
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 truncate text-slate-300">
                 <FileCheck className="w-3.5 h-3.5 text-[#94A3B8] flex-shrink-0" />

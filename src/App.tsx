@@ -6,6 +6,13 @@ import { compressImageFile, calculateUnitProgress, hexToRgba } from './utils/cal
 import { Header } from './components/Header';
 import { SidebarNav } from './components/SidebarNav';
 import { TopHeader } from './components/TopHeader';
+import { TasksFullView } from './components/TasksFullView';
+import { CalendarFullView } from './components/CalendarFullView';
+import { GanttFullView } from './components/GanttFullView';
+import { ContractorsFullView } from './components/ContractorsFullView';
+import { SettingsAppearanceView } from './components/SettingsAppearanceView';
+import { ProjectCoverModal } from './components/ProjectCoverModal';
+import { ContractorPhotoModal } from './components/ContractorPhotoModal';
 import { DashboardView } from './components/DashboardView';
 import { UnitsView } from './components/UnitsView';
 import { ChecklistView } from './components/ChecklistView';
@@ -243,8 +250,9 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
     };
   });
 
-  // Preserve any local projects that do not yet exist in remote
-  const localOnlyProjects = localProjects.filter(lp => !remoteIds.has(lp.id));
+  // Preserve any custom locally created projects that do not exist in remote (excluding stale sample mock IDs)
+  const mockIds = new Set(['proj_parque_los_andes', 'proj_parque_agustin']);
+  const localOnlyProjects = localProjects.filter(lp => !remoteIds.has(lp.id) && !mockIds.has(lp.id));
   return [...mergedRemote, ...localOnlyProjects];
 }
 
@@ -574,6 +582,11 @@ export default function App() {
   const handleSelectNav = (tabId: string) => {
     setActiveNavTab(tabId);
     setIsMobileSidebarOpen(false);
+    // Reset vertical scroll to beginning of page immediately (Section 2 & 9)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
+
     if (tabId === 'inicio') {
       setCurrentView('dashboard');
     } else if (tabId === 'proyectos') {
@@ -586,26 +599,11 @@ export default function App() {
         setIsNewProjectModalOpen(true);
       }
     } else if (tabId === 'tareas') {
-      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
-      if (projId) {
-        handleOpenProjectManager(projId, 'tasks');
-      } else {
-        showToast('Selecciona o crea una obra primero');
-      }
+      setCurrentView('tasks');
     } else if (tabId === 'calendario') {
-      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
-      if (projId) {
-        handleOpenProjectManager(projId, 'calendar');
-      } else {
-        showToast('Selecciona o crea una obra primero');
-      }
+      setCurrentView('calendar');
     } else if (tabId === 'gantt') {
-      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
-      if (projId) {
-        handleOpenProjectManager(projId, 'dashboard');
-      } else {
-        showToast('Selecciona o crea una obra primero');
-      }
+      setCurrentView('gantt');
     } else if (tabId === 'documentos') {
       const proj = selectedProject || (projects.length > 0 ? projects[0] : null);
       if (proj && proj.units.length > 0) {
@@ -616,14 +614,11 @@ export default function App() {
     } else if (tabId === 'fotos') {
       cameraInputRef.current?.click();
     } else if (tabId === 'materiales') {
-      showToast('M?dulo de gesti?n y solicitud de materiales');
+      showToast('Módulo de gestión y solicitud de materiales');
     } else if (tabId === 'equipo') {
-      const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
-      if (projId) {
-        handleOpenProjectManager(projId, 'dashboard');
-      } else {
-        showToast('Gesti?n de cuadrillas y contratistas');
-      }
+      setCurrentView('contractors');
+    } else if (tabId === 'configuracion' || tabId === 'settings') {
+      setCurrentView('settings');
     } else if (tabId === 'reportes') {
       const projId = selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
       handleOpenReportModal('project', projId);
@@ -2374,6 +2369,101 @@ export default function App() {
     showToast('Cuadrillas y fotos del equipo actualizadas en la Nube', 'Users');
   };
 
+  // Save Project Cover Image with positioning (Section 3)
+  const handleSaveProjectCover = (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => {
+    updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        return {
+          ...p,
+          coverImageUrl: coverUrl,
+          coverImagePosition: position || p.coverImagePosition
+        };
+      })
+    );
+    showToast('Imagen de portada de la obra actualizada en Supabase', 'Check');
+  };
+
+  // Save Worker / Contractor Photo ONLY (Section 8)
+  const handleSaveContractorPhoto = (projectId: string, contractorId: string, avatarUrl: string) => {
+    updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const currentContractors = p.contractors && p.contractors.length > 0
+          ? p.contractors
+          : (projects.find(pj => pj.id === projectId)?.contractors || []);
+
+        const updatedContractors = currentContractors.map(c => {
+          if (c.id === contractorId) {
+            return { ...c, avatarUrl };
+          }
+          return c;
+        });
+
+        return {
+          ...p,
+          contractors: updatedContractors
+        };
+      })
+    );
+    showToast('Fotografía del trabajador actualizada en Supabase', 'Check');
+  };
+
+  // Appearance & Customization handlers (Section 5 & 6)
+  const handleSaveAppearance = (newLogos: CustomLogos, newColors: LocalColors) => {
+    setLogos(newLogos);
+    setLocalColors(newColors);
+    try {
+      localStorage.setItem(STORAGE_KEY_LOGOS, JSON.stringify(newLogos));
+      localStorage.setItem(STORAGE_KEY_LOCAL_COLORS, JSON.stringify(newColors));
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+    saveLogosToCloud(newLogos);
+    showToast('Configuración estética guardada con éxito', 'Check');
+  };
+
+  const handlePreviewAppearance = (newLogos: CustomLogos, newColors: LocalColors) => {
+    setLogos(newLogos);
+    setLocalColors(newColors);
+  };
+
+  const handleRestoreDefaultAppearance = () => {
+    const defaultLogos: CustomLogos = {
+      header: DEFAULT_LOGO_URL,
+      banner: DEFAULT_LOGO_URL,
+      sidebarLogo: '',
+      sidebarLogoSize: 36,
+      sidebarLogoAlign: 'left',
+      sidebarShowText: true,
+      appName: 'CONTROL DE AVANCE'
+    };
+    const defaultColors: LocalColors = {
+      appBackground: '#081321',
+      presentationBackground: '#101D30',
+      neonColor: '#00f2fe',
+      secondaryColor: '#3b82f6',
+      cardBackground: '#101D30',
+      sidebarBackground: '#081321',
+      headerTextColor: '#F8FAFC',
+      bodyTextColor: '#94A3B8',
+      progressColor: '#10b981',
+      fontFamily: 'Inter, sans-serif',
+      fontSize: 'standard',
+      visualDensity: 'standard',
+      isBoldText: false
+    };
+    setLogos(defaultLogos);
+    setLocalColors(defaultColors);
+    setTheme('theme-original');
+    try {
+      localStorage.setItem(STORAGE_KEY_LOGOS, JSON.stringify(defaultLogos));
+      localStorage.setItem(STORAGE_KEY_LOCAL_COLORS, JSON.stringify(defaultColors));
+      localStorage.setItem(STORAGE_KEY_THEME, 'theme-original');
+    } catch {}
+    saveLogosToCloud(defaultLogos);
+  };
+
   // Reset to Mock Data
   const handleResetData = () => {
     if (confirm('¿Restablecer datos de prueba de ejemplo? Se reiniciarán las obras y fotos de muestra.')) {
@@ -2508,17 +2598,26 @@ export default function App() {
       {/* Left Sidebar Navigation (Matching Reference Screenshot) */}
       <SidebarNav
         currentView={currentView}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={handleSelectProject}
         activeNavTab={activeNavTab}
         onSelectNav={handleSelectNav}
         onOpenSettings={() => {
-          setLogoEditorTarget('header');
-          setIsLogoEditorOpen(true);
+          setActiveNavTab('configuracion');
+          setCurrentView('settings');
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        directorName={selectedProject?.director || 'Arq. Venier Gast?n'}
-        directorRole="Director T?cnico"
+        directorName={selectedProject?.director || 'Arq. Venier Gastón'}
+        directorRole="Director Técnico"
         avatarUrl="/avatar_venier.png"
+        customLogoUrl={logos.sidebarLogo}
+        logoSize={logos.sidebarLogoSize}
+        logoAlign={logos.sidebarLogoAlign}
+        showAppName={logos.sidebarShowText}
+        appName={logos.appName}
       />
 
       {/* Main Column Wrapper (Shifted by Sidebar Width on Desktop) */}
@@ -2528,8 +2627,10 @@ export default function App() {
         {/* Top Header Bar */}
         <TopHeader
           currentView={currentView}
+          projects={projects}
           selectedProject={selectedProject}
           selectedUnit={selectedUnit}
+          onSelectProject={handleSelectProject}
           onBack={handleBack}
           onOpenReportModal={handleOpenReportModal}
           cloudStatus={cloudStatus}
@@ -2565,6 +2666,7 @@ export default function App() {
             onSaveCalendarEvent={handleSaveCalendarEvent}
             onDeleteCalendarEvent={handleDeleteCalendarEvent}
             onToggleCalendarEvent={handleToggleCalendarEvent}
+            onSaveProjectCover={handleSaveProjectCover}
             onShowToast={showToast}
             onActiveProjectChange={handleActiveProjectChange}
             onOpenMonthlyReport={handleOpenMonthlyReport}
@@ -2578,6 +2680,8 @@ export default function App() {
           >
             <UnitsView
               project={selectedProject}
+              projects={projects}
+              onSelectProject={handleSelectProject}
               presentationBg={localColors.presentationBackground}
               neonColor={localColors.neonColor || '#00f2fe'}
               onSelectUnit={handleSelectUnit}
@@ -2596,6 +2700,7 @@ export default function App() {
               onEditProject={(proj) => setEditingProject(proj)}
               onOpenProjectManager={handleOpenProjectManager}
               onSaveCalendarEvent={handleSaveCalendarEvent}
+              onSaveProjectCover={handleSaveProjectCover}
               onOpenUnitBlueprints={(unit) => setActiveBlueprintViewerUnit(unit)}
               onAddTrade={handleAddTrade}
               onDeleteTrade={handleDeleteTrade}
@@ -2641,6 +2746,93 @@ export default function App() {
                 setCroquisModalTargetUnitId(unitId || selectedUnitId || undefined);
                 setIsCroquisModalOpen(true);
               }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {/* FULL-PAGE VIEWS (SECTIONS 2 & 9 - NO FLOATING WINDOWS, START FROM TOP) */}
+        {currentView === 'tasks' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar las tareas"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <TasksFullView
+              projects={projects}
+              neonColor={localColors.neonColor || '#00f2fe'}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
+              onSaveCalendarEvent={handleSaveCalendarEvent}
+              onDeleteCalendarEvent={handleDeleteCalendarEvent}
+              onToggleCalendarEvent={handleToggleCalendarEvent}
+              onShowToast={showToast}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'calendar' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar el calendario"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <CalendarFullView
+              projects={projects}
+              neonColor={localColors.neonColor || '#00f2fe'}
+              onSelectProject={handleSelectProject}
+              onSaveCalendarEvent={handleSaveCalendarEvent}
+              onDeleteCalendarEvent={handleDeleteCalendarEvent}
+              onToggleCalendarEvent={handleToggleCalendarEvent}
+              onShowToast={showToast}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'gantt' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar el cronograma Gantt"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <GanttFullView
+              projects={projects}
+              neonColor={localColors.neonColor || '#00f2fe'}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
+              onSaveTask={handleSaveCalendarEvent}
+              onSaveMilestone={handleSaveMilestone}
+              onOpenMilestonesConfig={handleOpenMilestonesConfig}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'contractors' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar el equipo de obra"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <ContractorsFullView
+              projects={projects}
+              neonColor={localColors.neonColor || '#00f2fe'}
+              selectedProjectId={selectedProjectId}
+              onSaveContractorPhoto={handleSaveContractorPhoto}
+              onShowToast={showToast}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'settings' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar la configuración"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <SettingsAppearanceView
+              currentLogos={logos}
+              localColors={localColors}
+              theme={theme}
+              projects={projects}
+              onToggleTheme={handleSetTheme}
+              onPreviewAppearance={handlePreviewAppearance}
+              onSaveAppearance={handleSaveAppearance}
+              onRestoreDefaults={handleRestoreDefaultAppearance}
+              onShowToast={showToast}
             />
           </ErrorBoundary>
         )}

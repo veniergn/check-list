@@ -173,6 +173,8 @@ export interface Project {
   logoUrl?: string; // Logo específico del proyecto inmobiliario
   developerLogoUrl?: string; // Logo de la empresa desarrolladora
   developerName?: string; // Nombre comercial de la empresa desarrolladora
+  coverImageUrl?: string; // Fotografía principal de portada de la obra
+  coverImagePosition?: { x: number; y: number; zoom: number }; // Encuadre / posición
   units: Unit[];
 }
 
@@ -190,18 +192,31 @@ export interface CustomLogos {
   banner: string;
   appBackground?: string;
   presentationBackground?: string;
+  sidebarLogo?: string;
+  sidebarLogoSize?: number;
+  sidebarLogoAlign?: 'left' | 'center';
+  sidebarShowText?: boolean;
+  appName?: string;
 }
 
 export interface LocalColors {
   appBackground: string;
   presentationBackground: string;
   neonColor?: string;
+  secondaryColor?: string;
+  cardBackground?: string;
+  sidebarBackground?: string;
+  headerTextColor?: string;
+  bodyTextColor?: string;
+  progressColor?: string;
   appBackgroundImage?: string;
   fontFamily?: string;
+  fontSize?: 'compact' | 'standard' | 'large';
+  visualDensity?: 'compact' | 'standard' | 'relaxed';
   isBoldText?: boolean;
 }
 
-export type ViewMode = 'dashboard' | 'units' | 'checklist';
+export type ViewMode = 'dashboard' | 'units' | 'checklist' | 'tasks' | 'calendar' | 'gantt' | 'contractors' | 'settings';
 export type StatusFilter = 'all' | 'completed' | 'in_progress' | 'pending';
 export type TaskFilter = 'all' | 'pending' | 'completed';
 export type AppTheme = 'theme-original' | 'theme-glass';
