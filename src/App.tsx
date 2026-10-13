@@ -2667,6 +2667,7 @@ export default function App() {
             onDeleteCalendarEvent={handleDeleteCalendarEvent}
             onToggleCalendarEvent={handleToggleCalendarEvent}
             onSaveProjectCover={handleSaveProjectCover}
+              onShowToast={showToast}
             onShowToast={showToast}
             onActiveProjectChange={handleActiveProjectChange}
             onOpenMonthlyReport={handleOpenMonthlyReport}

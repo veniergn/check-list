@@ -69,6 +69,7 @@ interface UnitsViewProps {
   onOpenCroquis?: (unitId?: string) => void;
   onOpenMonthlyReport?: (projectId: string) => void;
   onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
+  onShowToast?: (msg: string, icon?: string) => void;
 }
 
 export function UnitsView({
@@ -97,9 +98,12 @@ export function UnitsView({
   onDeleteTrade,
   onOpenCroquis,
   onOpenMonthlyReport,
-  onSaveProjectCover
+  onSaveProjectCover,
+  onShowToast
 }: UnitsViewProps) {
   const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
+  const coverImageSrc = project.coverImageUrl || project.developerLogoUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&auto=format&fit=crop&q=80';
+  const coverPos = project.coverImagePosition || { x: 50, y: 50, zoom: 100 };
   const [tradeFilter, setTradeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'unit' | 'common_area'>('all');
@@ -293,6 +297,54 @@ export function UnitsView({
           </div>
         </div>
       )}
+
+      {/* Banner de Portada de la Obra (Con acceso inmediato para cambiar imagen) */}
+      <div className="relative rounded-3xl overflow-hidden border border-[#29384C] bg-[#101D30] shadow-xl group">
+        <div className="relative h-44 sm:h-56 md:h-64 w-full overflow-hidden bg-[#081321]">
+          <img
+            src={coverImageSrc}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&auto=format&fit=crop&q=80';
+            }}
+            alt={`Portada de ${project.name}`}
+            style={{
+              objectPosition: `${coverPos.x}% ${coverPos.y}%`,
+              transform: `scale(${coverPos.zoom / 100})`,
+              transformOrigin: `${coverPos.x}% ${coverPos.y}%`
+            }}
+            className="w-full h-full object-cover filter brightness-[0.88] transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#101D30] via-black/35 to-transparent pointer-events-none" />
+
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCoverModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#101D30]/90 hover:bg-blue-600 border border-[#29384C] hover:border-blue-400 text-white font-bold text-xs flex items-center gap-2 shadow-xl backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+              title="Cambiar fotografía de presentación de la obra"
+            >
+              <Camera className="w-4 h-4 text-cyan-400" />
+              <span>Cambiar Portada</span>
+            </button>
+          </div>
+
+          <div className="absolute bottom-3 left-4 sm:bottom-4 sm:left-6 z-10 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-cyan-300 bg-black/50 px-2 py-0.5 rounded-md border border-cyan-500/20 backdrop-blur-sm">
+                Obra Activa
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
+              {project.name}
+            </h1>
+            <p className="text-xs text-slate-300 flex items-center gap-1.5 drop-shadow">
+              <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>{project.location || 'Calle Agustín Alvarez 315'}</span>
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Executive Project Summary Card */}
       <div
@@ -1277,6 +1329,19 @@ export function UnitsView({
             )}
           </div>
         </div>
+      )}
+      {/* Modal para Editar Foto de Portada de la Obra */}
+      {isCoverModalOpen && (
+        <ProjectCoverModal
+          isOpen={isCoverModalOpen}
+          project={project}
+          onClose={() => setIsCoverModalOpen(false)}
+          onSaveCover={(pid, coverUrl, pos) => {
+            onSaveProjectCover?.(pid, coverUrl, pos);
+            setIsCoverModalOpen(false);
+          }}
+          onShowToast={onShowToast}
+        />
       )}
     </section>
   );
