@@ -75,6 +75,28 @@ export function ProjectCoverModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      try {
+        setIsProcessing(true);
+        onShowToast?.('Optimizando fotografía...', 'Camera');
+        const compressed = await compressImageFile(file, 1600, 0.85);
+        setPreviewUrl(compressed);
+        setPosX(50);
+        setPosY(50);
+        setZoom(100);
+        onShowToast?.('Fotografía cargada para encuadre', 'Check');
+      } catch (err) {
+        console.error('Error cargando imagen de portada:', err);
+        onShowToast?.('Error al procesar la imagen', 'AlertCircle');
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,7 +170,13 @@ export function ProjectCoverModal({
             <span className="text-[10px]">Relación 16:9 • Proporción adaptativa</span>
           </div>
 
-          <div className="w-full h-56 sm:h-64 rounded-2xl overflow-hidden border-2 border-[#29384C] relative bg-[#081321] shadow-inner">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className="w-full h-56 sm:h-64 rounded-2xl overflow-hidden border-2 border-[#29384C] relative bg-[#081321] shadow-inner cursor-pointer group"
+            title="Haz clic o arrastra un archivo aquí para elegir imagen"
+          >
             <div
               className="w-full h-full bg-cover bg-no-repeat transition-all"
               style={{
@@ -159,6 +187,14 @@ export function ProjectCoverModal({
               }}
             />
 
+            {/* Hover overlay explaining click to upload */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-200 pointer-events-none">
+              <div className="px-4 py-2 rounded-xl bg-blue-600/90 text-white font-bold text-xs flex items-center gap-2 shadow-2xl backdrop-blur-sm border border-blue-400">
+                <Upload className="w-4 h-4" />
+                <span>Haz clic para cargar imagen o arrastra un archivo aquí</span>
+              </div>
+            </div>
+
             {/* Subtle architectural overlay badge */}
             <div className="absolute bottom-3 left-3 bg-[#101D30]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#29384C] flex items-center gap-2 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -168,7 +204,7 @@ export function ProjectCoverModal({
         </div>
 
         {/* Upload Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -186,21 +222,29 @@ export function ProjectCoverModal({
           />
 
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isProcessing}
-            className="p-3 rounded-2xl bg-[#17263B] hover:bg-[#1f324d] border border-[#29384C] hover:border-blue-500/50 flex items-center justify-center gap-2 text-xs font-bold transition-all active:scale-95 text-[#F8FAFC]"
+            className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-600/30 to-cyan-500/20 hover:from-blue-600/50 hover:to-cyan-500/40 border border-cyan-400/50 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 text-[#F8FAFC] shadow-lg cursor-pointer"
           >
-            <Upload className="w-4 h-4 text-cyan-400" />
-            <span>Subir desde dispositivo</span>
+            <div className="flex items-center gap-2 font-bold text-xs text-cyan-300">
+              <Upload className="w-4 h-4" />
+              <span>Elegir Imagen de mi Dispositivo</span>
+            </div>
+            <span className="text-[10px] text-slate-400">Archivos JPG, PNG o WebP de tu PC o celular</span>
           </button>
 
           <button
+            type="button"
             onClick={() => cameraInputRef.current?.click()}
             disabled={isProcessing}
-            className="p-3 rounded-2xl bg-[#17263B] hover:bg-[#1f324d] border border-[#29384C] hover:border-blue-500/50 flex items-center justify-center gap-2 text-xs font-bold transition-all active:scale-95 text-[#F8FAFC]"
+            className="p-3.5 rounded-2xl bg-[#17263B] hover:bg-[#1f324d] border border-[#29384C] hover:border-emerald-500/50 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 text-[#F8FAFC] cursor-pointer"
           >
-            <Camera className="w-4 h-4 text-emerald-400" />
-            <span>Tomar foto con cámara</span>
+            <div className="flex items-center gap-2 font-bold text-xs text-emerald-400">
+              <Camera className="w-4 h-4" />
+              <span>Tomar Foto con la Cámara</span>
+            </div>
+            <span className="text-[10px] text-slate-400">Capturar foto directa en la obra</span>
           </button>
         </div>
 
