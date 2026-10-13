@@ -439,13 +439,12 @@ body.theme-original:not(.has-custom-bg) {
   box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
 }
 
-/* Header Superior Glassmorphism Translúcido */
+/* Header Superior Sincronizado con Fondo de Barra Lateral */
 header,
-.theme-original header {
-  background: rgba(15, 23, 42, 0.58) !important;
-  backdrop-filter: blur(24px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+.theme-original header,
+.theme-glass header {
+  background-color: var(--sidebar-bg, #081321) !important;
+  border-bottom: 1px solid #29384C !important;
 }
 
 /* Dock de Navegación Inferior Flotante Translúcido (Glass Dock) */
@@ -579,30 +578,10 @@ body.has-custom-bg {
   background-color: rgba(226, 232, 240, 0.8) !important;
 }
 
-/* Barra de Navegación Superior (Header) Glassmorphism */
+/* Barra de Navegación Superior (Header) - Sincronizada con paleta naval oscura */
 .theme-glass header {
-  background: rgba(255, 255, 255, 0.84) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03) !important;
-}
-
-.theme-glass header h1,
-.theme-glass header .text-white {
-  color: #0f172a !important;
-}
-
-.theme-glass header .bg-slate-800\/80,
-.theme-glass header .bg-slate-800 {
-  background-color: rgba(241, 245, 249, 0.85) !important;
-  border: 1px solid rgba(226, 232, 240, 0.9) !important;
-  color: #334155 !important;
-}
-
-.theme-glass header .text-slate-300,
-.theme-glass header .text-slate-400 {
-  color: #475569 !important;
+  background-color: var(--sidebar-bg, #081321) !important;
+  border-bottom: 1px solid #29384C !important;
 }
 
 /* Breadcrumb Subheader */

@@ -350,6 +350,7 @@ export default function App() {
           presentationBackground: parsed.presentationBackground || '',
           neonColor: parsed.neonColor || '#00f2fe',
           appBackgroundImage: parsed.appBackgroundImage || '',
+          sidebarBackground: parsed.sidebarBackground || '#081321',
           fontFamily: parsed.fontFamily || "'Inter', sans-serif",
           isBoldText: Boolean(parsed.isBoldText)
         };
@@ -379,6 +380,7 @@ export default function App() {
       presentationBackground: '',
       neonColor: '#00f2fe',
       appBackgroundImage: '',
+      sidebarBackground: '#081321',
       fontFamily: "'Inter', sans-serif",
       isBoldText: false
     };
@@ -417,6 +419,9 @@ export default function App() {
       document.documentElement.style.backgroundImage = '';
       document.body.style.backgroundImage = '';
     }
+
+    const activeSidebarBg = localColors.sidebarBackground || '#081321';
+    document.documentElement.style.setProperty('--sidebar-bg', activeSidebarBg);
 
     const activeNeon = localColors.neonColor || '#00f2fe';
     document.documentElement.style.setProperty('--neon-color', activeNeon);
@@ -2683,6 +2688,7 @@ export default function App() {
         currentView={currentView}
         projects={projects}
         selectedProjectId={selectedProjectId}
+        sidebarBackground={localColors.sidebarBackground || '#081321'}
         onSelectProject={(id) => {
           handleSelectProject(id);
           setIsMobileSidebarOpen(false);
@@ -2720,6 +2726,7 @@ export default function App() {
           projects={projects}
           selectedProject={selectedProject}
           selectedUnit={selectedUnit}
+          sidebarBackground={localColors.sidebarBackground || '#081321'}
           onSelectProject={handleSelectProject}
           onBack={handleBack}
           onOpenReportModal={handleOpenReportModal}

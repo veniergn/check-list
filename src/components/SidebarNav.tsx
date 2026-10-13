@@ -23,6 +23,7 @@ interface SidebarNavProps {
   currentView: ViewMode;
   projects?: Project[];
   selectedProjectId?: string | null;
+  sidebarBackground?: string;
   onSelectProject?: (projectId: string) => void;
   activeNavTab?: string;
   onSelectNav: (tab: string) => void;
@@ -46,6 +47,7 @@ export function SidebarNav({
   currentView,
   projects = [],
   selectedProjectId,
+  sidebarBackground = '#081321',
   onSelectProject,
   activeNavTab = 'inicio',
   onSelectNav,
@@ -104,6 +106,7 @@ export function SidebarNav({
 
       {/* Sidebar / Mobile Slide-over Drawer */}
       <aside
+        style={{ backgroundColor: sidebarBackground || '#081321' }}
         className={`fixed top-0 bottom-0 left-0 bg-[#081321] border-r border-[#29384C]/80 flex flex-col justify-between transition-transform duration-300 select-none z-50 ${
           isMobileOpen
             ? 'translate-x-0 w-72 max-w-[85vw] shadow-2xl'

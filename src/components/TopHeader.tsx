@@ -20,6 +20,7 @@ interface TopHeaderProps {
   projects?: Project[];
   selectedProject: Project | null;
   selectedUnit: Unit | null;
+  sidebarBackground?: string;
   onSelectProject?: (projectId: string) => void;
   onBack: () => void;
   onOpenReportModal: (type?: 'auto' | 'project' | 'unit') => void;
@@ -34,6 +35,7 @@ export function TopHeader({
   projects = [],
   selectedProject,
   selectedUnit,
+  sidebarBackground = '#081321',
   onSelectProject,
   onBack,
   onOpenReportModal,
@@ -73,7 +75,10 @@ export function TopHeader({
   }, []);
 
   return (
-    <header className="h-16 px-4 sm:px-8 border-b border-[#29384C]/80 bg-[#081321]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between select-none">
+    <header
+      style={{ backgroundColor: sidebarBackground || '#081321' }}
+      className="h-16 px-4 sm:px-8 border-b border-[#29384C] bg-[#081321] sticky top-0 z-30 flex items-center justify-between select-none"
+    >
       {/* Left side: Mobile menu toggle + Context Breadcrumb + Project Switcher Dropdown */}
       <div className="flex items-center gap-3">
         {/* Mobile menu hamburger */}
