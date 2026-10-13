@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Building2, DoorOpen, Image as ImageIcon, FileText, Download, ShieldCheck, PenTool } from 'lucide-react';
 import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto } from './types';
+import { getProjectContractors } from './utils/pmContractors';
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
 import { compressImageFile, calculateUnitProgress, hexToRgba } from './utils/calculations';
 import { Header } from './components/Header';
@@ -611,8 +612,9 @@ export default function App() {
       } else {
         showToast('Selecciona una obra con planos');
       }
-    } else if (tabId === 'fotos') {
-      cameraInputRef.current?.click();
+    } else if (tabId === 'croquis' || tabId === 'fotos') {
+      setCroquisModalTargetUnitId(selectedUnitId || undefined);
+      setIsCroquisModalOpen(true);
     } else if (tabId === 'materiales') {
       showToast('Módulo de gestión y solicitud de materiales');
     } else if (tabId === 'equipo') {
@@ -860,6 +862,7 @@ export default function App() {
 
   // Hidden native camera input ref
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const directorPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // Cloud Sync state (Supabase)
   const [cloudStatus, setCloudStatus] = useState<CloudSyncStatus>('syncing');
@@ -2014,6 +2017,8 @@ export default function App() {
       expedienteAysam: payload.expedienteAysam,
       customServices: payload.customServices || [],
       floorsConfig: payload.floorsConfig,
+      projectType: payload.projectType || 'building',
+      houseDetails: payload.houseDetails,
       units: newUnits
     };
 
@@ -2384,6 +2389,77 @@ export default function App() {
     showToast('Imagen de portada de la obra actualizada en Supabase', 'Check');
   };
 
+  // Add new contractor to project with cloud sync
+  const handleAddContractor = (projectId: string, newContractor: ContractorProfile) => {
+    updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const current = getProjectContractors(p);
+        const updated = [...current, newContractor];
+        return { ...p, contractors: updated };
+      })
+    );
+    try {
+      const proj = projects.find(p => p.id === projectId);
+      if (proj) {
+        const current = getProjectContractors(proj);
+        localStorage.setItem(`pm_contractors_${projectId}`, JSON.stringify([...current, newContractor]));
+      }
+    } catch {}
+    showToast(`Trabajador "${newContractor.name}" agregado con éxito`, 'Check');
+  };
+
+  // Delete contractor from project with cloud sync
+  const handleDeleteContractor = (projectId: string, contractorId: string) => {
+    updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const current = getProjectContractors(p);
+        const updated = current.filter(c => c.id !== contractorId);
+        return { ...p, contractors: updated };
+      })
+    );
+    try {
+      const proj = projects.find(p => p.id === projectId);
+      if (proj) {
+        const current = getProjectContractors(proj);
+        localStorage.setItem(`pm_contractors_${projectId}`, JSON.stringify(current.filter(c => c.id !== contractorId)));
+      }
+    } catch {}
+    showToast('Trabajador eliminado del equipo', 'Trash2');
+  };
+
+  // Save Director Technical Profile Photo with dual cloud sync
+  const handleSaveDirectorPhoto = (avatarUrl: string) => {
+    const updatedLogos: CustomLogos = {
+      ...logos,
+      directorAvatarUrl: avatarUrl
+    };
+    setLogos(updatedLogos);
+    try {
+      localStorage.setItem(STORAGE_KEY_LOGOS, JSON.stringify(updatedLogos));
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+    saveLogosToCloud(updatedLogos);
+    showToast('Foto de perfil de Arq. Venier Gastón actualizada con éxito', 'Check');
+  };
+
+  // Upload handler for director profile photo
+  const handleDirectorPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressedDataUrl = await compressImageFile(file, 400, 0.85);
+      handleSaveDirectorPhoto(compressedDataUrl);
+    } catch (err) {
+      console.error('Error al subir foto del director:', err);
+      showToast('Error al procesar la imagen', 'AlertCircle');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
   // Save Worker / Contractor Photo ONLY (Section 8)
   const handleSaveContractorPhoto = (projectId: string, contractorId: string, avatarUrl: string) => {
     updateProjectsAndSync(prev =>
@@ -2594,25 +2670,39 @@ export default function App() {
         onChange={handlePhotoCaptured}
         className="hidden"
       />
+      <input
+        ref={directorPhotoInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleDirectorPhotoUpload}
+        className="hidden"
+      />
 
-      {/* Left Sidebar Navigation (Matching Reference Screenshot) */}
+      {/* Left Sidebar Navigation (Responsive Drawer on Mobile, Docked on Desktop) */}
       <SidebarNav
         currentView={currentView}
         projects={projects}
         selectedProjectId={selectedProjectId}
-        onSelectProject={handleSelectProject}
+        onSelectProject={(id) => {
+          handleSelectProject(id);
+          setIsMobileSidebarOpen(false);
+        }}
         activeNavTab={activeNavTab}
         onSelectNav={handleSelectNav}
         onOpenSettings={() => {
           setActiveNavTab('configuracion');
           setCurrentView('settings');
+          setIsMobileSidebarOpen(false);
           window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        directorName={selectedProject?.director || 'Arq. Venier Gastón'}
-        directorRole="Director Técnico"
-        avatarUrl="/avatar_venier.png"
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onEditDirectorPhoto={() => directorPhotoInputRef.current?.click()}
+        directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
+        directorRole={logos.directorRole || 'Director Técnico'}
+        avatarUrl={logos.directorAvatarUrl || '/avatar_venier.png'}
         customLogoUrl={logos.sidebarLogo}
         logoSize={logos.sidebarLogoSize}
         logoAlign={logos.sidebarLogoAlign}
@@ -2635,7 +2725,7 @@ export default function App() {
           onOpenReportModal={handleOpenReportModal}
           cloudStatus={cloudStatus}
           onOpenCloudSetup={() => setIsCloudSetupModalOpen(true)}
-          onToggleMobileSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
           isSidebarCollapsed={isSidebarCollapsed}
         />
 
@@ -2814,6 +2904,8 @@ export default function App() {
               neonColor={localColors.neonColor || '#00f2fe'}
               selectedProjectId={selectedProjectId}
               onSaveContractorPhoto={handleSaveContractorPhoto}
+              onAddContractor={handleAddContractor}
+              onDeleteContractor={handleDeleteContractor}
               onShowToast={showToast}
             />
           </ErrorBoundary>

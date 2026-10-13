@@ -175,6 +175,15 @@ export interface Project {
   developerName?: string; // Nombre comercial de la empresa desarrolladora
   coverImageUrl?: string; // Fotografía principal de portada de la obra
   coverImagePosition?: { x: number; y: number; zoom: number }; // Encuadre / posición
+  projectType?: 'building' | 'house'; // 'building' (edificio) o 'house' (casa unifamiliar)
+  houseDetails?: {
+    bedrooms?: number;
+    bathrooms?: number;
+    toilettes?: number;
+    garageCars?: number;
+    levels?: number;
+    totalArea?: string;
+  };
   units: Unit[];
 }
 
@@ -197,6 +206,9 @@ export interface CustomLogos {
   sidebarLogoAlign?: 'left' | 'center';
   sidebarShowText?: boolean;
   appName?: string;
+  directorAvatarUrl?: string; // Foto de perfil del profesional a cargo
+  directorName?: string;
+  directorRole?: string;
 }
 
 export interface LocalColors {

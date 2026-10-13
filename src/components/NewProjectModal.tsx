@@ -13,7 +13,12 @@ import {
   Building,
   Zap,
   Droplets,
-  FileCheck
+  FileCheck,
+  Home,
+  Bed,
+  Bath,
+  Car,
+  Ruler
 } from 'lucide-react';
 import { FloorConfig, ProjectCustomService } from '../types';
 
@@ -38,6 +43,15 @@ export interface NewProjectPayload {
   startDate?: string;
   estimatedEndDate?: string;
   floorsConfig?: FloorConfig[];
+  projectType?: 'building' | 'house';
+  houseDetails?: {
+    bedrooms?: number;
+    bathrooms?: number;
+    toilettes?: number;
+    garageCars?: number;
+    levels?: number;
+    totalArea?: string;
+  };
   units: GeneratedUnitConfig[];
 }
 
@@ -64,6 +78,17 @@ const PRESET_AMENITIES = [
   { id: 'bauleras', label: 'Bauleras / Depósito', icon: '📦' }
 ];
 
+const PRESET_HOUSE_ROOMS = [
+  { id: 'living', label: 'Living - Comedor', icon: '🛋️', floor: 1 },
+  { id: 'cocina', label: 'Cocina / Comedor Diario', icon: '🍳', floor: 1 },
+  { id: 'galeria', label: 'Galería / Quincho con Parrilla', icon: '🍖', floor: 1 },
+  { id: 'lavadero', label: 'Lavadero / Sala de Máquinas', icon: '🧺', floor: 1 },
+  { id: 'jardin', label: 'Jardín / Piscina / Exterior', icon: '🏊', floor: 1 },
+  { id: 'estudio', label: 'Estudio / Home Office', icon: '💼', floor: 1 },
+  { id: 'deposito', label: 'Depósito / Sala Técnica', icon: '📦', floor: 1 },
+  { id: 'playroom', label: 'Playroom / Estar Familiar', icon: '🎮', floor: 2 },
+];
+
 export function NewProjectModal({
   isOpen,
   onClose,
@@ -71,7 +96,19 @@ export function NewProjectModal({
 }: NewProjectModalProps) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
+  const [projectType, setProjectType] = useState<'building' | 'house'>('building');
   const [mode, setMode] = useState<'floors' | 'manual'>('floors');
+
+  // Casa Unifamiliar configuration state
+  const [houseBedrooms, setHouseBedrooms] = useState<number>(3);
+  const [houseBathrooms, setHouseBathrooms] = useState<number>(2);
+  const [houseToilettes, setHouseToilettes] = useState<number>(1);
+  const [houseGarageCars, setHouseGarageCars] = useState<number>(2);
+  const [houseLevels, setHouseLevels] = useState<number>(1);
+  const [houseTotalArea, setHouseTotalArea] = useState<string>('220');
+  const [selectedHouseRooms, setSelectedHouseRooms] = useState<string[]>([
+    'living', 'cocina', 'galeria', 'lavadero', 'jardin'
+  ]);
 
   // Floors configuration
   const [floorsCount, setFloorsCount] = useState<number>(3);
@@ -200,6 +237,102 @@ export function NewProjectModal({
   // Generate complete units payload
   const generateUnits = (): GeneratedUnitConfig[] => {
     const units: GeneratedUnitConfig[] = [];
+
+    // --- MODO CASA UNIFAMILIAR ---
+    if (projectType === 'house') {
+      const isMultiLevel = houseLevels > 1;
+
+      // 1. Ambientes sociales y de servicio
+      selectedHouseRooms.forEach(roomId => {
+        const room = PRESET_HOUSE_ROOMS.find(r => r.id === roomId);
+        if (room) {
+          const floorLabel = isMultiLevel ? (room.floor === 2 ? 'Planta Alta (PA)' : 'Planta Baja (PB)') : 'Planta Única';
+          const floorNumber = isMultiLevel ? (room.floor === 2 ? 1 : 0) : 0;
+          units.push({
+            name: `${room.icon} ${room.label}`,
+            type: 'unit',
+            floorNumber,
+            floorLabel,
+            category: 'Ambiente'
+          });
+        }
+      });
+
+      // 2. Dormitorios
+      const bedFloorLabel = isMultiLevel ? 'Planta Alta (PA)' : 'Planta Única';
+      const bedFloorNumber = isMultiLevel ? 1 : 0;
+      for (let b = 1; b <= houseBedrooms; b++) {
+        const bedName = b === 1 ? '🛏️ Dormitorio Principal (Suite)' : `🛏️ Dormitorio ${b}`;
+        units.push({
+          name: bedName,
+          type: 'unit',
+          floorNumber: bedFloorNumber,
+          floorLabel: bedFloorLabel,
+          category: 'Dormitorio'
+        });
+      }
+
+      // 3. Baños completos
+      for (let ba = 1; ba <= houseBathrooms; ba++) {
+        const bathName = ba === 1 ? '🚿 Baño Principal' : `🚿 Baño Completo ${ba}`;
+        units.push({
+          name: bathName,
+          type: 'unit',
+          floorNumber: bedFloorNumber,
+          floorLabel: bedFloorLabel,
+          category: 'Baño'
+        });
+      }
+
+      // 4. Toilettes de visita
+      for (let t = 1; t <= houseToilettes; t++) {
+        const toiletName = houseToilettes === 1 ? '🚽 Toilette de Visitas' : `🚽 Toilette ${t}`;
+        units.push({
+          name: toiletName,
+          type: 'unit',
+          floorNumber: 0,
+          floorLabel: isMultiLevel ? 'Planta Baja (PB)' : 'Planta Única',
+          category: 'Toilette'
+        });
+      }
+
+      // 5. Cochera
+      if (houseGarageCars > 0) {
+        units.push({
+          name: `🚗 Cochera (${houseGarageCars} ${houseGarageCars === 1 ? 'auto' : 'autos'})`,
+          type: 'unit',
+          floorNumber: 0,
+          floorLabel: isMultiLevel ? 'Planta Baja (PB)' : 'Planta Única',
+          category: 'Cochera'
+        });
+      }
+
+      // 6. Amenities o espacios comunes adicionales
+      selectedAmenities.forEach(amenityId => {
+        const item = PRESET_AMENITIES.find(a => a.id === amenityId);
+        if (item) {
+          units.push({
+            name: `${item.icon} ${item.label}`,
+            type: 'common_area',
+            floorLabel: isMultiLevel ? 'Planta Baja (PB)' : 'Exterior',
+            category: 'Espacio Común'
+          });
+        }
+      });
+
+      customAmenities.forEach(nameStr => {
+        units.push({
+          name: `🏡 ${nameStr}`,
+          type: 'unit',
+          floorLabel: isMultiLevel ? 'Planta Baja (PB)' : 'Planta Única',
+          category: 'Ambiente'
+        });
+      });
+
+      return units;
+    }
+
+    // --- MODO EDIFICIO DE DEPARTAMENTOS ---
     const pref = prefix.trim() ? `${prefix.trim()} ` : '';
 
     if (mode === 'floors') {
@@ -275,7 +408,16 @@ export function NewProjectModal({
       expedienteEdemsa: expedienteEdemsa.trim() || undefined,
       expedienteAysam: expedienteAysam.trim() || undefined,
       customServices: customServices.length > 0 ? customServices : undefined,
-      floorsConfig: mode === 'floors' ? floorBreakdown : undefined,
+      floorsConfig: projectType === 'building' && mode === 'floors' ? floorBreakdown : undefined,
+      projectType,
+      houseDetails: projectType === 'house' ? {
+        bedrooms: houseBedrooms,
+        bathrooms: houseBathrooms,
+        toilettes: houseToilettes,
+        garageCars: houseGarageCars,
+        levels: houseLevels,
+        totalArea: houseTotalArea.trim() ? `${houseTotalArea.trim()} m²` : undefined
+      } : undefined,
       units
     });
 
@@ -309,16 +451,50 @@ export function NewProjectModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          {/* Selector de Tipo de Proyecto: Edificio vs Casa Unifamiliar */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Tipo de Obra
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-[#17263B] p-1 rounded-xl border border-slate-200 dark:border-[#29384C]">
+              <button
+                type="button"
+                onClick={() => setProjectType('building')}
+                className={`py-2.5 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  projectType === 'building'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-white'
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                <span>Edificio / Complejo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setProjectType('house')}
+                className={`py-2.5 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  projectType === 'house'
+                    ? 'bg-emerald-600 text-white shadow-md font-black'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-white'
+                }`}
+              >
+                <Home className="w-4 h-4" />
+                <span>Casa Unifamiliar</span>
+              </button>
+            </div>
+          </div>
+
           {/* Obra y Ubicación */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                Nombre del Edificio / Obra *
+                {projectType === 'house' ? 'Nombre de la Vivienda / Casa *' : 'Nombre del Edificio / Obra *'}
               </label>
               <input
                 type="text"
                 required
-                placeholder="Ej: Torre Los Ceibos II"
+                placeholder={projectType === "house" ? "Ej: Casa Familia Pérez • Chacras" : "Ej: Torre Los Ceibos II"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-[#29384C] bg-slate-50 dark:bg-[#17263B] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold"
@@ -339,14 +515,213 @@ export function NewProjectModal({
             </div>
           </div>
 
-          {/* Mode Selector */}
-          <div className="pt-1">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-              <span>Estructura de Unidades y Pisos</span>
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-black uppercase">
-                {totalDeptos} Deptos + {totalCommon} Comunes = {previewUnits.length} Total
-              </span>
-            </label>
+          {/* SI ES CASA UNIFAMILIAR: Configuración de Ambientes, Dormitorios, Baños, Cochera */}
+          {projectType === 'house' ? (
+            <div className="bg-slate-50 dark:bg-[#101D30] p-4 rounded-2xl border border-emerald-500/30 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#29384C] pb-2">
+                <span className="text-xs font-black uppercase text-emerald-500 flex items-center gap-1.5">
+                  <Home className="w-4 h-4" />
+                  <span>Configuración de la Casa Unifamiliar</span>
+                </span>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  {previewUnits.length} espacios de inspección
+                </span>
+              </div>
+
+              {/* Niveles / Plantas y Superficie */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Niveles / Plantas de la Vivienda
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[1, 2, 3].map(lvl => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setHouseLevels(lvl)}
+                        className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                          houseLevels === lvl
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : 'bg-white dark:bg-[#17263B] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#29384C]'
+                        }`}
+                      >
+                        {lvl === 1 ? '1 Planta (PB)' : lvl === 2 ? '2 Plantas (PB+PA)' : '3 Niveles'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Ruler className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Superficie Total Estimada</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Ej: 240"
+                      value={houseTotalArea}
+                      onChange={(e) => setHouseTotalArea(e.target.value)}
+                      className="w-full bg-white dark:bg-[#17263B] border border-slate-300 dark:border-[#29384C] rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-bold"
+                    />
+                    <span className="absolute right-3 top-2 text-xs text-slate-400 font-bold">m²</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contadores: Dormitorios, Baños, Toilettes, Cocheras */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                {/* Dormitorios */}
+                <div className="bg-white dark:bg-[#17263B] p-2.5 rounded-xl border border-slate-200 dark:border-[#29384C] text-center">
+                  <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1 mb-1">
+                    <Bed className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Dormitorios</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHouseBedrooms(Math.max(1, houseBedrooms - 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="text-base font-black text-slate-900 dark:text-white font-mono w-6">
+                      {houseBedrooms}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHouseBedrooms(Math.min(8, houseBedrooms + 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Baños Completos */}
+                <div className="bg-white dark:bg-[#17263B] p-2.5 rounded-xl border border-slate-200 dark:border-[#29384C] text-center">
+                  <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1 mb-1">
+                    <Bath className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Baños Compl.</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHouseBathrooms(Math.max(1, houseBathrooms - 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="text-base font-black text-slate-900 dark:text-white font-mono w-6">
+                      {houseBathrooms}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHouseBathrooms(Math.min(6, houseBathrooms + 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Toilettes */}
+                <div className="bg-white dark:bg-[#17263B] p-2.5 rounded-xl border border-slate-200 dark:border-[#29384C] text-center">
+                  <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1 mb-1">
+                    <span>🚽 Toilettes</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHouseToilettes(Math.max(0, houseToilettes - 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="text-base font-black text-slate-900 dark:text-white font-mono w-6">
+                      {houseToilettes}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHouseToilettes(Math.min(4, houseToilettes + 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cocheras */}
+                <div className="bg-white dark:bg-[#17263B] p-2.5 rounded-xl border border-slate-200 dark:border-[#29384C] text-center">
+                  <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1 mb-1">
+                    <Car className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Cocheras</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHouseGarageCars(Math.max(0, houseGarageCars - 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="text-base font-black text-slate-900 dark:text-white font-mono w-6">
+                      {houseGarageCars}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHouseGarageCars(Math.min(6, houseGarageCars + 1))}
+                      className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#101D30] font-bold text-sm text-slate-700 dark:text-white cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ambientes adicionales de la casa */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Ambientes y Espacios de la Casa a Inspeccionar:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_HOUSE_ROOMS.map(room => {
+                    const isSelected = selectedHouseRooms.includes(room.id);
+                    return (
+                      <button
+                        key={room.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedHouseRooms(prev =>
+                            prev.includes(room.id) ? prev.filter(r => r !== room.id) : [...prev, room.id]
+                          );
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-white dark:bg-[#17263B] text-slate-600 dark:text-slate-300 border-slate-300 dark:border-[#29384C] hover:border-slate-400'
+                        }`}
+                      >
+                        <span>{room.icon}</span>
+                        <span>{room.label}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Mode Selector */}
+              <div className="pt-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Estructura de Unidades y Pisos</span>
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-black uppercase">
+                    {totalDeptos} Deptos + {totalCommon} Comunes = {previewUnits.length} Total
+                  </span>
+                </label>
 
             <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-[#17263B] p-1 rounded-xl">
               <button
@@ -515,6 +890,9 @@ export function NewProjectModal({
                 className="w-24 px-3 py-2 rounded-xl border border-slate-300 dark:border-[#29384C] focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white dark:bg-[#17263B] text-slate-900 dark:text-white font-bold text-center"
               />
             </div>
+          )}
+
+          </>
           )}
 
           {/* Espacios Comunes & Amenities */}

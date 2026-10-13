@@ -216,8 +216,12 @@ export function DashboardView({
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-300 border border-blue-500/30">
-                      Obra #{idx + 1}
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                      p.projectType === 'house'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        : 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                    }`}>
+                      {p.projectType === 'house' ? '🏡 Casa Unifamiliar' : `Obra #${idx + 1}`}
                     </span>
 
                     <div className="flex items-center gap-1.5">
@@ -250,9 +254,19 @@ export function DashboardView({
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-[#94A3B8]">
-                    <span>Unidades ({unitsTotal})</span>
+                    <span>{p.projectType === 'house' ? 'Ambientes' : 'Unidades'} ({unitsTotal})</span>
                     <span className="font-bold text-white">{completedUnits} listas</span>
                   </div>
+                  {p.projectType === 'house' && p.houseDetails && (
+                    <div className="text-[10px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/20 truncate">
+                      {[
+                        p.houseDetails.bedrooms ? `${p.houseDetails.bedrooms} Dorm` : '',
+                        p.houseDetails.bathrooms ? `${p.houseDetails.bathrooms} Baños` : '',
+                        p.houseDetails.garageCars ? `${p.houseDetails.garageCars} Autos` : '',
+                        p.houseDetails.totalArea || ''
+                      ].filter(Boolean).join(' • ')}
+                    </div>
+                  )}
                   <div className="w-full h-2 rounded-full bg-[#101D30] overflow-hidden border border-[#29384C]">
                     <div
                       className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"

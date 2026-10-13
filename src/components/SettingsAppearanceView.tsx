@@ -88,7 +88,10 @@ export function SettingsAppearanceView({
     sidebarLogoSize: currentLogos.sidebarLogoSize || 36,
     sidebarLogoAlign: currentLogos.sidebarLogoAlign || 'left',
     sidebarShowText: currentLogos.sidebarShowText ?? true,
-    appName: currentLogos.appName || 'CONTROL DE AVANCE'
+    appName: currentLogos.appName || 'CONTROL DE AVANCE',
+    directorAvatarUrl: currentLogos.directorAvatarUrl || '',
+    directorName: currentLogos.directorName || 'Arq. Venier Gastón',
+    directorRole: currentLogos.directorRole || 'Director Técnico'
   });
 
   // Draft state for Colors & Theme
@@ -111,6 +114,24 @@ export function SettingsAppearanceView({
   const [draftTheme, setDraftTheme] = useState<AppTheme>(theme);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const directorAvatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDirectorAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      onShowToast?.('Cargando foto de perfil...', 'Sparkles');
+      const compressed = await compressImageFile(file, 400, 0.85);
+      setDraftLogos(prev => ({ ...prev, directorAvatarUrl: compressed }));
+      onShowToast?.('Foto de perfil cargada en vista previa', 'Check');
+    } catch (err) {
+      console.error('Error cargando foto:', err);
+      onShowToast?.('Error al procesar la imagen', 'AlertCircle');
+    } finally {
+      e.target.value = '';
+    }
+  };
 
   // Handle Logo Upload
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -409,6 +430,96 @@ export function SettingsAppearanceView({
                 className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-blue-500"
               />
             </div>
+
+            {/* Perfil del Profesional a Cargo (Director Técnico) */}
+            <div className="pt-4 border-t border-[#29384C] space-y-4">
+              <div>
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-blue-400" />
+                  <span>Perfil del Profesional a Cargo</span>
+                </h3>
+                <p className="text-xs text-[#94A3B8]">
+                  Fotografía y datos personales visibles en el pie del menú lateral
+                </p>
+              </div>
+
+              {/* Avatar Uploader & Preview */}
+              <div className="flex items-center gap-4 bg-[#081321] p-3.5 rounded-2xl border border-[#29384C]">
+                <div className="relative group/avatar shrink-0">
+                  <img
+                    src={draftLogos.directorAvatarUrl || '/avatar_venier.png'}
+                    alt="Perfil Profesional"
+                    className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-500/50 shadow-md"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=Gaston+Venier&background=0284c7&color=fff';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => directorAvatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center border-2 border-[#081321] shadow-md transition-transform hover:scale-110 cursor-pointer"
+                    title="Subir fotografía"
+                  >
+                    <Camera className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={directorAvatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleDirectorAvatarUpload}
+                    className="hidden"
+                  />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => directorAvatarInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Subir Foto</span>
+                    </button>
+                    {draftLogos.directorAvatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setDraftLogos(prev => ({ ...prev, directorAvatarUrl: '' }))}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#17263B] text-rose-400 hover:text-rose-300 font-bold text-xs flex items-center gap-1 border border-[#29384C] cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Restaurar Predeterminada</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[#94A3B8]">
+                    Formatos JPG o PNG. Se comprime y optimiza automáticamente.
+                  </p>
+                </div>
+              </div>
+
+              {/* Name & Role Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#94A3B8]">Nombre del Profesional</label>
+                  <input
+                    type="text"
+                    value={draftLogos.directorName || 'Arq. Venier Gastón'}
+                    onChange={(e) => setDraftLogos(prev => ({ ...prev, directorName: e.target.value }))}
+                    className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-500 font-bold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#94A3B8]">Cargo o Especialidad</label>
+                  <input
+                    type="text"
+                    value={draftLogos.directorRole || 'Director Técnico'}
+                    onChange={(e) => setDraftLogos(prev => ({ ...prev, directorRole: e.target.value }))}
+                    className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Live Miniature Sidebar Preview */}
@@ -463,6 +574,26 @@ export function SettingsAppearanceView({
                 <div className="p-2 rounded-xl text-[#94A3B8] text-xs font-medium flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded bg-slate-600" />
                   <span>Tareas</span>
+                </div>
+              </div>
+
+              {/* Mini User Profile in Sidebar Preview */}
+              <div className="pt-3 border-t border-[#29384C]/60 flex items-center gap-2.5 bg-[#101D30]/80 p-2 rounded-xl">
+                <img
+                  src={draftLogos.directorAvatarUrl || '/avatar_venier.png'}
+                  alt="Director"
+                  className="w-8 h-8 rounded-full object-cover ring-1 ring-blue-500/40"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=Gaston+Venier&background=0284c7&color=fff';
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-white truncate">
+                    {draftLogos.directorName || 'Arq. Venier Gastón'}
+                  </div>
+                  <div className="text-[9px] text-[#94A3B8] truncate">
+                    {draftLogos.directorRole || 'Director Técnico'}
+                  </div>
                 </div>
               </div>
             </div>
