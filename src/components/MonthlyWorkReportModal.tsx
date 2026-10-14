@@ -18,7 +18,7 @@ import { Project, SavedWorkReport } from '../types';
 import { compressImageFile } from '../utils/calculations';
 import {
   Save,
-  History,
+  History as HistoryIcon,
   FileText,
   Calendar,
   Check,
@@ -996,7 +996,7 @@ export function MonthlyWorkReportModal({
           </div>
         ) : (
           <div className="flex items-center gap-2 text-xs font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-3 py-1.5 rounded-xl">
-            <History className="w-4 h-4 text-cyan-400" />
+            <HistoryIcon className="w-4 h-4 text-cyan-400" />
             <span>Apartado: Informes Anteriores (${(project.savedReports || []).length} Registrados)</span>
           </div>
         )}
@@ -1021,7 +1021,7 @@ export function MonthlyWorkReportModal({
                 className="px-3 py-1.5 bg-[#17263B] hover:bg-cyan-950/40 text-cyan-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-cyan-500/40 hover:border-cyan-400 transition-colors shadow-xs active:scale-95"
                 title="Ver informes anteriores guardados para esta obra"
               >
-                <History className="w-3.5 h-3.5 text-cyan-400" />
+                <HistoryIcon className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Informes Anteriores</span>
                 {(project.savedReports || []).length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-slate-950 font-mono font-black">
@@ -1115,7 +1115,7 @@ export function MonthlyWorkReportModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#29384C]/80 pb-5">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-black shadow-inner">
-                    <History className="w-6 h-6 stroke-[2.2]" />
+                    <HistoryIcon className="w-6 h-6 stroke-[2.2]" />
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">

@@ -30,7 +30,7 @@ import {
   Flame,
   Pencil,
   FileCheck,
-  History
+  History as HistoryIcon
 } from 'lucide-react';
 import { Project, StatusFilter, ProjectCalendarEvent, Milestone } from '../types';
 import {
@@ -421,7 +421,7 @@ export function DashboardView({
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 text-xs font-bold transition-all active:scale-95 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
                       title="Ver informes anteriores guardados para esta obra"
                     >
-                      <History className="w-3.5 h-3.5 text-cyan-400" />
+                      <HistoryIcon className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Informes Anteriores</span>
                       {(activeProject.savedReports || []).length > 0 && (
                         <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-slate-950 font-mono font-black">
