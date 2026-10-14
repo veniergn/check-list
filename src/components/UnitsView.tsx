@@ -67,7 +67,7 @@ interface UnitsViewProps {
   onAddTrade?: (tradeName: string, scope?: 'current_unit' | 'all_units') => void;
   onDeleteTrade?: (tradeId: string, tradeName: string, scope?: 'current_unit' | 'all_units') => void;
   onOpenCroquis?: (unitId?: string) => void;
-  onOpenMonthlyReport?: (projectId: string) => void;
+  onOpenMonthlyReport?: (projectId: string, openHistory?: boolean) => void;
   onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
   onShowToast?: (msg: string, icon?: string) => void;
 }
@@ -482,12 +482,29 @@ export function UnitsView({
           {onOpenMonthlyReport && (
             <button
               type="button"
-              onClick={() => onOpenMonthlyReport(project.id)}
+              onClick={() => onOpenMonthlyReport(project.id, false)}
               className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(245,158,11,0.2)] active:scale-95"
               title="Generar Informe Mensual Ejecutivo de Obra para Propietarios (PDF)"
             >
               <FileCheck className="w-3.5 h-3.5 text-amber-400" />
               <span>Informe de Obra</span>
+            </button>
+          )}
+
+          {onOpenMonthlyReport && (
+            <button
+              type="button"
+              onClick={() => onOpenMonthlyReport(project.id, true)}
+              className="px-3 py-1.5 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-95"
+              title="Ver informes anteriores guardados para esta obra con su fecha"
+            >
+              <History className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Informes Anteriores</span>
+              {(project.savedReports || []).length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-slate-950 font-mono font-black">
+                  {(project.savedReports || []).length}
+                </span>
+              )}
             </button>
           )}
 

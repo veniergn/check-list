@@ -91,7 +91,8 @@ export async function saveLogosToCloud(logos: CustomLogos): Promise<{ success: b
     // Los fondos y estilos de color se conservan estrictamente locales en cada equipo.
     const cloudLogosPayload = {
       header: logos.header,
-      banner: logos.banner
+      banner: logos.banner,
+      directorAvatarUrl: logos.directorAvatarUrl
     };
 
     const { error } = await supabase

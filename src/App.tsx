@@ -66,7 +66,8 @@ const isDarkColor = (color?: string): boolean => {
 
 const normalizeCustomLogos = (raw?: CustomLogos | null): CustomLogos => ({
   header: normalizeLogo(raw?.header),
-  banner: normalizeLogo(raw?.banner)
+  banner: normalizeLogo(raw?.banner),
+  directorAvatarUrl: raw?.directorAvatarUrl || ''
 });
 
 /**
@@ -104,7 +105,7 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
           photos: i.photos?.map(ph => ({
             id: ph.id,
             timestamp: ph.timestamp,
-            dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : ''
+            dataUrl: ph.dataUrl || ''
           })) || []
         }))
       }))
@@ -221,8 +222,17 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
           if (!localItem) return remoteItem;
 
           const photoMap = new Map<string, { id: string; dataUrl: string; timestamp: string }>();
-          (localItem.photos || []).forEach(ph => photoMap.set(ph.id, ph));
-          (remoteItem.photos || []).forEach(ph => photoMap.set(ph.id, ph));
+          (localItem.photos || []).forEach(ph => {
+            if (ph && ph.id) photoMap.set(ph.id, ph);
+          });
+          (remoteItem.photos || []).forEach(ph => {
+            if (ph && ph.id) {
+              const existing = photoMap.get(ph.id);
+              if (!existing || (!existing.dataUrl && ph.dataUrl) || (existing.dataUrl.length < (ph.dataUrl?.length || 0))) {
+                photoMap.set(ph.id, ph);
+              }
+            }
+          });
 
           return {
             ...remoteItem,
@@ -244,9 +254,26 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
       };
     });
 
+    // Merge Saved Reports (Informes Anteriores) by ID
+    const repMap = new Map<string, any>();
+    (localProj.savedReports || []).forEach(r => repMap.set(r.id, r));
+    (remoteProj.savedReports || []).forEach(r => repMap.set(r.id, r));
+
+    const mergedMonthlyData = remoteProj.monthlyReportData || localProj.monthlyReportData;
+    const mergedCoverImage = remoteProj.coverImageUrl || localProj.coverImageUrl;
+    const mergedCoverPos = remoteProj.coverImagePosition || localProj.coverImagePosition;
+    const mergedContractors = (remoteProj.contractors && remoteProj.contractors.length > 0)
+      ? remoteProj.contractors
+      : (localProj.contractors || []);
+
     return {
       ...remoteProj,
       calendarEvents: Array.from(mergedEventsMap.values()),
+      savedReports: Array.from(repMap.values()),
+      monthlyReportData: mergedMonthlyData,
+      coverImageUrl: mergedCoverImage,
+      coverImagePosition: mergedCoverPos,
+      contractors: mergedContractors,
       units: mergedUnits
     };
   });
@@ -664,10 +691,12 @@ export default function App() {
   // Informe de Obra Mensual (PDF para propietarios) modal state
   const [isMonthlyReportModalOpen, setIsMonthlyReportModalOpen] = useState(false);
   const [monthlyReportProjectId, setMonthlyReportProjectId] = useState<string>('');
+  const [monthlyReportInitialTab, setMonthlyReportInitialTab] = useState<'editor' | 'history'>('editor');
 
-  const handleOpenMonthlyReport = (projectId?: string) => {
+  const handleOpenMonthlyReport = (projectId?: string, openHistoryTab: boolean = false) => {
     const targetPid = projectId || selectedProjectId || (projects.length > 0 ? projects[0].id : '');
     setMonthlyReportProjectId(targetPid);
+    setMonthlyReportInitialTab(openHistoryTab ? 'history' : 'editor');
     setIsMonthlyReportModalOpen(true);
   };
 
@@ -1650,27 +1679,6 @@ export default function App() {
     if (!selectedProjectId || !selectedUnitId) return;
     lastLocalEditTimeRef.current = Date.now();
 
-    let finalDataUrl = dataUrl;
-
-    // Si es un payload base64 local, subir a Google Drive para guardar solo la URL ligera
-    if (dataUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
-      showToast('Subiendo foto a Google Drive...', 'Camera');
-      try {
-        const uploadRes = await uploadFileToDrive({
-          base64: dataUrl,
-          filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
-          mimeType: 'image/jpeg'
-        });
-        if (uploadRes.success && uploadRes.url) {
-          finalDataUrl = uploadRes.url;
-        } else if (uploadRes.error) {
-          console.warn('Google Drive aviso:', uploadRes.error);
-        }
-      } catch (err) {
-        console.warn('Error al subir a Google Drive:', err);
-      }
-    }
-
     const now = new Date();
     const dateString = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -1678,7 +1686,7 @@ export default function App() {
 
     const newPhoto = {
       id: `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      dataUrl: finalDataUrl,
+      dataUrl: dataUrl,
       timestamp
     };
 
@@ -1711,6 +1719,7 @@ export default function App() {
           })
         };
       });
+      projectsRef.current = updated;
       updatedProjectsList = updated;
       return updated;
     });
@@ -1726,12 +1735,51 @@ export default function App() {
     saveProjectsToCloud(updatedProjectsList).then(res => {
       setCloudStatus(res.status);
       if (res.success) {
-        const isDrive = isDriveUrl(finalDataUrl);
-        showToast(isDrive ? 'Foto guardada en Google Drive y Supabase' : 'Foto guardada en la Nube Supabase', 'Check');
+        showToast('Foto guardada en la Nube Supabase', 'Check');
       } else {
         showToast('Foto guardada localmente (sincronizando...)', 'AlertCircle');
       }
     });
+
+    // Opcional en segundo plano: si hay backend de Google Apps Script configurado, intentar optimizar url
+    const directAppsScriptUrl = (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL;
+    if (directAppsScriptUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
+      uploadFileToDrive({
+        base64: dataUrl,
+        filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
+        mimeType: 'image/jpeg'
+      }).then(uploadRes => {
+        if (uploadRes.success && uploadRes.url) {
+          setProjects(prev => {
+            const up = prev.map(proj => {
+              if (proj.id !== selectedProjectId) return proj;
+              return {
+                ...proj,
+                units: proj.units.map(u => {
+                  if (u.id !== selectedUnitId) return u;
+                  return {
+                    ...u,
+                    trades: u.trades.map(t => ({
+                      ...t,
+                      items: t.items.map(it => {
+                        if (it.id !== itemId) return it;
+                        return {
+                          ...it,
+                          photos: (it.photos || []).map(p => p.id === newPhoto.id ? { ...p, dataUrl: uploadRes.url } : p)
+                        };
+                      })
+                    }))
+                  };
+                })
+              };
+            });
+            projectsRef.current = up;
+            saveProjectsToCloud(up);
+            return up;
+          });
+        }
+      }).catch(err => console.warn('Background drive upload notice:', err));
+    }
   };
 
   // Delete photo from item and persist immediately to Supabase Cloud
@@ -2056,14 +2104,19 @@ export default function App() {
 
   // Generic Update Project Handler (used by MonthlyWorkReportModal, etc.)
   const handleUpdateProject = (updatedProj: Project) => {
+    lastLocalEditTimeRef.current = Date.now();
     setProjects(prev => {
       const updated = prev.map(p => p.id === updatedProj.id ? updatedProj : p);
+      projectsRef.current = updated;
       try {
         localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updated));
       } catch (e) {
         console.warn('LocalStorage error:', e);
       }
-      saveProjectsToCloud(updated);
+      setCloudStatus('syncing');
+      saveProjectsToCloud(updated).then(res => {
+        setCloudStatus(res.status);
+      });
       return updated;
     });
   };
@@ -3190,6 +3243,7 @@ export default function App() {
           isOpen={isMonthlyReportModalOpen}
           project={projects.find(p => p.id === monthlyReportProjectId) || selectedProject || projects[0]}
           headerLogoUrl={logos.header}
+          initialView={monthlyReportInitialTab}
           onClose={() => setIsMonthlyReportModalOpen(false)}
           onUpdateProject={handleUpdateProject}
         />

@@ -14,7 +14,18 @@ import {
   Clock,
   Users
 } from 'lucide-react';
-import { Project } from '../types';
+import { Project, SavedWorkReport } from '../types';
+import { compressImageFile } from '../utils/calculations';
+import {
+  Save,
+  History,
+  Calendar,
+  Check,
+  Eye,
+  ArrowLeft,
+  ChevronRight,
+  Download
+} from 'lucide-react';
 
 interface MonthlyWorkReportModalProps {
   isOpen: boolean;
@@ -532,6 +543,25 @@ export function MonthlyWorkReportModal({
     return DEFAULT_ANDES_DATA;
   });
 
+  // Sincronización debounced del borrador activo hacia la Obra en Supabase
+  const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const syncDraftToProject = (nextAgustin: AgustinData, nextAndes: AndesData, tmpl: TemplateType) => {
+    if (!project || !onUpdateProject) return;
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      onUpdateProject({
+        ...project,
+        monthlyReportData: {
+          template: tmpl,
+          agustinData: nextAgustin,
+          andesData: nextAndes,
+          updatedAt: new Date().toISOString()
+        }
+      });
+    }, 600);
+  };
+
   // Save changes to localStorage
   const updateAgustinData = (updates: Partial<AgustinData>) => {
     setAgustinData(prev => {
@@ -773,53 +803,100 @@ export function MonthlyWorkReportModal({
           </div>
         </div>
 
-        {/* Center: Template Selector */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-[#29384C] text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTemplate('parque_agustin')}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-              activeTemplate === 'parque_agustin'
-                ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                : 'text-[#94A3B8] hover:text-white'
-            }`}
-          >
-            Parque Agustín (2 Págs)
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTemplate('parque_andes')}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-              activeTemplate === 'parque_andes'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                : 'text-[#94A3B8] hover:text-white'
-            }`}
-          >
-            Parque de los Andes ({andesGalleryChunks.length + 2} Págs)
-          </button>
-        </div>
+        {/* Center: Template Selector OR History Mode Indicator */}
+        {viewMode === 'editor' ? (
+          <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-[#29384C] text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTemplate('parque_agustin')}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                activeTemplate === 'parque_agustin'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                  : 'text-[#94A3B8] hover:text-white'
+              }`}
+            >
+              Parque Agustín (2 Págs)
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTemplate('parque_andes')}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                activeTemplate === 'parque_andes'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-[#94A3B8] hover:text-white'
+              }`}
+            >
+              Parque de los Andes (${andesGalleryChunks.length + 2} Págs)
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-3 py-1.5 rounded-xl">
+            <History className="w-4 h-4 text-cyan-400" />
+            <span>Apartado: Informes Anteriores (${(project.savedReports || []).length} Registrados)</span>
+          </div>
+        )}
 
-        {/* Actions: Reset, Print and Close */}
+        {/* Actions: History Toggle, Save, Reset, Print and Close */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleResetTemplate}
-            className="px-3 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-[#29384C] transition-colors"
-            title="Restablecer textos e imágenes a la plantilla original"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Restablecer Original</span>
-          </button>
+          {viewMode === 'history' ? (
+            <button
+              type="button"
+              onClick={() => setViewMode('editor')}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Volver a Plantilla</span>
+            </button>
+          ) : (
+            <>
+              {/* Botón Informes Anteriores */}
+              <button
+                type="button"
+                onClick={() => setViewMode('history')}
+                className="px-3 py-1.5 bg-[#17263B] hover:bg-cyan-950/40 text-cyan-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-cyan-500/40 hover:border-cyan-400 transition-colors shadow-xs active:scale-95"
+                title="Ver informes anteriores guardados para esta obra"
+              >
+                <History className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Informes Anteriores</span>
+                {(project.savedReports || []).length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-slate-950 font-mono font-black">
+                    {(project.savedReports || []).length}
+                  </span>
+                )}
+              </button>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-lg active:scale-95 transition-all touch-target"
-            title="Imprimir o guardar en PDF"
-          >
-            <Printer className="w-4 h-4 stroke-[2.5]" />
-            <span>Imprimir / PDF</span>
-          </button>
+              {/* Botón Guardar Informe */}
+              <button
+                type="button"
+                onClick={() => handleSaveReportSnapshot(false)}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                title="Guardar informe actual en el sistema de la obra y sincronizar en la nube"
+              >
+                <Save className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Guardar Informe</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetTemplate}
+                className="px-2.5 py-1.5 bg-[#17263B] hover:bg-[#1f324d] text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-[#29384C] transition-colors"
+                title="Restablecer textos e imágenes a la plantilla original"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">Restablecer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-lg active:scale-95 transition-all touch-target"
+                title="Imprimir o guardar en PDF (guarda automáticamente en el sistema)"
+              >
+                <Printer className="w-4 h-4 stroke-[2.5]" />
+                <span>Imprimir / PDF</span>
+              </button>
+            </>
+          )}
 
           <button
             type="button"
@@ -845,12 +922,176 @@ export function MonthlyWorkReportModal({
         </span>
       </div>
 
+      {/* Toast Feedback Notification */}
+      {feedbackToast && (
+        <div className="absolute top-20 right-6 z-50 bg-[#101D30] text-cyan-300 border border-cyan-500/50 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-200">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span>{feedbackToast}</span>
+        </div>
+      )}
+
+      {/* Image Processing Overlay */}
+      {isProcessingPhoto && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+          <div className="bg-[#101D30] border border-cyan-500/40 p-4 rounded-2xl flex items-center gap-3 text-cyan-300 text-sm font-bold shadow-2xl">
+            <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <span>Optimizando fotografía para el informe...</span>
+          </div>
+        </div>
+      )}
+
       {/* MAIN SCROLL CONTAINER: USA DIV (NO MAIN) PARA NO SER BLOQUEADO POR INDEX.CSS */}
       <div id="monthly-report-printable-area" className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#101D30]/60 flex flex-col items-center gap-10 monthly-report-sheet-wrapper">
+        {/* VISTA 1: HISTORIAL DE INFORMES ANTERIORES */}
+        {viewMode === 'history' && (
+          <div className="w-full max-w-5xl py-4 flex flex-col items-center animate-in fade-in duration-200">
+            {/* Header del apartado */}
+            <div className="w-full bg-[#101D30] border border-[#29384C] rounded-3xl p-6 sm:p-8 shadow-2xl mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#29384C]/80 pb-5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-black shadow-inner">
+                    <History className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
+                      <span>Informes Anteriores</span>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30 font-mono">
+                        {(project.savedReports || []).length} Guardados
+                      </span>
+                    </h2>
+                    <p className="text-xs text-[#94A3B8] mt-0.5">
+                      Historial archivado de informes mensuales para <b className="text-white">{project.name}</b>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveReportSnapshot(false)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                    title="Guardar borrador actual como nuevo informe en el historial"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Guardar Estado Actual</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('editor')}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Volver a Plantilla</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2 text-xs text-slate-300 bg-slate-950/40 p-3 rounded-2xl border border-[#29384C]/60">
+                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span>
+                  Cada informe guardado almacena la fecha exacta de guardado, fotos en alta resolución, porcentajes de avance y textos técnicos del reporte tal como estaban en ese momento.
+                </span>
+              </div>
+            </div>
+
+            {/* Listado de Informes */}
+            {(project.savedReports || []).length === 0 ? (
+              <div className="w-full bg-[#101D30]/60 border border-dashed border-[#29384C] rounded-3xl p-12 flex flex-col items-center justify-center text-center max-w-2xl my-6">
+                <div className="w-16 h-16 rounded-3xl bg-[#17263B] border border-[#29384C] flex items-center justify-center text-slate-500 mb-4 shadow-inner">
+                  <Calendar className="w-8 h-8 text-cyan-500/60" />
+                </div>
+                <h3 className="text-base font-black text-white mb-2">
+                  No hay informes guardados aún para esta obra
+                </h3>
+                <p className="text-xs text-[#94A3B8] leading-relaxed max-w-md mb-6">
+                  Cuando redactes o prepares el informe de avance en la plantilla y pulses el botón <b className="text-cyan-300">"Guardar Informe"</b> o <b className="text-cyan-300">"Imprimir / PDF"</b>, quedará registrado aquí automáticamente con su fecha y hora de guardado.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('editor')}
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Ir a la Plantilla de Edición</span>
+                </button>
+              </div>
+            ) : (
+              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(project.savedReports || []).map((rep) => (
+                  <div
+                    key={rep.id}
+                    className="bg-[#101D30] border border-[#29384C] hover:border-cyan-500/50 rounded-2xl p-5 shadow-xl flex flex-col justify-between transition-all group hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+                  >
+                    <div>
+                      {/* Top Row: Date Badge and Template */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Guardado: {rep.formattedDate}</span>
+                        </span>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-700/60 uppercase font-mono">
+                          {rep.template === 'parque_agustin' ? 'Parque Agustín' : 'Parque de los Andes'}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h4 className="text-sm sm:text-base font-black text-white group-hover:text-cyan-300 transition-colors">
+                        {rep.title}
+                      </h4>
+
+                      {/* Summary */}
+                      {rep.summary && (
+                        <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
+                          {rep.summary}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-5 pt-3 border-t border-[#29384C]/60 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleLoadSavedReport(rep)}
+                          className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-white border border-blue-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                          title="Cargar este informe en la plantilla para ver o editar"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Cargar / Ver</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handlePrintSavedReport(rep)}
+                          className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-black inline-flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                          title="Imprimir o exportar este informe a PDF"
+                        >
+                          <Printer className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span>Imprimir PDF</span>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSavedReport(rep.id, rep.title)}
+                        className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
+                        title="Eliminar este informe del historial"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ========================================================================= */}
-        {/* 1. PLANTILLA PARQUE AGUSTÍN (2 PÁGINAS A4 VERTICALES)                     */}
+        {/* VISTA 2: PLANTILLAS DE EDICIÓN E IMPRESIÓN (SOLO EN MODO EDITOR)          */}
         {/* ========================================================================= */}
-        {activeTemplate === 'parque_agustin' && (
+        {viewMode === 'editor' && activeTemplate === 'parque_agustin' && (
           <>
             {/* PÁGINA 1: PARQUE AGUSTÍN */}
             <section className="monthly-report-page monthly-report-preview-sheet flex flex-col justify-between font-sans text-slate-900 bg-white shadow-2xl relative select-text">
@@ -1395,7 +1636,7 @@ export function MonthlyWorkReportModal({
         {/* ========================================================================= */}
         {/* 2. PLANTILLA PARQUE DE LOS ANDES (3 PÁGINAS A4 VERTICALES)                */}
         {/* ========================================================================= */}
-        {activeTemplate === 'parque_andes' && (
+        {viewMode === 'editor' && activeTemplate === 'parque_andes' && (
           <>
             {/* PÁGINA 1: PARQUE DE LOS ANDES (PORTADA) */}
             <section className="monthly-report-page monthly-report-preview-sheet flex flex-col justify-between font-sans text-slate-900 bg-white shadow-2xl relative select-text">

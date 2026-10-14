@@ -152,6 +152,18 @@ export interface ContractorProfile {
 
 export type ProjectManagerTask = ProjectCalendarEvent;
 
+export interface SavedWorkReport {
+  id: string;
+  projectId: string;
+  projectName: string;
+  createdAt: string; // ISO timestamp
+  formattedDate: string; // e.g. "14/10/2026, 14:50 hs"
+  title: string; // e.g. "Informe Mayo 2026 - Parque Agustín"
+  template: 'parque_agustin' | 'parque_andes' | string;
+  summary?: string;
+  data: any; // snapshot completo de agustinData o andesData
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -170,6 +182,13 @@ export interface Project {
   milestones?: Milestone[];
   calendarEvents?: ProjectCalendarEvent[]; // Tareas, eventos y alarmas independientes por obra
   contractors?: ContractorProfile[]; // Cuadrillas y responsables técnicos personalizados con fotos
+  savedReports?: SavedWorkReport[]; // Historial de informes anteriores guardados con fecha
+  monthlyReportData?: {
+    template?: 'parque_agustin' | 'parque_andes' | string;
+    agustinData?: any;
+    andesData?: any;
+    updatedAt?: string;
+  };
   logoUrl?: string; // Logo específico del proyecto inmobiliario
   developerLogoUrl?: string; // Logo de la empresa desarrolladora
   developerName?: string; // Nombre comercial de la empresa desarrolladora

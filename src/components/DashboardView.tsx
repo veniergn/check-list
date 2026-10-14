@@ -28,7 +28,9 @@ import {
   CheckSquare,
   CalendarDays,
   Flame,
-  Pencil
+  Pencil,
+  FileCheck,
+  History
 } from 'lucide-react';
 import { Project, StatusFilter, ProjectCalendarEvent, Milestone } from '../types';
 import {
@@ -69,7 +71,7 @@ interface DashboardViewProps {
   onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
   onShowToast?: (msg: string, icon?: string) => void;
   onActiveProjectChange?: (projectId: string) => void;
-  onOpenMonthlyReport?: (projectId: string) => void;
+  onOpenMonthlyReport?: (projectId: string, openHistory?: boolean) => void;
 }
 
 export function DashboardView({
@@ -387,7 +389,7 @@ export function DashboardView({
                   </p>
                 </div>
 
-                <div className="pt-2 flex items-center gap-3">
+                <div className="pt-2 flex flex-wrap items-center gap-2.5">
                   <button
                     onClick={() => {
                       if (activeProject) {
@@ -399,6 +401,35 @@ export function DashboardView({
                     <span>Ver Unidades & Checklist</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
+
+                  {onOpenMonthlyReport && activeProject && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenMonthlyReport(activeProject.id, false)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all active:scale-95 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                      title="Generar informe mensual de obra en PDF"
+                    >
+                      <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Informe de Obra</span>
+                    </button>
+                  )}
+
+                  {onOpenMonthlyReport && activeProject && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenMonthlyReport(activeProject.id, true)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 text-xs font-bold transition-all active:scale-95 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                      title="Ver informes anteriores guardados para esta obra"
+                    >
+                      <History className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Informes Anteriores</span>
+                      {(activeProject.savedReports || []).length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-slate-950 font-mono font-black">
+                          {(activeProject.savedReports || []).length}
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 
