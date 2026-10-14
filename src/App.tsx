@@ -2021,7 +2021,7 @@ export default function App() {
 
   // Trigger camera for active item
   const handleTriggerCamera = (tradeId: string, itemId: string, tradeName: string, itemName: string) => {
-    setActivePhotoViewer({ tradeId, itemId, tradeName, itemName });
+    setActivePhotoViewer({ tradeId, itemId, tradeName: tradeName || '', itemName: itemName || '' });
     if (cameraInputRef.current) {
       cameraInputRef.current.value = '';
       cameraInputRef.current.click();
@@ -2817,7 +2817,6 @@ export default function App() {
             onDeleteCalendarEvent={handleDeleteCalendarEvent}
             onToggleCalendarEvent={handleToggleCalendarEvent}
             onSaveProjectCover={handleSaveProjectCover}
-              onShowToast={showToast}
             onShowToast={showToast}
             onActiveProjectChange={handleActiveProjectChange}
             onOpenMonthlyReport={handleOpenMonthlyReport}

@@ -26,7 +26,8 @@ import {
   SlidersHorizontal,
   Check,
   AlertTriangle,
-  Briefcase
+  Briefcase,
+  History
 } from 'lucide-react';
 import { Project, Unit, StatusFilter, ProjectCalendarEvent, Milestone } from '../types';
 import { calculateUnitProgress, getUnitItemCounts, calculateProjectProgress, isUnitCommonArea, parseUnitFloor, hexToRgba } from '../utils/calculations';

@@ -19,6 +19,7 @@ import { compressImageFile } from '../utils/calculations';
 import {
   Save,
   History,
+  FileText,
   Calendar,
   Check,
   Eye,
@@ -31,6 +32,7 @@ interface MonthlyWorkReportModalProps {
   isOpen: boolean;
   project: Project | null;
   headerLogoUrl?: string;
+  initialView?: 'editor' | 'history';
   onClose: () => void;
   onUpdateProject?: (updatedProject: Project) => void;
 }
@@ -469,10 +471,15 @@ const DEFAULT_ANDES_DATA: AndesData = {
 export function MonthlyWorkReportModal({
   isOpen,
   project,
-  onClose
+  headerLogoUrl,
+  initialView = 'editor',
+  onClose,
+  onUpdateProject
 }: MonthlyWorkReportModalProps) {
-  // Determine template based on project name
+  // Determine template based on project name or existing saved template
   const detectedTemplate: TemplateType = (() => {
+    if (project?.monthlyReportData?.template === 'parque_andes') return 'parque_andes';
+    if (project?.monthlyReportData?.template === 'parque_agustin') return 'parque_agustin';
     const name = (project?.name || '').toLowerCase();
     if (name.includes('agustin') || name.includes('alvarez') || name.includes('quinta')) {
       return 'parque_agustin';
@@ -487,15 +494,38 @@ export function MonthlyWorkReportModal({
 
   // Sync detected template when project changes
   useEffect(() => {
-    setActiveTemplate(detectedTemplate);
-  }, [detectedTemplate]);
+    if (project?.monthlyReportData?.template === 'parque_andes' || project?.monthlyReportData?.template === 'parque_agustin') {
+      setActiveTemplate(project.monthlyReportData.template as TemplateType);
+    } else {
+      setActiveTemplate(detectedTemplate);
+    }
+  }, [detectedTemplate, project?.id]);
+
+  // View mode: editor or history
+  const [viewMode, setViewMode] = useState<'editor' | 'history'>(initialView || 'editor');
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+
+  const showModalToast = (msg: string) => {
+    setFeedbackToast(msg);
+    setTimeout(() => setFeedbackToast(null), 3500);
+  };
+
+  useEffect(() => {
+    if (initialView) {
+      setViewMode(initialView);
+    }
+  }, [initialView, isOpen]);
 
   // Storage keys for persistence per project
   const storageKeyAgustin = project ? `CONTROL_AVANCE_REPORT_AGUSTIN_${project.id}` : 'CONTROL_AVANCE_REPORT_AGUSTIN';
   const storageKeyAndes = project ? `CONTROL_AVANCE_REPORT_ANDES_${project.id}` : 'CONTROL_AVANCE_REPORT_ANDES';
 
-  // State for Parque Agustín
+  // State for Parque Agust�n (restaura desde Supabase o localStorage)
   const [agustinData, setAgustinData] = useState<AgustinData>(() => {
+    if (project?.monthlyReportData?.agustinData) {
+      return { ...DEFAULT_AGUSTIN_DATA, ...project.monthlyReportData.agustinData };
+    }
     try {
       const saved = localStorage.getItem(storageKeyAgustin);
       if (saved) return { ...DEFAULT_AGUSTIN_DATA, ...JSON.parse(saved) };
@@ -503,8 +533,15 @@ export function MonthlyWorkReportModal({
     return DEFAULT_AGUSTIN_DATA;
   });
 
-  // State for Parque de los Andes (con migración para galería dinámica)
+  // State for Parque de los Andes (con migraci�n para galer�a din�mica)
   const [andesData, setAndesData] = useState<AndesData>(() => {
+    if (project?.monthlyReportData?.andesData) {
+      const parsed = project.monthlyReportData.andesData;
+      if (!parsed.galleryItems || !Array.isArray(parsed.galleryItems) || parsed.galleryItems.length === 0) {
+        parsed.galleryItems = DEFAULT_ANDES_GALLERY;
+      }
+      return { ...DEFAULT_ANDES_DATA, ...parsed };
+    }
     try {
       const saved = localStorage.getItem(storageKeyAndes);
       if (saved) {
@@ -543,7 +580,7 @@ export function MonthlyWorkReportModal({
     return DEFAULT_ANDES_DATA;
   });
 
-  // Sincronización debounced del borrador activo hacia la Obra en Supabase
+  // Sincronizaci�n debounced del borrador activo hacia la Obra en Supabase
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const syncDraftToProject = (nextAgustin: AgustinData, nextAndes: AndesData, tmpl: TemplateType) => {
@@ -562,13 +599,14 @@ export function MonthlyWorkReportModal({
     }, 600);
   };
 
-  // Save changes to localStorage
+  // Save changes to localStorage & trigger sync to project
   const updateAgustinData = (updates: Partial<AgustinData>) => {
     setAgustinData(prev => {
       const next = { ...prev, ...updates };
       try {
         localStorage.setItem(storageKeyAgustin, JSON.stringify(next));
       } catch {}
+      syncDraftToProject(next, andesData, 'parque_agustin');
       return next;
     });
   };
@@ -579,11 +617,12 @@ export function MonthlyWorkReportModal({
       try {
         localStorage.setItem(storageKeyAndes, JSON.stringify(next));
       } catch {}
+      syncDraftToProject(agustinData, next, 'parque_andes');
       return next;
     });
   };
 
-  // Manejadores de galería dinámica de Parque de los Andes
+  // Manejadores de galer�a din�mica de Parque de los Andes
   const handleAddGalleryItem = () => {
     const newItem: AndesGalleryItem = {
       id: Date.now().toString(),
@@ -596,6 +635,7 @@ export function MonthlyWorkReportModal({
       try {
         localStorage.setItem(storageKeyAndes, JSON.stringify(next));
       } catch {}
+      syncDraftToProject(agustinData, next, 'parque_andes');
       return next;
     });
   };
@@ -610,6 +650,7 @@ export function MonthlyWorkReportModal({
       try {
         localStorage.setItem(storageKeyAndes, JSON.stringify(next));
       } catch {}
+      syncDraftToProject(agustinData, next, 'parque_andes');
       return next;
     });
   };
@@ -623,6 +664,7 @@ export function MonthlyWorkReportModal({
       try {
         localStorage.setItem(storageKeyAndes, JSON.stringify(next));
       } catch {}
+      syncDraftToProject(agustinData, next, 'parque_andes');
       return next;
     });
   };
@@ -632,13 +674,15 @@ export function MonthlyWorkReportModal({
     if (activeTemplate === 'parque_agustin') {
       setAgustinData(DEFAULT_AGUSTIN_DATA);
       try { localStorage.removeItem(storageKeyAgustin); } catch {}
+      syncDraftToProject(DEFAULT_AGUSTIN_DATA, andesData, 'parque_agustin');
     } else {
       setAndesData(DEFAULT_ANDES_DATA);
       try { localStorage.removeItem(storageKeyAndes); } catch {}
+      syncDraftToProject(agustinData, DEFAULT_ANDES_DATA, 'parque_andes');
     }
   };
 
-  // Generic File Upload Trigger
+  // Generic File Upload Trigger con compresi�n inteligente
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeUploadTarget, setActiveUploadTarget] = useState<string | null>(null);
 
@@ -647,35 +691,156 @@ export function MonthlyWorkReportModal({
     fileInputRef.current?.click();
   };
 
-  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeUploadTarget) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (!base64) return;
+    setIsProcessingPhoto(true);
+    try {
+      // Compresi�n fotogr�fica arquitect�nica (1200px max, 76% calidad)
+      const compressedBase64 = await compressImageFile(file, 1200, 0.76);
+      if (!compressedBase64) return;
 
       if (activeUploadTarget.startsWith('gallery_')) {
         const itemId = activeUploadTarget.replace('gallery_', '');
-        handleUpdateGalleryItem(itemId, { photo: base64 });
+        handleUpdateGalleryItem(itemId, { photo: compressedBase64 });
       } else if (activeTemplate === 'parque_agustin') {
-        updateAgustinData({ [activeUploadTarget]: base64 });
+        updateAgustinData({ [activeUploadTarget]: compressedBase64 });
       } else {
-        updateAndesData({ [activeUploadTarget]: base64 });
+        updateAndesData({ [activeUploadTarget]: compressedBase64 });
       }
+      showModalToast('Fotografia optimizada y cargada al informe');
+    } catch (err) {
+      console.warn('Fallback a FileReader est�ndar:', err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (!base64) return;
+
+        if (activeUploadTarget.startsWith('gallery_')) {
+          const itemId = activeUploadTarget.replace('gallery_', '');
+          handleUpdateGalleryItem(itemId, { photo: base64 });
+        } else if (activeTemplate === 'parque_agustin') {
+          updateAgustinData({ [activeUploadTarget]: base64 });
+        } else {
+          updateAndesData({ [activeUploadTarget]: base64 });
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsProcessingPhoto(false);
       setActiveUploadTarget(null);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+      e.target.value = '';
+    }
   };
 
-  // Print Handler (Strict Portrait A4)
+  // Guardar un snapshot completo del informe actual en "Informes Anteriores"
+  const handleSaveReportSnapshot = (silent = false) => {
+    if (!project) return;
+    const now = new Date();
+    const formattedDate = new Intl.DateTimeFormat('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(now);
+
+    const isAgustin = activeTemplate === 'parque_agustin';
+    const reportTitle = isAgustin
+      ? `Informe de Avance - ${agustinData.month || 'Mensual'} ${agustinData.year || ''}`
+      : (andesData.p3DocTitle || `Informe de Avance - ${andesData.p1TopRightDate || ''}`);
+
+    const summaryText = isAgustin
+      ? `${agustinData.summaryStat1Label || 'Avance'}: ${agustinData.summaryStat1Value || '95%'} � ${agustinData.month || ''} ${agustinData.year || ''}`
+      : `Fecha: ${andesData.p1TopRightDate || 'Actual'} � ${andesData.galleryItems?.length || 0} fotos de avance`;
+
+    const snapshotData = isAgustin ? { ...agustinData } : { ...andesData };
+
+    const newReport: SavedWorkReport = {
+      id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      projectId: project.id,
+      projectName: project.name,
+      createdAt: now.toISOString(),
+      formattedDate: `${formattedDate} hs`,
+      title: reportTitle,
+      template: activeTemplate,
+      summary: summaryText,
+      data: snapshotData
+    };
+
+    const currentSavedReports = project.savedReports || [];
+    const updatedSavedReports = [newReport, ...currentSavedReports];
+
+    const updatedProject: Project = {
+      ...project,
+      savedReports: updatedSavedReports,
+      monthlyReportData: {
+        template: activeTemplate,
+        agustinData,
+        andesData,
+        updatedAt: now.toISOString()
+      }
+    };
+
+    if (onUpdateProject) {
+      onUpdateProject(updatedProject);
+    }
+
+    if (!silent) {
+      showModalToast(`Informe guardado en Informes Anteriores (${formattedDate} hs)`);
+    }
+    return newReport;
+  };
+
+  // Cargar un informe guardado en la plantilla de edici�n
+  const handleLoadSavedReport = (report: SavedWorkReport) => {
+    if (!report || !report.data) return;
+    if (report.template === 'parque_agustin') {
+      setActiveTemplate('parque_agustin');
+      setAgustinData({ ...DEFAULT_AGUSTIN_DATA, ...report.data });
+      try {
+        localStorage.setItem(storageKeyAgustin, JSON.stringify(report.data));
+      } catch {}
+    } else {
+      setActiveTemplate('parque_andes');
+      setAndesData({ ...DEFAULT_ANDES_DATA, ...report.data });
+      try {
+        localStorage.setItem(storageKeyAndes, JSON.stringify(report.data));
+      } catch {}
+    }
+    setViewMode('editor');
+  };
+
+  // Imprimir un informe hist�rico espec�fico
+  const handlePrintSavedReport = (report: SavedWorkReport) => {
+    handleLoadSavedReport(report);
+    setTimeout(() => {
+      window.print();
+    }, 400);
+  };
+
+  // Eliminar un informe del historial de la obra
+  const handleDeleteSavedReport = (reportId: string, title: string) => {
+    if (!project || !onUpdateProject) return;
+    if (!window.confirm(`��Est�s seguro de que deseas eliminar del historial el informe "${title}"?`)) {
+      return;
+    }
+    const updatedSavedReports = (project.savedReports || []).filter(r => r.id !== reportId);
+    onUpdateProject({
+      ...project,
+      savedReports: updatedSavedReports
+    });
+  };
+
+  // Print Handler (Strict Portrait A4 con guardado autom�tico previo en el sistema)
   const handlePrint = () => {
+    // Al mandar guardar o imprimir en PDF o impresora, queda guardado en el sistema de la app
+    handleSaveReportSnapshot(true);
     window.print();
   };
 
-  // Paginación de la galería de Parque de los Andes en bloques de 4 fotos por hoja A4
   const andesGalleryChunks: AndesGalleryItem[][] = [];
   for (let i = 0; i < andesData.galleryItems.length; i += 4) {
     andesGalleryChunks.push(andesData.galleryItems.slice(i, i + 4));

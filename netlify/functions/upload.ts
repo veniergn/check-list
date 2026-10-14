@@ -1,7 +1,6 @@
-import type { Handler, HandlerEvent } from '@netlify/functions';
 import { uploadToDrive } from '../../src/server/driveService.js';
 
-export const handler: Handler = async (event: HandlerEvent) => {
+export const handler = async (event: any) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,

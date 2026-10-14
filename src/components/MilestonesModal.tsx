@@ -102,7 +102,7 @@ export function MilestonesModal({
   const availableBuildingParts = Array.from(
     new Set([
       ...DEFAULT_BUILDING_PARTS,
-      ...(project.floorsConfig?.map(f => f.label) || [])
+      ...(project.floorsConfig?.map(f => f.floorLabel || (f as any).label) || [])
     ])
   );
 

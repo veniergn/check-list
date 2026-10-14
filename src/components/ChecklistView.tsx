@@ -63,7 +63,8 @@ interface ChecklistViewProps {
   onUpdateItemProgress: (tradeId: string, itemId: string, percentage: number) => void;
   onDeleteItem: (tradeId: string, itemId: string) => void;
   onEditItem?: (tradeId: string, itemId: string, newName: string) => void;
-  onAddItem: (tradeId: string, itemName: string, scopeTarget?: 'current_unit' | 'all_units') => void;
+  onAddItem: (tradeId: string, itemName: string, scopeTarget?: any, targetProjectIds?: string[]) => void;
+  onTriggerQuickPhoto?: (tradeId: string, itemId: string, tradeName: string, itemName: string) => void;
   onSaveComment: (tradeId: string, itemId: string, comment: string) => void;
   onSaveObservation?: (
     tradeId: string,
