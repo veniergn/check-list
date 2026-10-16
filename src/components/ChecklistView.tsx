@@ -56,6 +56,7 @@ function WhatsAppIcon({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 interface ChecklistViewProps {
+  onBack?: () => void;
   project: Project;
   unit: Unit;
   allProjects?: Project[];
@@ -93,6 +94,7 @@ export function ChecklistView({
   project,
   unit,
   allProjects,
+  onBack,
   onToggleItem,
   onUpdateItemProgress,
   onDeleteItem,

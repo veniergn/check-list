@@ -169,6 +169,20 @@ export function sanitizeProjectTrades(project: Project): Project {
   };
 }
 
+function countTotalPhotos(projs: Project[]): number {
+  let count = 0;
+  for (const p of projs || []) {
+    for (const u of (p.units || [])) {
+      for (const t of (u.trades || [])) {
+        for (const item of (t.items || [])) {
+          count += (item.photos?.filter(ph => ph && ph.dataUrl) || []).length;
+        }
+      }
+    }
+  }
+  return count;
+}
+
 export function mergeProjectsWithLocalState(remoteProjects: Project[], localProjects: Project[]): Project[] {
   if (!localProjects || localProjects.length === 0) return remoteProjects;
   if (!remoteProjects || remoteProjects.length === 0) return localProjects;
@@ -222,14 +236,28 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
           if (!localItem) return remoteItem;
 
           const photoMap = new Map<string, { id: string; dataUrl: string; timestamp: string }>();
+          // First preserve local photos (from this tablet / device)
           (localItem.photos || []).forEach(ph => {
             if (ph && ph.id) photoMap.set(ph.id, ph);
           });
+          // Merge remote photos: prefer permanent Drive URLs or valid images over empty strings
           (remoteItem.photos || []).forEach(ph => {
             if (ph && ph.id) {
               const existing = photoMap.get(ph.id);
-              if (!existing || (!existing.dataUrl && ph.dataUrl) || (existing.dataUrl.length < (ph.dataUrl?.length || 0))) {
+              if (!existing) {
                 photoMap.set(ph.id, ph);
+              } else {
+                const exUrl = existing.dataUrl || '';
+                const remUrl = ph.dataUrl || '';
+                if (remUrl.startsWith('http')) {
+                  photoMap.set(ph.id, ph);
+                } else if (!exUrl && remUrl) {
+                  photoMap.set(ph.id, ph);
+                } else if (exUrl.startsWith('http')) {
+                  // Keep local existing permanent URL
+                } else if (remUrl.length > exUrl.length) {
+                  photoMap.set(ph.id, ph);
+                }
               }
             }
           });
@@ -947,6 +975,7 @@ export default function App() {
           if (res.projects && res.projects.length > 0) {
             isRemoteUpdateRef.current = true;
             const sanitized = res.projects.map(sanitizeProjectTrades);
+            let shouldPushLocalToCloud = false;
             setProjects(prev => {
               const merged = mergeProjectsWithLocalState(sanitized, prev);
               projectsRef.current = merged;
@@ -955,8 +984,14 @@ export default function App() {
               } catch (e) {
                 console.warn('LocalStorage error on cloud init:', e);
               }
+              if (countTotalPhotos(merged) > countTotalPhotos(sanitized)) {
+                shouldPushLocalToCloud = true;
+              }
               return merged;
             });
+            if (shouldPushLocalToCloud) {
+              saveProjectsToCloud(projectsRef.current);
+            }
             showToast('Conectado a la Nube Supabase', 'Cloud');
           } else {
             // Seed cloud if empty
@@ -1099,7 +1134,7 @@ export default function App() {
 
     async function syncBase64PhotosToDrive() {
       // Esperar 4 segundos tras inicio
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 1200));
       if (isCancelled) return;
 
       let hasChanges = false;
