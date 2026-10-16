@@ -421,16 +421,23 @@ export function ItemObservationModal({
                     key={photo.id}
                     className="relative bg-slate-950 rounded-xl overflow-hidden border border-[#29384C] group shadow-sm flex flex-col"
                   >
-                    <div
-                      onClick={() => setActivePhotoPreview(photo.dataUrl)}
-                      className="cursor-pointer h-28 bg-black flex items-center justify-center overflow-hidden"
-                    >
-                      <img
-                        src={photo.dataUrl}
-                        alt={`Evidencia ${index + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
+                    {photo.dataUrl ? (
+                      <div
+                        onClick={() => setActivePhotoPreview(photo.dataUrl)}
+                        className="cursor-pointer h-28 bg-black flex items-center justify-center overflow-hidden"
+                      >
+                        <img
+                          src={photo.dataUrl}
+                          alt={`Evidencia ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-28 bg-slate-950 flex flex-col items-center justify-center text-center p-2 border-b border-[#29384C]">
+                        <Camera className="w-6 h-6 text-amber-400/50 mb-1" />
+                        <span className="text-[10px] text-slate-400 font-bold">En Nube</span>
+                      </div>
+                    )}
 
                     <div className="p-1.5 flex items-center justify-between bg-slate-950 text-[10px] text-[#94A3B8] border-t border-[#29384C]/80">
                       <span className="font-mono truncate">{photo.timestamp || `#${index + 1}`}</span>

@@ -30,7 +30,8 @@ import {
   Unlock,
   FileCheck2,
   Compass,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ArrowLeft
 } from 'lucide-react';
 import { Project, Unit, TaskFilter, InspectionItem, Trade } from '../types';
 import { calculateUnitProgress, getUnitItemCounts, isUnitCommonArea, isTradeMatchingFilter, hexToRgba } from '../utils/calculations';
@@ -246,6 +247,24 @@ export function ChecklistView({
 
   return (
     <section className="space-y-4 relative z-10">
+      {/* Bot�n Volver al piso anterior de la obra */}
+      {onBack && (
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-4 py-2 rounded-2xl bg-[#101D30] hover:bg-[#17263B] text-slate-200 hover:text-white text-xs font-black flex items-center gap-2 border border-[#29384C] hover:border-cyan-500/50 transition-all active:scale-95 shadow-md touch-target"
+            title="Volver a los departamentos del mismo piso"
+          >
+            <ArrowLeft className="w-4 h-4 text-cyan-400 stroke-[2.5]" />
+            <span>Volver a {unit.floorLabel || 'Piso'}</span>
+          </button>
+
+          <span className="text-xs text-[#94A3B8] font-bold truncate">
+            {project.name} � {unit.name}
+          </span>
+        </div>
+      )}
       {/* Executive Unit Status Card with Glowing Cyan Donut Chart */}
       <div
         onMouseEnter={() => setUnitCardHoverTrigger(prev => prev + 1)}

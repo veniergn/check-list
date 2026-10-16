@@ -168,24 +168,34 @@ export function PhotoViewerModal({
                 key={photo.id}
                 className="bg-[#17263B] rounded-2xl overflow-hidden border border-[#29384C] shadow-md flex flex-col"
               >
-                <div className="relative bg-black flex items-center justify-center max-h-72 overflow-hidden group">
-                  <img
-                    src={photo.dataUrl}
-                    alt={`Evidencia ${index + 1}`}
-                    className="w-full object-contain max-h-72"
-                  />
-                  <span className="absolute top-2 left-2 bg-slate-950/80 text-amber-400 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs">
-                    Foto {index + 1} de {photos.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadPhoto(photo.dataUrl, index)}
-                    className="absolute top-2 right-2 bg-slate-950/80 hover:bg-[#101D30] text-amber-400 border border-amber-500/40 p-1.5 rounded-full shadow-lg backdrop-blur-xs active:scale-95 transition-all"
-                    title="Descargar esta foto"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                </div>
+                {photo.dataUrl ? (
+                  <div className="relative bg-black flex items-center justify-center max-h-72 overflow-hidden group">
+                    <img
+                      src={photo.dataUrl}
+                      alt={`Evidencia ${index + 1}`}
+                      className="w-full object-contain max-h-72"
+                    />
+                    <span className="absolute top-2 left-2 bg-slate-950/80 text-amber-400 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs">
+                      Foto {index + 1} de {photos.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPhoto(photo.dataUrl, index)}
+                      className="absolute top-2 right-2 bg-slate-950/80 hover:bg-[#101D30] text-amber-400 border border-amber-500/40 p-1.5 rounded-full shadow-lg backdrop-blur-xs active:scale-95 transition-all"
+                      title="Descargar esta foto"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-8 bg-slate-950/80 flex flex-col items-center justify-center text-center border-b border-[#29384C]">
+                    <Camera className="w-10 h-10 text-amber-400/50 mb-2" />
+                    <p className="text-xs font-bold text-slate-200">Foto registrada #{index + 1}</p>
+                    <p className="text-[11px] text-slate-400 mt-1 max-w-xs leading-relaxed">
+                      La imagen se encuentra sincroniz�ndose en Google Drive (Gmail). Si necesitas actualizarla, toma una nueva foto con el bot�n inferior.
+                    </p>
+                  </div>
+                )}
 
                 <div className="p-3 bg-slate-950 flex items-center justify-between border-t border-[#29384C]">
                   <div className="flex items-center text-[#94A3B8] text-xs gap-1.5">

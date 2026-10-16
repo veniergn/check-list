@@ -608,6 +608,7 @@ export default function App() {
   }, []);
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+  const [selectedFloorKey, setSelectedFloorKey] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState('inicio');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -1092,6 +1093,62 @@ export default function App() {
     }
   }, [projects]);
 
+  // Rutina en segundo plano: migra fotos base64 pendientes a enlaces permanentes de Google Drive (Gmail)
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function syncBase64PhotosToDrive() {
+      // Esperar 4 segundos tras inicio
+      await new Promise(r => setTimeout(r, 4000));
+      if (isCancelled) return;
+
+      let hasChanges = false;
+      const currentProjects = projectsRef.current;
+      if (!currentProjects || currentProjects.length === 0) return;
+
+      const updated = JSON.parse(JSON.stringify(currentProjects)) as Project[];
+
+      for (const p of updated) {
+        for (const u of (p.units || [])) {
+          for (const t of (u.trades || [])) {
+            for (const item of (t.items || [])) {
+              for (const ph of (item.photos || [])) {
+                if (ph.dataUrl && ph.dataUrl.startsWith('data:') && !isDriveUrl(ph.dataUrl)) {
+                  try {
+                    const res = await uploadFileToDrive({
+                      base64: ph.dataUrl,
+                      filename: `inspeccion_${t.id}_${item.id}_${Date.now()}.jpg`,
+                      mimeType: 'image/jpeg'
+                    });
+                    if (res && res.success && res.url) {
+                      ph.dataUrl = res.url;
+                      hasChanges = true;
+                    }
+                  } catch (e) {
+                    console.warn('Sync pending photo notice:', e);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (hasChanges && !isCancelled) {
+        projectsRef.current = updated;
+        setProjects(updated);
+        try {
+          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updated));
+        } catch {}
+        saveProjectsToCloud(updated);
+        showToast('Fotos sincronizadas con Google Drive (Gmail)', 'Cloud');
+      }
+    }
+
+    syncBase64PhotosToDrive();
+    return () => { isCancelled = true; };
+  }, []);
+
   // Persist logos to localStorage and Supabase Cloud
   useEffect(() => {
     try {
@@ -1171,6 +1228,7 @@ export default function App() {
     if (splashJustFinishedRef.current) return;
     setSelectedProjectId(projectId);
     setSelectedUnitId(null);
+    setSelectedFloorKey(null);
     setCurrentView('units');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1183,11 +1241,23 @@ export default function App() {
 
   const handleBack = () => {
     if (currentView === 'checklist') {
+      // Regresa de la unidad a la vista de unidades conservando el piso seleccionado
       setCurrentView('units');
       setSelectedUnitId(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentView === 'units') {
+      // Si est� dentro de un piso espec�fico, primero vuelve a la lista general de pisos de la obra
+      if (selectedFloorKey) {
+        setSelectedFloorKey(null);
+      } else {
+        // Si ya est� en la vista general de pisos, vuelve al Dashboard (Inicio)
+        setCurrentView('dashboard');
+        setSelectedProjectId(null);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (currentView !== 'dashboard') {
       setCurrentView('dashboard');
-      setSelectedProjectId(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -1674,7 +1744,7 @@ export default function App() {
     });
   };
 
-  // Add photo to item (from camera, file picker or modal) and persist directly to Supabase Cloud
+  // Add photo to item (from camera, file picker or modal) and persist directly to Google Drive (Gmail) & Supabase Cloud
   const handleAddPhoto = async (tradeId: string, itemId: string, dataUrl: string) => {
     if (!selectedProjectId || !selectedUnitId) return;
     lastLocalEditTimeRef.current = Date.now();
@@ -1684,21 +1754,27 @@ export default function App() {
     const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const timestamp = `${dateString}, ${timeString} hs`;
 
-    const newPhoto = {
-      id: `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    const photoId = `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // 1. Mostrar de inmediato la foto en estado local con la imagen comprimida para respuesta visual instant�nea
+    const initialPhoto = {
+      id: photoId,
       dataUrl: dataUrl,
       timestamp
     };
 
-    let updatedProjectsList: Project[] = [];
+    const targetProjId = selectedProjectId;
+    const targetUId = selectedUnitId;
+
+    let updatedList: Project[] = [];
 
     setProjects(prev => {
       const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
+        if (proj.id !== targetProjId) return proj;
         return {
           ...proj,
           units: proj.units.map(u => {
-            if (u.id !== selectedUnitId) return u;
+            if (u.id !== targetUId) return u;
             return {
               ...u,
               trades: u.trades.map(t => {
@@ -1710,7 +1786,7 @@ export default function App() {
                     if (item.id !== itemId) return item;
                     return {
                       ...item,
-                      photos: [...(item.photos || []), newPhoto]
+                      photos: [...(item.photos || []), initialPhoto]
                     };
                   })
                 };
@@ -1720,52 +1796,47 @@ export default function App() {
         };
       });
       projectsRef.current = updated;
-      updatedProjectsList = updated;
+      updatedList = updated;
       return updated;
     });
 
     try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedProjectsList));
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedList));
     } catch (e) {
-      console.warn('LocalStorage error on photo save:', e);
+      console.warn('LocalStorage error on initial photo add:', e);
     }
 
-    // Sincronizar de inmediato a Supabase Cloud con datos completos
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      if (res.success) {
-        showToast('Foto guardada en la Nube Supabase', 'Check');
-      } else {
-        showToast('Foto guardada localmente (sincronizando...)', 'AlertCircle');
-      }
-    });
+    // 2. Subida prioritaria a Google Drive (Gmail del usuario)
+    if (dataUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
+      showToast('Guardando foto en Google Drive (Gmail)...', 'Camera');
 
-    // Opcional en segundo plano: si hay backend de Google Apps Script configurado, intentar optimizar url
-    const directAppsScriptUrl = (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL;
-    if (directAppsScriptUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
-      uploadFileToDrive({
-        base64: dataUrl,
-        filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
-        mimeType: 'image/jpeg'
-      }).then(uploadRes => {
-        if (uploadRes.success && uploadRes.url) {
+      try {
+        const uploadRes = await uploadFileToDrive({
+          base64: dataUrl,
+          filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
+          mimeType: 'image/jpeg'
+        });
+
+        if (uploadRes && uploadRes.success && uploadRes.url) {
+          const driveUrl = uploadRes.url;
+          let updatedWithDrive: Project[] = [];
+
           setProjects(prev => {
-            const up = prev.map(proj => {
-              if (proj.id !== selectedProjectId) return proj;
+            const updated = prev.map(proj => {
+              if (proj.id !== targetProjId) return proj;
               return {
                 ...proj,
                 units: proj.units.map(u => {
-                  if (u.id !== selectedUnitId) return u;
+                  if (u.id !== targetUId) return u;
                   return {
                     ...u,
                     trades: u.trades.map(t => ({
                       ...t,
-                      items: t.items.map(it => {
-                        if (it.id !== itemId) return it;
+                      items: t.items.map(item => {
+                        if (item.id !== itemId) return item;
                         return {
-                          ...it,
-                          photos: (it.photos || []).map(p => p.id === newPhoto.id ? { ...p, dataUrl: uploadRes.url } : p)
+                          ...item,
+                          photos: (item.photos || []).map(p => p.id === photoId ? { ...p, dataUrl: driveUrl } : p)
                         };
                       })
                     }))
@@ -1773,13 +1844,38 @@ export default function App() {
                 })
               };
             });
-            projectsRef.current = up;
-            saveProjectsToCloud(up);
-            return up;
+            projectsRef.current = updated;
+            updatedWithDrive = updated;
+            return updated;
           });
+
+          try {
+            localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedWithDrive));
+          } catch (e) {
+            console.warn('LocalStorage save error:', e);
+          }
+
+          setCloudStatus('syncing');
+          const cloudRes = await saveProjectsToCloud(updatedWithDrive);
+          setCloudStatus(cloudRes.status);
+          showToast('? Foto guardada en Google Drive (Gmail) y en la Nube', 'Check');
+          return;
         }
-      }).catch(err => console.warn('Background drive upload notice:', err));
+      } catch (uploadErr) {
+        console.warn('Error al subir a Google Drive, manteniendo base64 en Supabase:', uploadErr);
+      }
     }
+
+    // 3. Fallback: Sincronizar a Supabase Cloud
+    setCloudStatus('syncing');
+    saveProjectsToCloud(updatedList).then(res => {
+      setCloudStatus(res.status);
+      if (res.success) {
+        showToast('Foto guardada en la Nube Supabase', 'Check');
+      } else {
+        showToast('Foto guardada localmente (sincronizando...)', 'AlertCircle');
+      }
+    });
   };
 
   // Delete photo from item and persist immediately to Supabase Cloud
@@ -2834,6 +2930,8 @@ export default function App() {
               onSelectProject={handleSelectProject}
               presentationBg={localColors.presentationBackground}
               neonColor={localColors.neonColor || '#00f2fe'}
+              selectedFloorKey={selectedFloorKey}
+              onSelectFloorKey={setSelectedFloorKey}
               onSelectUnit={handleSelectUnit}
               onOpenNewUnitModal={() => setIsNewUnitModalOpen(true)}
               onOpenReportModal={handleOpenReportModal}
@@ -2872,6 +2970,7 @@ export default function App() {
               unit={selectedUnit}
               allProjects={projects}
               neonColor={localColors.neonColor || '#00f2fe'}
+              onBack={handleBack}
               onToggleItem={handleToggleItem}
               onUpdateItemProgress={handleUpdateItemProgress}
               onDeleteItem={handleDeleteItem}

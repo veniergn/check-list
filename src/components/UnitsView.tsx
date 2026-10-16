@@ -71,6 +71,8 @@ interface UnitsViewProps {
   onOpenMonthlyReport?: (projectId: string, openHistory?: boolean) => void;
   onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
   onShowToast?: (msg: string, icon?: string) => void;
+  selectedFloorKey?: string | null;
+  onSelectFloorKey?: (floorKey: string | null) => void;
 }
 
 export function UnitsView({
@@ -100,7 +102,9 @@ export function UnitsView({
   onOpenCroquis,
   onOpenMonthlyReport,
   onSaveProjectCover,
-  onShowToast
+  onShowToast,
+  selectedFloorKey: externalSelectedFloorKey,
+  onSelectFloorKey: externalOnSelectFloorKey
 }: UnitsViewProps) {
   const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
   const coverImageSrc = project.coverImageUrl || project.developerLogoUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&auto=format&fit=crop&q=80';
@@ -112,7 +116,9 @@ export function UnitsView({
   const [newTradeNameDraft, setNewTradeNameDraft] = useState<string>('');
   const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
   const [cardHoverTrigger, setCardHoverTrigger] = useState(0);
-  const [selectedFloorKey, setSelectedFloorKey] = useState<string | null>(null);
+  const [internalSelectedFloorKey, setInternalSelectedFloorKey] = useState<string | null>(null);
+  const selectedFloorKey = externalSelectedFloorKey !== undefined ? externalSelectedFloorKey : internalSelectedFloorKey;
+  const setSelectedFloorKey = externalOnSelectFloorKey || setInternalSelectedFloorKey;
   const [activeFloorCardKey, setActiveFloorCardKey] = useState<string | null>(null);
 
   // Reset selected floor whenever project changes

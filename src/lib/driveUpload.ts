@@ -4,6 +4,16 @@
  * or directly with Google Apps Script Web App if configured in client env.
  */
 
+export const DEFAULT_GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4EZXFIWDFZx72UjMV2xCaH0A66aV2wNyiD2m95yzQG6xKqT-pkvuxnKJjYD7Oh_4uDw/exec';
+
+export function getGoogleAppsScriptUrl(): string {
+  const envUrl = (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().startsWith('http')) {
+    return envUrl.trim();
+  }
+  return DEFAULT_GOOGLE_APPS_SCRIPT_URL;
+}
+
 export interface UploadOptions {
   base64: string;
   filename?: string;
@@ -31,8 +41,8 @@ export async function uploadFileToDrive(options: UploadOptions): Promise<UploadR
     return { success: false, url: '', error: 'No se proveyó contenido para el archivo.' };
   }
 
-  // 1. Check if direct client-side Google Apps Script URL is set
-  const directAppsScriptUrl = (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL;
+  // 1. Check if direct client-side Google Apps Script URL is set (or fallback to default Gmail Web App)
+  const directAppsScriptUrl = getGoogleAppsScriptUrl();
 
   if (directAppsScriptUrl && directAppsScriptUrl.trim().startsWith('http')) {
     try {
