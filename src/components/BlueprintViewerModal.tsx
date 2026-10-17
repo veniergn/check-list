@@ -609,16 +609,36 @@ export function BlueprintViewerModal({
                     />
                   ) : activeDoc.type === 'image' ? (
                     <div className="w-full h-full overflow-auto flex items-center justify-center">
-                      <img
-                        src={activeDoc.url}
-                        alt={activeDoc.name}
-                        style={{
-                          transform: `scale(${zoomLevel})`,
-                          transformOrigin: 'center center',
-                          transition: 'transform 0.15s ease-out'
-                        }}
-                        className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing rounded shadow"
-                      />
+                      {activeDoc.url ? (
+                        <img
+                          src={activeDoc.url}
+                          alt={activeDoc.name}
+                          style={{
+                            transform: `scale(${zoomLevel})`,
+                            transformOrigin: 'center center',
+                            transition: 'transform 0.15s ease-out'
+                          }}
+                          className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing rounded shadow"
+                        />
+                      ) : (
+                        <div className="p-8 text-center flex flex-col items-center justify-center">
+                          <Camera className="w-12 h-12 text-amber-500/60 mb-2" />
+                          <h5 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            {activeDoc.name}
+                          </h5>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+                            El plano se encuentra registrado y listo para capturar o sincronizar. Puedes tomar o subir la foto con el botón inferior.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => cameraInputRef.current?.click()}
+                            className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all"
+                          >
+                            <Camera className="w-4 h-4" />
+                            <span>Sacar Foto del Plano</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center p-8">

@@ -95,7 +95,7 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
         category: b.category,
         type: b.type,
         uploadedAt: b.uploadedAt,
-        url: b.url?.startsWith('data:') ? '' : b.url,
+        url: b.url || '',
         cadViewerUrl: b.cadViewerUrl
       })) || [],
       trades: u.trades?.map(t => ({
@@ -173,6 +173,8 @@ function countTotalPhotos(projs: Project[]): number {
   let count = 0;
   for (const p of projs || []) {
     for (const u of (p.units || [])) {
+      count += (u.blueprints?.filter(b => b && b.url) || []).length;
+      count += (u.sketches?.filter(s => s && s.dataUrl) || []).length;
       for (const t of (u.trades || [])) {
         for (const item of (t.items || [])) {
           count += (item.photos?.filter(ph => ph && ph.dataUrl) || []).length;
@@ -216,10 +218,31 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
       const localUnit = (localProj.units || []).find(lu => lu.id === remoteUnit.id);
       if (!localUnit) return remoteUnit;
 
-      // Blueprints: merge by ID non-destructively
+      // Blueprints: merge by ID non-destructively (never let empty URL overwrite a valid image)
       const bpMap = new Map<string, BlueprintDocument>();
       (localUnit.blueprints || []).forEach(b => bpMap.set(b.id, b));
-      (remoteUnit.blueprints || []).forEach(b => bpMap.set(b.id, b));
+      (remoteUnit.blueprints || []).forEach(remoteBp => {
+        const localBp = bpMap.get(remoteBp.id);
+        if (!localBp) {
+          bpMap.set(remoteBp.id, remoteBp);
+        } else {
+          const localUrl = localBp.url || '';
+          const remoteUrl = remoteBp.url || '';
+          if (remoteUrl.startsWith('http')) {
+            bpMap.set(remoteBp.id, remoteBp);
+          } else if (localUrl.startsWith('http')) {
+            bpMap.set(remoteBp.id, localBp);
+          } else if (localUrl && !remoteUrl) {
+            bpMap.set(remoteBp.id, localBp);
+          } else if (remoteUrl && !localUrl) {
+            bpMap.set(remoteBp.id, remoteBp);
+          } else if (remoteUrl.length >= localUrl.length) {
+            bpMap.set(remoteBp.id, remoteBp);
+          } else {
+            bpMap.set(remoteBp.id, localBp);
+          }
+        }
+      });
 
       // Sketches: merge by ID non-destructively
       const sketchMap = new Map<string, SketchDocument>();
@@ -1145,6 +1168,25 @@ export default function App() {
 
       for (const p of updated) {
         for (const u of (p.units || [])) {
+          // Migrar planos técnicos con fotos base64 a Google Drive
+          for (const bp of (u.blueprints || [])) {
+            if (bp.url && bp.url.startsWith('data:') && !isDriveUrl(bp.url)) {
+              try {
+                const res = await uploadFileToDrive({
+                  base64: bp.url,
+                  filename: `plano_${(bp.name || 'plano').replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.jpg`,
+                  mimeType: 'image/jpeg'
+                });
+                if (res && res.success && res.url) {
+                  bp.url = res.url;
+                  hasChanges = true;
+                }
+              } catch (e) {
+                console.warn('Sync pending blueprint notice:', e);
+              }
+            }
+          }
+
           for (const t of (u.trades || [])) {
             for (const item of (t.items || [])) {
               for (const ph of (item.photos || [])) {
