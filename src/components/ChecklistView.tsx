@@ -34,7 +34,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Project, Unit, TaskFilter, InspectionItem, Trade } from '../types';
-import { calculateUnitProgress, getUnitItemCounts, isUnitCommonArea, isTradeMatchingFilter, hexToRgba } from '../utils/calculations';
+import { calculateUnitProgress, getUnitItemCounts, isUnitCommonArea, isTradeMatchingFilter, hexToRgba, parseUnitFloor } from '../utils/calculations';
 import { MASTER_TRADES_TEMPLATE } from '../data/initialData';
 import { ItemObservationModal } from './ItemObservationModal';
 import { AddItemScopeModal } from './AddItemScopeModal';
@@ -56,6 +56,9 @@ function WhatsAppIcon({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 interface ChecklistViewProps {
+  selectedFloorKey?: string | null;
+  onSelectFloorKey?: (floorKey: string | null) => void;
+  onSelectUnit?: (unitId: string) => void;
   onBack?: () => void;
   project: Project;
   unit: Unit;
@@ -95,6 +98,9 @@ export function ChecklistView({
   unit,
   allProjects,
   onBack,
+  selectedFloorKey,
+  onSelectFloorKey,
+  onSelectUnit,
   onToggleItem,
   onUpdateItemProgress,
   onDeleteItem,
@@ -130,6 +136,48 @@ export function ChecklistView({
   const [unitCardHoverTrigger, setUnitCardHoverTrigger] = useState(0);
   const [editingCommentItemId, setEditingCommentItemId] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
+
+  // Agrupamiento de todos los pisos de la obra para navegacion permanente
+  const floorGroups = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      floorNumber: number;
+      label: string;
+      isCommon: boolean;
+      units: Unit[];
+    }>();
+
+    project.units.forEach(u => {
+      const { floorNumber, label, isCommon } = parseUnitFloor(u);
+      const key = isCommon ? 'comunes' : `piso_${floorNumber}`;
+      if (!map.has(key)) {
+        map.set(key, { key, floorNumber, label, isCommon, units: [] });
+      }
+      map.get(key)!.units.push(u);
+    });
+
+    const groups = Array.from(map.values()).map(grp => {
+      let completedUnits = 0;
+      let totalPctSum = 0;
+      grp.units.forEach(u => {
+        const p = calculateUnitProgress(u);
+        totalPctSum += p;
+        if (p >= 100) completedUnits++;
+      });
+      const totalUnits = grp.units.length;
+      const progress = totalUnits > 0 ? Math.round(totalPctSum / totalUnits) : 0;
+      return { ...grp, totalUnits, completedUnits, progress };
+    });
+
+    groups.sort((a, b) => a.floorNumber - b.floorNumber);
+    return groups;
+  }, [project.units]);
+
+  // Informacion del piso de la unidad activa y departamentos hermanos
+  const currentUnitFloorInfo = useMemo(() => parseUnitFloor(unit), [unit]);
+  const currentFloorKey = currentUnitFloorInfo.isCommon ? 'comunes' : `piso_${currentUnitFloorInfo.floorNumber}`;
+  const activeFloorGroup = floorGroups.find(f => f.key === (selectedFloorKey || currentFloorKey)) || floorGroups.find(f => f.key === currentFloorKey);
+  const siblingUnits = activeFloorGroup ? activeFloorGroup.units : [];
   const [observationModalItem, setObservationModalItem] = useState<{
     tradeId: string;
     tradeName: string;
@@ -249,24 +297,150 @@ export function ChecklistView({
 
   return (
     <section className="space-y-4 relative z-10">
-      {/* Bot�n Volver al piso anterior de la obra */}
-      {onBack && (
-        <div className="flex items-center justify-between gap-3">
+      {/* 1. VENTANA SUPERIOR: CONTROL Y NAVEGACION DE TODOS LOS PISOS DE LA OBRA */}
+      <div className="bg-[#101D30] border border-[#29384C] rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg relative z-20">
+        {/* Fila superior: Volver al piso, estado de avance y boton de ver todos los pisos */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-3.5 py-1.5 rounded-xl bg-[#17263B] hover:bg-[#1f324d] text-slate-200 hover:text-white text-xs font-black flex items-center gap-1.5 border border-[#29384C] transition-all active:scale-95 shadow-xs touch-target"
+                title="Volver al piso y ver la lista completa de departamentos"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#00c2fe]" />
+                <span>Volver a {activeFloorGroup?.label || unit.floorLabel || 'Piso'}</span>
+              </button>
+            )}
+
+            <div className="h-6 w-px bg-slate-700/80 hidden sm:block" />
+
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 truncate">
+                <span style={{ color: neonColor }}>
+                  {activeFloorGroup?.label || unit.floorLabel || 'Piso Actual'}
+                </span>
+                <span className="text-xs font-bold text-[#94A3B8]">
+                  ({activeFloorGroup?.completedUnits || 0} de {activeFloorGroup?.totalUnits || siblingUnits.length} deptos listos • {activeFloorGroup?.progress || 0}%)
+                </span>
+              </h3>
+              <p className="text-[11px] text-[#94A3B8] font-medium">
+                Obra: <strong className="text-slate-200">{project.name}</strong> • Consulta y cambio directo de departamento
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {onSelectFloorKey && (
+              <button
+                type="button"
+                onClick={() => onSelectFloorKey(null)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#17263B] hover:bg-[#1f324d] text-slate-300 hover:text-white border border-[#29384C] hover:border-slate-500 transition-all active:scale-95 touch-target shadow-xs"
+                title="Ver la lista de todos los pisos de la obra"
+              >
+                Ver Todos los Pisos ({floorGroups.length})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Fila de Pildoras: TODOS LOS PISOS (Quick Floor Switcher) */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pt-2 text-xs border-t border-[#29384C]">
           <button
             type="button"
-            onClick={onBack}
-            className="px-4 py-2 rounded-2xl bg-[#101D30] hover:bg-[#17263B] text-slate-200 hover:text-white text-xs font-black flex items-center gap-2 border border-[#29384C] hover:border-cyan-500/50 transition-all active:scale-95 shadow-md touch-target"
-            title="Volver a los departamentos del mismo piso"
+            onClick={() => onSelectFloorKey ? onSelectFloorKey(null) : onBack?.()}
+            className="px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 flex-shrink-0 bg-[#17263B] text-slate-300 border border-[#29384C] hover:border-slate-500 touch-target"
+            title="Volver a la seleccion de pisos"
           >
-            <ArrowLeft className="w-4 h-4 text-cyan-400 stroke-[2.5]" />
-            <span>Volver a {unit.floorLabel || 'Piso'}</span>
+            <ArrowLeft className="w-3 h-3" style={{ color: neonColor }} />
+            <span>Pisos</span>
           </button>
 
-          <span className="text-xs text-[#94A3B8] font-bold truncate">
-            {project.name} � {unit.name}
-          </span>
+          {floorGroups.map((grp) => {
+            const isSelected = (selectedFloorKey || currentFloorKey) === grp.key;
+            return (
+              <button
+                key={grp.key}
+                type="button"
+                onClick={() => {
+                  if (onSelectFloorKey) {
+                    onSelectFloorKey(grp.key);
+                  } else if (onBack) {
+                    onBack();
+                  }
+                }}
+                style={isSelected ? {
+                  backgroundColor: neonColor,
+                  borderColor: neonColor,
+                  boxShadow: `0 0 12px ${hexToRgba(neonColor, 0.4)}`,
+                  color: '#020617'
+                } : undefined}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 border touch-target ${
+                  isSelected
+                    ? 'font-black'
+                    : 'bg-[#17263B] text-slate-300 border-[#29384C] hover:border-slate-500'
+                }`}
+                title={`Ir a ${grp.label}`}
+              >
+                <span>{grp.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-[#94A3B8]'
+                }`}>
+                  {grp.totalUnits}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {/* Fila de Departamentos del Piso Actual: Cambio directo entre departamentos sin salir */}
+        {siblingUnits.length > 0 && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pt-2 text-xs border-t border-[#29384C]/80">
+            <span className="text-[10px] font-black uppercase text-slate-400 shrink-0 pr-1 flex items-center gap-1 select-none">
+              <DoorOpen className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Deptos de este piso:</span>
+            </span>
+
+            {siblingUnits.map((u) => {
+              const isCurrentUnit = u.id === unit.id;
+              const uProgress = calculateUnitProgress(u);
+              const isCompleted = uProgress >= 100;
+              const shortUnit = u.name.replace(/^(?:depto|departamento|unidad|dpto)\s*/i, '');
+
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => onSelectUnit && onSelectUnit(u.id)}
+                  style={isCurrentUnit ? {
+                    backgroundColor: hexToRgba(neonColor, 0.22),
+                    borderColor: neonColor,
+                    boxShadow: `0 0 10px ${hexToRgba(neonColor, 0.35)}`,
+                    color: '#ffffff'
+                  } : undefined}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 border touch-target active:scale-95 ${
+                    isCurrentUnit
+                      ? 'border-2 font-black shadow-sm'
+                      : 'bg-[#17263B]/90 text-slate-300 border-[#29384C] hover:border-slate-500 hover:text-white'
+                  }`}
+                  title={`Cambiar al checklist de ${u.name}`}
+                >
+                  <span>{shortUnit}</span>
+                  {isCompleted ? (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
+                  ) : uProgress > 0 ? (
+                    <span className="text-[10px] text-cyan-300 font-mono font-bold">
+                      {uProgress}%
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Executive Unit Status Card with Glowing Cyan Donut Chart */}
       <div
         onMouseEnter={() => setUnitCardHoverTrigger(prev => prev + 1)}

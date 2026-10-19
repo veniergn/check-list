@@ -3,7 +3,7 @@ import { Building2, DoorOpen, Image as ImageIcon, FileText, Download, ShieldChec
 import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto } from './types';
 import { getProjectContractors } from './utils/pmContractors';
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
-import { compressImageFile, calculateUnitProgress, hexToRgba } from './utils/calculations';
+import { compressImageFile, calculateUnitProgress, hexToRgba, parseUnitFloor } from './utils/calculations';
 import { Header } from './components/Header';
 import { SidebarNav } from './components/SidebarNav';
 import { TopHeader } from './components/TopHeader';
@@ -1312,6 +1312,14 @@ export default function App() {
 
   const handleSelectUnit = (unitId: string) => {
     setSelectedUnitId(unitId);
+    if (selectedProject) {
+      const u = selectedProject.units.find(x => x.id === unitId);
+      if (u) {
+        const { floorNumber, isCommon } = parseUnitFloor(u);
+        const floorKey = isCommon ? 'comunes' : `piso_${floorNumber}`;
+        setSelectedFloorKey(floorKey);
+      }
+    }
     setCurrentView('checklist');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -3047,6 +3055,19 @@ export default function App() {
               unit={selectedUnit}
               allProjects={projects}
               neonColor={localColors.neonColor || '#00f2fe'}
+              selectedFloorKey={selectedFloorKey}
+              onSelectFloorKey={(floorKey) => {
+                setSelectedFloorKey(floorKey);
+                setCurrentView('units');
+              }}
+              onSelectUnit={(newUnitId) => {
+                setSelectedUnitId(newUnitId);
+                const targetU = selectedProject.units.find(x => x.id === newUnitId);
+                if (targetU) {
+                  const { floorNumber, isCommon } = parseUnitFloor(targetU);
+                  setSelectedFloorKey(isCommon ? 'comunes' : `piso_${floorNumber}`);
+                }
+              }}
               onBack={handleBack}
               onToggleItem={handleToggleItem}
               onUpdateItemProgress={handleUpdateItemProgress}
