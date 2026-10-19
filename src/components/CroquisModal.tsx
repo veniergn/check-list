@@ -44,6 +44,7 @@ import {
   CheckSquare
 } from 'lucide-react';
 import { Project, Unit, SketchDocument, BlueprintDocument } from '../types';
+import { compressImageFile } from '../utils/calculations';
 
 interface CroquisModalProps {
   isOpen: boolean;
@@ -291,10 +292,12 @@ export function CroquisModal({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Sync initialProjectId & initialUnitId when prop changes or modal opens
+    const prevIsOpenRef = useRef(false);
+
+  // Sync initialProjectId & initialUnitId ONLY when modal OPENS fresh (prevents resetting mid-drawing)
   useEffect(() => {
-    if (isOpen) {
-      setActiveTab('history'); // ALWAYS open gallery first as requested!
+    if (isOpen && !prevIsOpenRef.current) {
+      setActiveTab('history'); // ALWAYS open gallery first on fresh modal open
       setIsSaveLocationModalOpen(false);
       setPendingCompositeDataUrl(null);
 
@@ -318,7 +321,8 @@ export function CroquisModal({
         }
       }
     }
-  }, [isOpen, initialProjectId, initialUnitId, projects]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, initialProjectId, initialUnitId]);
 
   const handleSelectProject = (newProjId: string) => {
     setSelectedProjectId(newProjId);
@@ -814,37 +818,28 @@ export function CroquisModal({
         setPan({ x: 0, y: 0 });
         setIsPanMode(false);
         setIsToolsMenuOpen(false);
+        setActiveTab('draw');
         showToast(`Plano PDF cargado en pantalla completa (${result.totalPages} pág)`);
       } else {
-        // Image or Live Camera Photo
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const dataUrl = event.target?.result as string;
-          if (dataUrl) {
-            setBgDocument({
-              dataUrl,
-              name: isCamera ? `Foto de Obra (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : file.name,
-              type: isCamera ? 'camera' : 'image',
-              opacity: 0.95
-            });
-            if (sketchTitle === 'Croquis en sitio') {
-              setSketchTitle(isCamera ? 'Detalle fotográfico en sitio' : `Anotaciones: ${file.name.replace(/\.[^/.]+$/, '')}`);
-            }
-            setZoom(1);
-            setPan({ x: 0, y: 0 });
-            setIsPanMode(false);
-            setIsToolsMenuOpen(false);
-            setHasStartedDrawing(true);
-            showToast(isCamera ? 'Foto en pantalla completa lista para croquizar y hacer zoom' : 'Imagen a pantalla completa lista');
-          }
-          setIsLoadingFile(false);
-        };
-        reader.onerror = () => {
-          setIsLoadingFile(false);
-          showToast('Error al leer la imagen');
-        };
-        reader.readAsDataURL(file);
-        return;
+        // Image or Live Camera Photo - Instant compression for blazing speed & small memory footprint
+        showToast(isCamera ? 'Procesando foto de obra...' : 'Optimizando imagen...');
+        const compressedDataUrl = await compressImageFile(file, 1600, 0.78);
+        setBgDocument({
+          dataUrl: compressedDataUrl,
+          name: isCamera ? `Foto de Obra (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : file.name,
+          type: isCamera ? 'camera' : 'image',
+          opacity: 0.95
+        });
+        if (sketchTitle === 'Croquis en sitio') {
+          setSketchTitle(isCamera ? 'Detalle fotográfico en sitio' : `Anotaciones: ${file.name.replace(/\.[^/.]+$/, '')}`);
+        }
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+        setIsPanMode(false);
+        setIsToolsMenuOpen(false);
+        setHasStartedDrawing(true);
+        setActiveTab('draw'); // ALWAYS switch to draw tab immediately
+        showToast(isCamera ? 'Foto lista: puedes croquizar encima y guardar' : 'Imagen lista para croquizar');
       }
     } catch (err: any) {
       console.error('Error loading file onto croquis canvas:', err);
@@ -1120,14 +1115,15 @@ export function CroquisModal({
 
   // Confirm Save with Selected Destination
   const handleConfirmSave = () => {
-    if (!pendingCompositeDataUrl || !currentUnit || !activeProject) return;
+    const targetUnit = activeProject?.units?.find(u => u.id === selectedUnitId) || currentUnit;
+    if (!pendingCompositeDataUrl || !targetUnit || !activeProject) return;
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const timestamp = `${dateStr}, ${timeStr} hs`;
 
-    const selectedTrade = currentUnit.trades?.find(t => t.id === saveTradeId);
+    const selectedTrade = targetUnit.trades?.find(t => t.id === saveTradeId);
     const selectedItem = selectedTrade?.items?.find(i => i.id === saveItemId);
 
     const isItemLinked = saveDestinationType === 'item' && selectedTrade && selectedItem;
@@ -1137,8 +1133,8 @@ export function CroquisModal({
       title: sketchTitle.trim() || (isItemLinked ? `Croquis: ${selectedItem.name}` : 'Croquis en sitio'),
       dataUrl: pendingCompositeDataUrl,
       createdAt: timestamp,
-      unitId: currentUnit.id,
-      unitName: currentUnit.name,
+      unitId: targetUnit.id,
+      unitName: targetUnit.name,
       projectId: activeProject.id,
       projectName: activeProject.name,
       tradeId: isItemLinked ? selectedTrade.id : undefined,
@@ -1147,16 +1143,17 @@ export function CroquisModal({
       itemName: isItemLinked ? selectedItem.name : undefined
     };
 
-    onSaveSketch(activeProject.id, currentUnit.id, newSketch);
+    onSaveSketch(activeProject.id, targetUnit.id, newSketch);
 
     if (isItemLinked) {
-      showToast(`Croquis vinculado a "${selectedItem.name}" y guardado ✔`);
+      showToast(`Croquis vinculado a "${selectedItem.name}" en ${targetUnit.name} ✔`);
     } else {
-      showToast(`Croquis guardado en ${currentUnit.name} (${activeProject.name}) ✔`);
+      showToast(`Croquis guardado en ${targetUnit.name} (${activeProject.name}) ✔`);
     }
 
     setIsSaveLocationModalOpen(false);
     setPendingCompositeDataUrl(null);
+    setGalleryUnitFilter(targetUnit.id);
     setActiveTab('history'); // Directly view in gallery!
   };
 
@@ -2605,6 +2602,33 @@ export function CroquisModal({
                   />
                 </div>
               )}
+
+              {/* Department Target Selector - Guarantees croquis goes to the right unit */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <DoorOpen className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Departamento / Espacio de Destino:</span>
+                </label>
+                <select
+                  value={selectedUnitId}
+                  onChange={(e) => {
+                    const newUId = e.target.value;
+                    setSelectedUnitId(newUId);
+                    const targetU = activeProject?.units?.find(u => u.id === newUId);
+                    if (targetU && targetU.trades && targetU.trades.length > 0) {
+                      setSaveTradeId(targetU.trades[0].id);
+                      setSaveItemId(targetU.trades[0].items?.[0]?.id || '');
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-amber-500/60 rounded-xl text-xs font-black text-amber-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  {(activeProject?.units || []).map(u => (
+                    <option key={u.id} value={u.id} className="bg-[#101D30] text-white">
+                      {u.name} {u.type === 'common_area' ? '(Espacio Común)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Title input */}
               <div>

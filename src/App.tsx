@@ -1891,76 +1891,72 @@ export default function App() {
       console.warn('LocalStorage error on initial photo add:', e);
     }
 
-    // 2. Subida prioritaria a Google Drive (Gmail del usuario)
-    if (dataUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
-      showToast('Guardando foto en Google Drive (Gmail)...', 'Camera');
+    showToast('📸 Foto guardada. Sincronizando con Google Drive (Gmail)...', 'Camera');
 
-      try {
-        const uploadRes = await uploadFileToDrive({
-          base64: dataUrl,
-          filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
-          mimeType: 'image/jpeg'
-        });
-
-        if (uploadRes && uploadRes.success && uploadRes.url) {
-          const driveUrl = uploadRes.url;
-          let updatedWithDrive: Project[] = [];
-
-          setProjects(prev => {
-            const updated = prev.map(proj => {
-              if (proj.id !== targetProjId) return proj;
-              return {
-                ...proj,
-                units: proj.units.map(u => {
-                  if (u.id !== targetUId) return u;
-                  return {
-                    ...u,
-                    trades: u.trades.map(t => ({
-                      ...t,
-                      items: t.items.map(item => {
-                        if (item.id !== itemId) return item;
-                        return {
-                          ...item,
-                          photos: (item.photos || []).map(p => p.id === photoId ? { ...p, dataUrl: driveUrl } : p)
-                        };
-                      })
-                    }))
-                  };
-                })
-              };
-            });
-            projectsRef.current = updated;
-            updatedWithDrive = updated;
-            return updated;
+    // 2. Subida en segundo plano sin congelar la app (permite tomar fotos rapido una tras otra)
+    (async () => {
+      let finalDriveUrl = dataUrl;
+      if (dataUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
+        try {
+          const uploadRes = await uploadFileToDrive({
+            base64: dataUrl,
+            filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
+            mimeType: 'image/jpeg'
           });
 
-          try {
-            localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedWithDrive));
-          } catch (e) {
-            console.warn('LocalStorage save error:', e);
+          if (uploadRes && uploadRes.success && uploadRes.url) {
+            finalDriveUrl = uploadRes.url;
           }
-
-          setCloudStatus('syncing');
-          const cloudRes = await saveProjectsToCloud(updatedWithDrive);
-          setCloudStatus(cloudRes.status);
-          showToast('? Foto guardada en Google Drive (Gmail) y en la Nube', 'Check');
-          return;
+        } catch (uploadErr) {
+          console.warn('Error al subir foto a Google Drive:', uploadErr);
         }
-      } catch (uploadErr) {
-        console.warn('Error al subir a Google Drive, manteniendo base64 en Supabase:', uploadErr);
       }
-    }
 
-    // 3. Fallback: Sincronizar a Supabase Cloud
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedList).then(res => {
-      setCloudStatus(res.status);
-      if (res.success) {
-        showToast('Foto guardada en la Nube Supabase', 'Check');
-      } else {
-        showToast('Foto guardada localmente (sincronizando...)', 'AlertCircle');
+      let listToCloud = updatedList;
+      if (finalDriveUrl !== dataUrl) {
+        setProjects(prev => {
+          const updated = prev.map(proj => {
+            if (proj.id !== targetProjId) return proj;
+            return {
+              ...proj,
+              units: proj.units.map(u => {
+                if (u.id !== targetUId) return u;
+                return {
+                  ...u,
+                  trades: u.trades.map(t => ({
+                    ...t,
+                    items: t.items.map(item => {
+                      if (item.id !== itemId) return item;
+                      return {
+                        ...item,
+                        photos: (item.photos || []).map(p => p.id === photoId ? { ...p, dataUrl: finalDriveUrl } : p)
+                      };
+                    })
+                  }))
+                };
+              })
+            };
+          });
+          projectsRef.current = updated;
+          listToCloud = updated;
+          return updated;
+        });
+
+        try {
+          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(listToCloud));
+        } catch (e) {}
       }
-    });
+
+      setCloudStatus('syncing');
+      saveProjectsToCloud(listToCloud).then(res => {
+        setCloudStatus(res.status);
+        if (isDriveUrl(finalDriveUrl)) {
+          showToast('☁️ Foto respaldada en tu Google Drive (Gmail) y en la Nube', 'Check');
+        } else {
+          showToast('☁️ Foto guardada en la Nube', 'Check');
+        }
+      });
+    })();
   };
 
   // Delete photo from item and persist immediately to Supabase Cloud
@@ -2077,30 +2073,12 @@ export default function App() {
     });
   };
 
-  // Save Croquis sketch to unit and sync to Supabase Cloud
+  // Save Croquis sketch to unit and sync to Google Drive & Supabase Cloud (Instant optimistic save)
   const handleSaveSketch = async (projectId: string, unitId: string, sketch: SketchDocument) => {
     lastLocalEditTimeRef.current = Date.now();
-    let finalSketch = { ...sketch };
+    const sketchId = sketch.id;
 
-    // Si el croquis es una imagen base64, subir a Google Drive
-    if (sketch.dataUrl && sketch.dataUrl.startsWith('data:') && !isDriveUrl(sketch.dataUrl)) {
-      showToast('Guardando croquis en Google Drive...', 'PenTool');
-      try {
-        const uploadRes = await uploadFileToDrive({
-          base64: sketch.dataUrl,
-          filename: `croquis_${(sketch.projectName || 'obra').replace(/\s+/g, '_')}_${(sketch.unitName || 'unidad').replace(/\s+/g, '_')}_${Date.now()}.png`,
-          mimeType: 'image/png'
-        });
-        if (uploadRes.success && uploadRes.url) {
-          finalSketch.dataUrl = uploadRes.url;
-        } else if (uploadRes.error) {
-          console.warn('Google Drive croquis aviso:', uploadRes.error);
-        }
-      } catch (err) {
-        console.warn('Error subiendo croquis a Drive:', err);
-      }
-    }
-
+    // 1. Guardado instantaneo local (Respuesta inmediata en 5ms, sin congelar la pantalla)
     let updatedProjectsList: Project[] = [];
     setProjects(prev => {
       const updated = prev.map(proj => {
@@ -2111,19 +2089,19 @@ export default function App() {
             if (u.id !== unitId) return u;
 
             let updatedTrades = u.trades;
-            if (finalSketch.tradeId && finalSketch.itemId) {
+            if (sketch.tradeId && sketch.itemId) {
               const newPhoto: InspectionPhoto = {
                 id: `photo_sk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-                dataUrl: finalSketch.dataUrl,
-                timestamp: finalSketch.createdAt || new Date().toLocaleString()
+                dataUrl: sketch.dataUrl,
+                timestamp: sketch.createdAt || new Date().toLocaleString()
               };
 
               updatedTrades = (u.trades || []).map(tr => {
-                if (tr.id !== finalSketch.tradeId) return tr;
+                if (tr.id !== sketch.tradeId) return tr;
                 return {
                   ...tr,
                   items: tr.items.map(it => {
-                    if (it.id !== finalSketch.itemId) return it;
+                    if (it.id !== sketch.itemId) return it;
                     return {
                       ...it,
                       photos: [newPhoto, ...(it.photos || [])]
@@ -2136,12 +2114,13 @@ export default function App() {
             return {
               ...u,
               trades: updatedTrades,
-              sketches: [finalSketch, ...(u.sketches || [])]
+              sketches: [sketch, ...(u.sketches || [])]
             };
           })
         };
       });
       updatedProjectsList = updated;
+      projectsRef.current = updated;
       return updated;
     });
 
@@ -2151,17 +2130,62 @@ export default function App() {
       console.warn('LocalStorage error on sketch save:', e);
     }
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      const isDrive = isDriveUrl(finalSketch.dataUrl);
-      showToast(
-        isDrive
-          ? `Croquis guardado en Google Drive y Nube (${finalSketch.unitName || 'Unidad'})`
-          : `Croquis guardado en ${finalSketch.unitName || 'la unidad'} (${finalSketch.projectName || 'Obra'}) y en la Nube`,
-        'Check'
-      );
-    });
+    showToast(`💾 Croquis guardado en ${sketch.unitName || 'departamento'}. Subiendo a Google Drive...`, 'PenTool');
+
+    // 2. Subida en segundo plano a Google Drive (Gmail del usuario) y Supabase
+    (async () => {
+      let finalUrl = sketch.dataUrl;
+      if (sketch.dataUrl && sketch.dataUrl.startsWith('data:') && !isDriveUrl(sketch.dataUrl)) {
+        try {
+          const uploadRes = await uploadFileToDrive({
+            base64: sketch.dataUrl,
+            filename: `croquis_${(sketch.projectName || 'obra').replace(/\s+/g, '_')}_${(sketch.unitName || 'unidad').replace(/\s+/g, '_')}_${Date.now()}.jpg`,
+            mimeType: 'image/jpeg'
+          });
+          if (uploadRes && uploadRes.success && uploadRes.url) {
+            finalUrl = uploadRes.url;
+          }
+        } catch (err) {
+          console.warn('Error subiendo croquis a Drive:', err);
+        }
+      }
+
+      // Si se subio a Drive, actualizar la URL permanente
+      let listToSync = updatedProjectsList;
+      if (finalUrl !== sketch.dataUrl) {
+        setProjects(prev => {
+          const updated = prev.map(proj => {
+            if (proj.id !== projectId) return proj;
+            return {
+              ...proj,
+              units: proj.units.map(u => {
+                if (u.id !== unitId) return u;
+                return {
+                  ...u,
+                  sketches: (u.sketches || []).map(s => s.id === sketchId ? { ...s, dataUrl: finalUrl } : s)
+                };
+              })
+            };
+          });
+          listToSync = updated;
+          projectsRef.current = updated;
+          return updated;
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(listToSync));
+        } catch (e) {}
+      }
+
+      setCloudStatus('syncing');
+      saveProjectsToCloud(listToSync).then(res => {
+        setCloudStatus(res.status);
+        if (isDriveUrl(finalUrl)) {
+          showToast(`☁️ Croquis guardado en Google Drive y Nube (${sketch.unitName || 'Unidad'})`, 'Check');
+        } else {
+          showToast(`☁️ Croquis sincronizado en la Nube (${sketch.unitName || 'Unidad'})`, 'Check');
+        }
+      });
+    })();
   };
 
   // Delete Croquis sketch from unit and sync to Supabase Cloud

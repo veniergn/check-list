@@ -118,6 +118,11 @@ export function UnitsView({
   const [cardHoverTrigger, setCardHoverTrigger] = useState(0);
   const [internalSelectedFloorKey, setInternalSelectedFloorKey] = useState<string | null>(null);
   const selectedFloorKey = externalSelectedFloorKey !== undefined ? externalSelectedFloorKey : internalSelectedFloorKey;
+  const [isProjectOverviewExpanded, setIsProjectOverviewExpanded] = useState<boolean>(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [selectedFloorKey]);
   const setSelectedFloorKey = externalOnSelectFloorKey || setInternalSelectedFloorKey;
   const [activeFloorCardKey, setActiveFloorCardKey] = useState<string | null>(null);
 
@@ -305,7 +310,46 @@ export function UnitsView({
         </div>
       )}
 
-      {/* Banner de Portada de la Obra (Con acceso inmediato para cambiar imagen) */}
+      {/* Header compacto de acceso directo al piso seleccionado (evita tener que scrollear) */}
+      {selectedFloorKey !== null && (
+        <div className="bg-[#101D30] border border-cyan-500/50 rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedFloorKey(null)}
+              className="px-3.5 py-1.5 rounded-xl bg-[#17263B] hover:bg-[#1f324d] text-slate-200 hover:text-white text-xs font-black flex items-center gap-1.5 border border-[#29384C] transition-all active:scale-95 shadow-xs touch-target"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#00c2fe]" />
+              <span>Volver a Pisos</span>
+            </button>
+            <div className="h-6 w-px bg-slate-700/80 hidden sm:block" />
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <span style={{ color: neonColor }}>
+                  {selectedFloorKey === 'all_units' ? 'Todos los Departamentos' : activeFloorGroup?.label}
+                </span>
+                <span className="text-xs font-bold text-[#94A3B8]">
+                  ({activeFloorGroup?.totalUnits || tabTotalCount} deptos)
+                </span>
+              </h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsProjectOverviewExpanded(prev => !prev)}
+            className="px-3 py-1.5 bg-[#17263B] hover:bg-[#1f324d] border border-[#29384C] text-xs font-bold text-cyan-300 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+          >
+            <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">{isProjectOverviewExpanded ? 'Ocultar Resumen Obra' : 'Ver Resumen Obra'}</span>
+            <span className="font-mono text-[10px]">{isProjectOverviewExpanded ? '▲' : '▼'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Resumen General de Obra (Visible al ver toda la obra o al expandir) */}
+      {(selectedFloorKey === null || isProjectOverviewExpanded) && (
+        <>
+          {/* Banner de Portada de la Obra (Con acceso inmediato para cambiar imagen) */}
       <div className="relative rounded-3xl overflow-hidden border border-[#29384C] bg-[#101D30] shadow-xl group">
         <div className="relative h-44 sm:h-56 md:h-64 w-full overflow-hidden bg-[#081321]">
           <img
@@ -759,6 +803,9 @@ export function UnitsView({
           </div>
         )}
       </div>
+
+        </>
+      )}
 
       {/* SECTION 1: FLOOR CARDS (When no floor is selected) */}
       {selectedFloorKey === null ? (
