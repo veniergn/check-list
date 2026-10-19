@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Project, ProjectCalendarEvent, CalendarEventType } from '../types';
 import { hexToRgba } from '../utils/calculations';
+import { getCalendarTypeStyle } from '../utils/calendarTypes';
 
 interface ProjectCalendarModalProps {
   isOpen: boolean;

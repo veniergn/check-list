@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Project, ProjectCalendarEvent } from '../types';
 import { getTodayString, getDaysDiff, getTaskAlarms } from '../utils/pmCalculations';
+import { getCalendarTypeStyle } from '../utils/calendarTypes';
 
 interface GlobalCalendarCardProps {
   projects: Project[];

@@ -1176,14 +1176,18 @@ export function ProjectManagerModal({
                         </div>
 
                         <div className="flex items-center justify-center gap-1">
-                          {dayEvents.slice(0, 3).map(e => (
-                            <span
-                              key={e.id}
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                e.completed ? 'bg-emerald-500' : e.type === 'alarm' ? 'bg-amber-500' : 'bg-blue-500'
-                              }`}
-                            />
-                          ))}
+                          {dayEvents.slice(0, 3).map(e => {
+                            const tStyle = getCalendarTypeStyle(e.type);
+                            return (
+                              <span
+                                key={e.id}
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  e.completed ? 'bg-emerald-500' : tStyle.dotClass
+                                }`}
+                                title={`${tStyle.label}: ${e.title}`}
+                              />
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -1327,17 +1331,30 @@ export function ProjectManagerModal({
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
-                        Fecha Límite (Deadline) *
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={deadlineDate}
-                        onChange={(e) => setDeadlineDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
+                          Fecha Límite *
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={deadlineDate}
+                          onChange={(e) => setDeadlineDate(e.target.value)}
+                          className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
+                          Hora (opcional)
+                        </label>
+                        <input
+                          type="time"
+                          value={time}
+                          onChange={(e) => setTime(e.target.value)}
+                          className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1350,11 +1367,12 @@ export function ProjectManagerModal({
                       <select
                         value={type}
                         onChange={(e) => setType(e.target.value as any)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
                       >
-                        <option value="task">Tarea Técnica</option>
-                        <option value="alarm">Alarma</option>
-                        <option value="event">Evento</option>
+                        <option value="note">🟨 Nota (Amarillo)</option>
+                        <option value="task">🟩 Tarea Técnica (Verde)</option>
+                        <option value="meeting">🟦 Reunión (Azul)</option>
+                        <option value="alarm">🟥 Alarma (Rojo)</option>
                       </select>
                     </div>
 

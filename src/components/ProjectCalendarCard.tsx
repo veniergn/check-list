@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Project, ProjectCalendarEvent } from '../types';
 import { hexToRgba } from '../utils/calculations';
+import { getCalendarTypeStyle, normalizeCalendarType } from '../utils/calendarTypes';
 import { calculateProjectPMStats, getTaskAlarms } from '../utils/pmCalculations';
 
 interface ProjectCalendarCardProps {

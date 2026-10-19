@@ -101,7 +101,7 @@ export interface ProjectCustomService {
   number: string;
 }
 
-export type CalendarEventType = 'task' | 'alarm' | 'event';
+export type CalendarEventType = 'note' | 'task' | 'meeting' | 'alarm' | 'event';
 export type PMTaskStatus = 'pending' | 'in_progress' | 'blocked' | 'completed';
 
 export interface PMSubtask {

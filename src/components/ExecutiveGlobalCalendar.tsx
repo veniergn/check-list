@@ -19,10 +19,17 @@ import {
   Check,
   CalendarDays,
   CalendarRange,
-  ListTodo
+  ListTodo,
+  FileText,
+  Tag,
+  Pencil,
+  Trash2,
+  X,
+  Bell
 } from 'lucide-react';
 import { Project, ProjectCalendarEvent, PMTaskStatus, CalendarEventType } from '../types';
 import { hexToRgba } from '../utils/calculations';
+import { getCalendarTypeStyle, normalizeCalendarType } from '../utils/calendarTypes';
 
 interface ExecutiveGlobalCalendarProps {
   projects: Project[];
@@ -81,19 +88,35 @@ export function ExecutiveGlobalCalendar({
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed' | 'overdue'>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all'); // 'all' | 'note' | 'task' | 'meeting' | 'alarm'
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Quick task modal state
-  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+  // Quick form in right panel state (defaults strictly to todayStr initially, then updates on click)
   const [quickTitle, setQuickTitle] = useState('');
   const [quickProjectId, setQuickProjectId] = useState<string>(projects[0]?.id || '');
   const [quickDate, setQuickDate] = useState<string>(todayStr);
-  const [quickType, setQuickType] = useState<CalendarEventType>('task');
-  const [quickPriority, setQuickPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
-  const [quickAssignee, setQuickAssignee] = useState('');
+  const [quickTime, setQuickTime] = useState<string>('');
+  const [quickType, setQuickType] = useState<CalendarEventType>('note');
+  const [quickPriority, setQuickPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
 
-  // Editing existing task state
-  const [editingEvent, setEditingEvent] = useState<{ projectId: string; event: ProjectCalendarEvent } | null>(null);
+  // Full Modal for Create / Edit
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
+  const [modalProjectId, setModalProjectId] = useState<string>(projects[0]?.id || '');
+  const [modalDate, setModalDate] = useState<string>(todayStr);
+  const [modalTime, setModalTime] = useState<string>('');
+  const [modalType, setModalType] = useState<CalendarEventType>('note');
+  const [modalPriority, setModalPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [modalAssignee, setModalAssignee] = useState('');
+  const [modalCompleted, setModalCompleted] = useState(false);
+
+  // Handler to select date anywhere in calendar: updates both selectedDateStr AND quickDate
+  const handleSelectDate = (dateStr: string) => {
+    setSelectedDateStr(dateStr);
+    setQuickDate(dateStr);
+  };
 
   // Map project ID to color palette index
   const projectColorMap = useMemo(() => {
@@ -127,6 +150,10 @@ export function ExecutiveGlobalCalendar({
     return allConsolidatedEvents.filter(evt => {
       if (selectedProjectFilter !== 'all' && evt.projectId !== selectedProjectFilter) return false;
       if (priorityFilter !== 'all' && evt.priority !== priorityFilter) return false;
+      if (typeFilter !== 'all') {
+        const normEvtType = normalizeCalendarType(evt.type);
+        if (normEvtType !== typeFilter) return false;
+      }
       if (statusFilter === 'completed' && !evt.completed) return false;
       if (statusFilter === 'pending' && (evt.completed || evt.status === 'in_progress')) return false;
       if (statusFilter === 'in_progress' && (evt.completed || evt.status !== 'in_progress')) return false;
@@ -140,7 +167,7 @@ export function ExecutiveGlobalCalendar({
       }
       return true;
     });
-  }, [allConsolidatedEvents, selectedProjectFilter, statusFilter, priorityFilter, searchQuery]);
+  }, [allConsolidatedEvents, selectedProjectFilter, statusFilter, priorityFilter, typeFilter, searchQuery]);
 
   // Group events by date (YYYY-MM-DD)
   const eventsByDate = useMemo(() => {
@@ -256,14 +283,18 @@ export function ExecutiveGlobalCalendar({
 
   // Events of the selected day
   const selectedDayEvents = useMemo(() => {
-    return eventsByDate.get(selectedDateStr) || [];
+    const evts = eventsByDate.get(selectedDateStr) || [];
+    // Sort by time if available
+    return [...evts].sort((a, b) => {
+      if (a.time && b.time) return a.time.localeCompare(b.time);
+      if (a.time) return -1;
+      if (b.time) return 1;
+      return 0;
+    });
   }, [selectedDateStr, eventsByDate]);
 
   // Overall counts for summary
-  const totalTasksCount = allConsolidatedEvents.length;
   const overdueCount = allConsolidatedEvents.filter(e => e.isOverdue).length;
-  const pendingCount = allConsolidatedEvents.filter(e => !e.completed).length;
-  const completedCount = allConsolidatedEvents.filter(e => e.completed).length;
 
   // Navigation handlers
   const handlePrev = () => {
@@ -273,13 +304,13 @@ export function ExecutiveGlobalCalendar({
       const d = new Date(selectedDateStr + 'T12:00:00');
       d.setDate(d.getDate() - 7);
       const newDStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setSelectedDateStr(newDStr);
+      handleSelectDate(newDStr);
       setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
     } else {
       const d = new Date(selectedDateStr + 'T12:00:00');
       d.setDate(d.getDate() - 1);
       const newDStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setSelectedDateStr(newDStr);
+      handleSelectDate(newDStr);
       setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
     }
   };
@@ -291,27 +322,29 @@ export function ExecutiveGlobalCalendar({
       const d = new Date(selectedDateStr + 'T12:00:00');
       d.setDate(d.getDate() + 7);
       const newDStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setSelectedDateStr(newDStr);
+      handleSelectDate(newDStr);
       setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
     } else {
       const d = new Date(selectedDateStr + 'T12:00:00');
       d.setDate(d.getDate() + 1);
       const newDStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setSelectedDateStr(newDStr);
+      handleSelectDate(newDStr);
       setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
     }
   };
 
   const handleGoToToday = () => {
-    setSelectedDateStr(todayStr);
+    handleSelectDate(todayStr);
     setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
-  // Quick Create Task
+  // Quick Create Task: strictly saves to the chosen date!
   const handleSaveQuickTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickTitle.trim()) {
-      onShowToast?.('Ingresa un título para la tarea', 'AlertCircle');
+    const cleanTitle = quickTitle.trim();
+    if (!cleanTitle) {
+      const typeStyle = getCalendarTypeStyle(quickType);
+      onShowToast?.(`Por favor ingresa un título para la ${typeStyle.label.toLowerCase()}`, 'AlertCircle');
       return;
     }
 
@@ -321,25 +354,118 @@ export function ExecutiveGlobalCalendar({
       return;
     }
 
+    // STRICT DATE FIX: Use quickDate if set, otherwise selectedDateStr
+    const targetDate = quickDate || selectedDateStr;
+
     const newEvt: ProjectCalendarEvent = {
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       projectId: targetPid,
-      title: quickTitle.trim(),
-      date: quickDate || selectedDateStr,
+      title: cleanTitle,
+      date: targetDate, // Saved on chosen date!
+      time: quickTime.trim() || undefined,
       type: quickType,
       priority: quickPriority,
       status: 'pending',
       completed: false,
-      assignedTo: quickAssignee.trim() || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     onSaveCalendarEvent?.(targetPid, newEvt);
     setQuickTitle('');
-    setQuickAssignee('');
-    setIsQuickCreateOpen(false);
-    onShowToast?.('Tarea programada con éxito en Supabase', 'Check');
+    setQuickTime('');
+    // Keep quickDate matching targetDate
+    setSelectedDateStr(targetDate);
+    setQuickDate(targetDate);
+
+    const typeStyle = getCalendarTypeStyle(quickType);
+    onShowToast?.(`¡${typeStyle.label} guardada para el ${targetDate}!`, 'Check');
+  };
+
+  // Modal Open Handlers
+  const handleOpenCreateModal = (presetDate?: string) => {
+    const targetDate = presetDate || quickDate || selectedDateStr;
+    setEditingEventId(null);
+    setModalTitle('');
+    setModalDescription('');
+    setModalProjectId(quickProjectId || projects[0]?.id || '');
+    setModalDate(targetDate);
+    setModalTime(quickTime || '');
+    setModalType(quickType || 'note');
+    setModalPriority('medium');
+    setModalAssignee('');
+    setModalCompleted(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (evt: ProjectCalendarEvent) => {
+    setEditingEventId(evt.id);
+    setModalTitle(evt.title);
+    setModalDescription(evt.description || '');
+    setModalProjectId(evt.projectId);
+    setModalDate(evt.date);
+    setModalTime(evt.time || '');
+    setModalType(normalizeCalendarType(evt.type));
+    setModalPriority(evt.priority || 'medium');
+    setModalAssignee(evt.assignedTo || '');
+    setModalCompleted(!!evt.completed);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTitle = modalTitle.trim();
+    if (!cleanTitle) {
+      const typeStyle = getCalendarTypeStyle(modalType);
+      onShowToast?.(`Por favor ingresa un título para la ${typeStyle.label.toLowerCase()}`, 'AlertCircle');
+      return;
+    }
+
+    const targetPid = modalProjectId || projects[0]?.id;
+    if (!targetPid) {
+      onShowToast?.('Selecciona una obra primero', 'AlertCircle');
+      return;
+    }
+
+    const targetDate = modalDate || selectedDateStr;
+
+    const eventPayload: ProjectCalendarEvent = {
+      id: editingEventId || `task_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      projectId: targetPid,
+      title: cleanTitle,
+      description: modalDescription.trim() || undefined,
+      date: targetDate, // Modified date strictly respected!
+      time: modalTime.trim() || undefined,
+      type: modalType,
+      priority: modalPriority,
+      status: modalCompleted ? 'completed' : 'pending',
+      completed: modalCompleted,
+      assignedTo: modalAssignee.trim() || undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    onSaveCalendarEvent?.(targetPid, eventPayload);
+    setIsModalOpen(false);
+    setSelectedDateStr(targetDate);
+    setQuickDate(targetDate);
+
+    const typeStyle = getCalendarTypeStyle(modalType);
+    onShowToast?.(
+      editingEventId
+        ? `¡${typeStyle.label} actualizada con éxito!`
+        : `¡${typeStyle.label} guardada para el ${targetDate}!`,
+      'Check'
+    );
+  };
+
+  const handleDeleteFromModal = () => {
+    if (!editingEventId) return;
+    if (confirm('¿Eliminar esta actividad del calendario?')) {
+      onDeleteCalendarEvent?.(modalProjectId, editingEventId);
+      setIsModalOpen(false);
+      onShowToast?.('Actividad eliminada del calendario', 'Trash2');
+    }
   };
 
   // Format readable title of active month
@@ -366,7 +492,7 @@ export function ExecutiveGlobalCalendar({
       {/* Decorative ambient aura */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* TOP HEADER: Title + Statistics Pills + View Mode Toggles + Navigation */}
+      {/* TOP HEADER: Title + Statistics Pills + View Mode Toggles + Navigation + Botón Crear */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-[#29384C]">
         {/* Left: Section Header */}
         <div className="flex items-center gap-3">
@@ -386,7 +512,7 @@ export function ExecutiveGlobalCalendar({
               )}
             </div>
             <p className="text-xs text-[#94A3B8]">
-              Centraliza todas las actividades, alarmas y fechas límite de todas las obras en ejecución
+              Notas, tareas, reuniones y alarmas con control de fecha, hora y obra
             </p>
           </div>
         </div>
@@ -455,21 +581,18 @@ export function ExecutiveGlobalCalendar({
             </span>
           </div>
 
-          {/* Nueva Tarea Direct Action */}
+          {/* Nueva Actividad Modal Trigger */}
           <button
-            onClick={() => {
-              setQuickDate(selectedDateStr);
-              setIsQuickCreateOpen(true);
-            }}
+            onClick={() => handleOpenCreateModal()}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-xs shadow-[0_0_15px_rgba(59,130,246,0.35)] transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Programar Tarea</span>
+            <span>+ Programar Actividad</span>
           </button>
         </div>
       </div>
 
-      {/* FILTER BAR: Obra pills + Estado + Prioridad + Búsqueda */}
+      {/* FILTER BAR: Obra pills + Tipo de Evento (Nota, Tarea, Reunión, Alarma) + Estado */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#081321]/70 p-2.5 rounded-2xl border border-[#29384C]/80">
         {/* Project Selector Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -509,43 +632,52 @@ export function ExecutiveGlobalCalendar({
           })}
         </div>
 
-        {/* Status & Priority Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {/* Status Filter */}
-          <div className="flex items-center gap-1 text-xs">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${
-                statusFilter === 'all' ? 'bg-[#17263B] text-white' : 'text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setStatusFilter('pending')}
-              className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${
-                statusFilter === 'pending' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              Pendientes
-            </button>
-            <button
-              onClick={() => setStatusFilter('overdue')}
-              className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${
-                statusFilter === 'overdue' ? 'bg-rose-500/25 text-rose-300 border border-rose-500/40' : 'text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              Vencidas
-            </button>
-            <button
-              onClick={() => setStatusFilter('completed')}
-              className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${
-                statusFilter === 'completed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              Completadas
-            </button>
-          </div>
+        {/* Filters by Type (Nota, Tarea, Reunión, Alarma) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <span className="text-[10px] font-black uppercase text-[#94A3B8] px-1 flex items-center gap-1 whitespace-nowrap">
+            <Filter className="w-3 h-3 text-cyan-400" />
+            Tipo:
+          </span>
+          <button
+            onClick={() => setTypeFilter('all')}
+            className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${
+              typeFilter === 'all' ? 'bg-[#17263B] text-white border border-slate-600' : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            Todos
+          </button>
+          <button
+            onClick={() => setTypeFilter('note')}
+            className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border ${
+              typeFilter === 'note' ? 'bg-amber-500/25 text-amber-300 border-amber-400' : 'text-amber-400/70 border-transparent hover:text-amber-300'
+            }`}
+          >
+            🟨 Notas
+          </button>
+          <button
+            onClick={() => setTypeFilter('task')}
+            className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border ${
+              typeFilter === 'task' ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400' : 'text-emerald-400/70 border-transparent hover:text-emerald-300'
+            }`}
+          >
+            🟩 Tareas
+          </button>
+          <button
+            onClick={() => setTypeFilter('meeting')}
+            className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border ${
+              typeFilter === 'meeting' ? 'bg-blue-600/30 text-blue-300 border-blue-400' : 'text-blue-400/70 border-transparent hover:text-blue-300'
+            }`}
+          >
+            🟦 Reuniones
+          </button>
+          <button
+            onClick={() => setTypeFilter('alarm')}
+            className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border ${
+              typeFilter === 'alarm' ? 'bg-rose-500/25 text-rose-300 border-rose-400' : 'text-rose-400/70 border-transparent hover:text-rose-300'
+            }`}
+          >
+            🟥 Alarmas
+          </button>
         </div>
       </div>
 
@@ -570,13 +702,14 @@ export function ExecutiveGlobalCalendar({
                 {monthCalendarDays.map((dayItem, idx) => {
                   const evts = dayItem.events;
                   const hasOverdue = evts.some(e => e.isOverdue);
-                  const hasAlarms = evts.some(e => e.type === 'alarm' || e.priority === 'urgent');
+                  const hasAlarms = evts.some(e => normalizeCalendarType(e.type) === 'alarm' || e.priority === 'urgent');
 
                   return (
                     <div
                       key={idx}
-                      onClick={() => setSelectedDateStr(dayItem.dateStr)}
-                      className={`min-h-[72px] sm:min-h-[88px] p-1.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between relative group ${
+                      onClick={() => handleSelectDate(dayItem.dateStr)}
+                      onDoubleClick={() => handleOpenCreateModal(dayItem.dateStr)}
+                      className={`min-h-[78px] sm:min-h-[92px] p-1.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between relative group ${
                         dayItem.isSelected
                           ? 'bg-[#17263B] border-cyan-400 ring-2 ring-cyan-400/30 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
                           : dayItem.isToday
@@ -593,7 +726,7 @@ export function ExecutiveGlobalCalendar({
                             dayItem.isToday
                               ? 'bg-blue-600 text-white font-black shadow-sm'
                               : dayItem.isSelected
-                              ? 'text-cyan-300'
+                              ? 'text-cyan-300 font-black'
                               : 'text-slate-300'
                           }`}
                         >
@@ -616,29 +749,38 @@ export function ExecutiveGlobalCalendar({
                         </div>
                       </div>
 
-                      {/* Event chips preview (up to 2 visible on desktop) */}
+                      {/* Event chips preview with Dedicated Type Colors (Nota=Amarillo, Tarea=Verde, Reunión=Azul, Alarma=Rojo) */}
                       <div className="space-y-1 mt-1 overflow-hidden">
                         {evts.slice(0, 2).map(evt => {
-                          const pColor = projectColorMap.get(evt.projectId) || PROJECT_COLOR_PALETTES[0];
+                          const typeStyle = getCalendarTypeStyle(evt.type);
                           return (
                             <div
                               key={evt.id}
-                              className={`text-[10px] font-semibold truncate px-1.5 py-0.5 rounded flex items-center gap-1 border ${
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditModal(evt);
+                              }}
+                              className={`text-[9.5px] font-bold truncate px-1.5 py-0.5 rounded flex items-center justify-between gap-1 border transition-all hover:scale-[1.02] cursor-pointer ${
                                 evt.completed
-                                  ? 'bg-slate-800/80 text-slate-400 border-slate-700 line-through'
-                                  : evt.isOverdue
-                                  ? 'bg-rose-950/60 text-rose-300 border-rose-800'
-                                  : `${pColor.bg} ${pColor.text} ${pColor.border}`
+                                  ? 'bg-slate-800/80 text-slate-400 border-slate-700 line-through opacity-60'
+                                  : `${typeStyle.bgChip}`
                               }`}
-                              title={`${evt.projectName}: ${evt.title}`}
+                              title={`${typeStyle.label} (${evt.projectName}): ${evt.title}${evt.time ? ` · ${evt.time} hs` : ''}`}
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${pColor.dot} shrink-0`} />
-                              <span className="truncate">{evt.title}</span>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className={`w-1.5 h-1.5 rounded-full ${typeStyle.dotClass} shrink-0`} />
+                                <span className="truncate">{evt.title}</span>
+                              </div>
+                              {evt.time && (
+                                <span className="text-[8px] font-mono opacity-80 shrink-0">
+                                  {evt.time}
+                                </span>
+                              )}
                             </div>
                           );
                         })}
                         {evts.length > 2 && (
-                          <div className="text-[9px] text-[#94A3B8] font-bold text-right px-1">
+                          <div className="text-[9px] text-cyan-400 font-bold text-right px-1">
                             +{evts.length - 2} más
                           </div>
                         )}
@@ -657,7 +799,7 @@ export function ExecutiveGlobalCalendar({
                 {weekDays.map((wd, i) => (
                   <div
                     key={i}
-                    onClick={() => setSelectedDateStr(wd.dateStr)}
+                    onClick={() => handleSelectDate(wd.dateStr)}
                     className={`p-2 rounded-xl border text-center cursor-pointer transition-all ${
                       wd.isSelected
                         ? 'bg-[#17263B] border-cyan-400 ring-2 ring-cyan-400/30'
@@ -679,24 +821,36 @@ export function ExecutiveGlobalCalendar({
               <div className="grid grid-cols-1 sm:grid-cols-7 gap-2 pt-2">
                 {weekDays.map((wd, i) => (
                   <div key={i} className="min-h-[220px] bg-[#101D30]/40 rounded-xl p-2 border border-[#29384C]/50 space-y-1.5">
-                    <div className="text-[11px] font-bold text-slate-400 border-b border-[#29384C] pb-1">
-                      {wd.dayName} {wd.dayNumber}
+                    <div className="text-[11px] font-bold text-slate-400 border-b border-[#29384C] pb-1 flex items-center justify-between">
+                      <span>{wd.dayName} {wd.dayNumber}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenCreateModal(wd.dateStr)}
+                        className="text-cyan-400 hover:text-cyan-300 font-bold"
+                        title="Agregar en este día"
+                      >
+                        +
+                      </button>
                     </div>
                     {wd.events.length === 0 ? (
-                      <p className="text-[10px] text-slate-500 italic pt-2">Sin tareas</p>
+                      <p className="text-[10px] text-slate-500 italic pt-2 text-center">Sin tareas</p>
                     ) : (
                       wd.events.map(evt => {
-                        const pColor = projectColorMap.get(evt.projectId) || PROJECT_COLOR_PALETTES[0];
+                        const typeStyle = getCalendarTypeStyle(evt.type);
                         return (
                           <div
                             key={evt.id}
-                            className={`p-1.5 rounded-lg border text-[11px] space-y-1 ${
+                            onClick={() => handleOpenEditModal(evt)}
+                            className={`p-1.5 rounded-lg border text-[11px] space-y-1 cursor-pointer hover:scale-[1.02] transition-all ${
                               evt.completed
                                 ? 'bg-slate-800/60 text-slate-400 border-slate-700 line-through'
-                                : `${pColor.bg} ${pColor.text} ${pColor.border}`
+                                : `${typeStyle.bgChip}`
                             }`}
                           >
-                            <div className="font-bold truncate">{evt.title}</div>
+                            <div className="font-bold truncate flex items-center justify-between">
+                              <span>{evt.title}</span>
+                              {evt.time && <span className="text-[9px] font-mono">{evt.time}</span>}
+                            </div>
                             <div className="text-[9px] opacity-80 truncate">{evt.projectName}</div>
                           </div>
                         );
@@ -721,14 +875,11 @@ export function ExecutiveGlobalCalendar({
                   </p>
                 </div>
                 <button
-                  onClick={() => {
-                    setQuickDate(selectedDateStr);
-                    setIsQuickCreateOpen(true);
-                  }}
+                  onClick={() => handleOpenCreateModal(selectedDateStr)}
                   className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Agregar Tarea</span>
+                  <span>Agregar Actividad</span>
                 </button>
               </div>
 
@@ -738,64 +889,78 @@ export function ExecutiveGlobalCalendar({
                   <p className="text-xs">No hay actividades programadas para esta fecha.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto no-scrollbar">
                   {selectedDayEvents.map(evt => {
+                    const typeStyle = getCalendarTypeStyle(evt.type);
                     const pColor = projectColorMap.get(evt.projectId) || PROJECT_COLOR_PALETTES[0];
                     return (
                       <div
                         key={evt.id}
-                        className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                        className={`p-3 rounded-2xl border transition-all ${
                           evt.completed
-                            ? 'bg-slate-800/40 border-slate-700/60 text-slate-400'
+                            ? 'bg-[#101D30]/40 border-[#29384C]/50 opacity-75'
                             : evt.isOverdue
-                            ? 'bg-rose-950/30 border-rose-800/60 text-[#F8FAFC]'
-                            : 'bg-[#101D30] border-[#29384C] text-[#F8FAFC]'
+                            ? 'bg-rose-950/25 border-rose-800/60'
+                            : 'bg-[#101D30] border-[#29384C]'
                         }`}
                       >
-                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${typeStyle.badgeClass} flex items-center gap-1`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${typeStyle.dotClass}`} />
+                              <span>{typeStyle.label}</span>
+                            </span>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${pColor.badge}`}>
+                              {evt.projectName}
+                            </span>
+                          </div>
+
+                          {evt.time && (
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-950/60 border border-blue-500/40 text-blue-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-cyan-400" />
+                              <span>{evt.time} hs</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-start gap-2.5">
                           <button
                             onClick={() => onToggleCalendarEvent?.(evt.projectId, evt.id)}
-                            className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
+                            className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                               evt.completed
                                 ? 'bg-emerald-500 border-emerald-400 text-white'
                                 : 'border-[#29384C] hover:border-blue-400 bg-[#081321]'
                             }`}
                           >
-                            {evt.completed && <Check className="w-4 h-4 stroke-[3]" />}
+                            {evt.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </button>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${pColor.badge}`}>
-                                {evt.projectName}
-                              </span>
-                              {evt.isOverdue && (
-                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                                  Vencida
-                                </span>
-                              )}
-                            </div>
-                            <h4 className={`text-sm font-bold mt-1 leading-snug ${evt.completed ? 'line-through text-slate-400' : ''}`}>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-bold ${evt.completed ? 'line-through text-slate-400' : 'text-white'}`}>
                               {evt.title}
-                            </h4>
+                            </p>
                             {evt.description && (
-                              <p className="text-xs text-[#94A3B8] mt-0.5 truncate">{evt.description}</p>
+                              <p className="text-[11px] text-[#94A3B8] mt-0.5">{evt.description}</p>
                             )}
-                            <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[#94A3B8]">
-                              {evt.time && <span>🕒 {evt.time} hs</span>}
-                              {evt.assignedTo && <span>👤 {evt.assignedTo}</span>}
-                            </div>
                           </div>
                         </div>
 
-                        {onSelectProject && (
+                        <div className="flex items-center justify-between pt-2 mt-2 border-t border-[#29384C]/60 text-xs">
                           <button
-                            onClick={() => onSelectProject(evt.projectId)}
-                            className="p-2 rounded-xl bg-[#081321] hover:bg-[#17263B] text-blue-400 border border-[#29384C] transition-colors shrink-0"
-                            title="Ir a la obra"
+                            onClick={() => handleOpenEditModal(evt)}
+                            className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 text-[11px]"
                           >
-                            <ArrowRight className="w-4 h-4" />
+                            <Pencil className="w-3 h-3" />
+                            <span>Editar</span>
                           </button>
-                        )}
+                          {onDeleteCalendarEvent && (
+                            <button
+                              onClick={() => onDeleteCalendarEvent(evt.projectId, evt.id)}
+                              className="text-slate-500 hover:text-rose-400 text-[11px]"
+                            >
+                              Eliminar
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -817,47 +982,149 @@ export function ExecutiveGlobalCalendar({
               </h3>
             </div>
             <span className="text-xs font-mono font-black text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded-lg">
-              {selectedDayEvents.length} tareas
+              {selectedDayEvents.length} {selectedDayEvents.length === 1 ? 'actividad' : 'actividades'}
             </span>
           </div>
 
-          {/* Quick Task input for selected date */}
-          <form onSubmit={handleSaveQuickTask} className="space-y-2">
-            <input
-              type="text"
-              value={quickTitle}
-              onChange={(e) => setQuickTitle(e.target.value)}
-              placeholder="Nueva tarea para esta fecha..."
-              className="w-full bg-[#101D30] border border-[#29384C] focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-[#F8FAFC] placeholder-slate-500 outline-none transition-colors"
-            />
-            <div className="flex items-center gap-2">
-              <select
-                value={quickProjectId}
-                onChange={(e) => setQuickProjectId(e.target.value)}
-                className="flex-1 bg-[#101D30] border border-[#29384C] rounded-xl px-2.5 py-1.5 text-xs text-slate-300 outline-none"
+          {/* Quick Task input with Nota (Amarillo), Tarea (Verde), Reunión (Azul), Alarma (Rojo), Fecha, Hora y Obra */}
+          <form onSubmit={handleSaveQuickTask} className="space-y-2.5 p-3 rounded-2xl bg-[#101D30]/90 border border-[#29384C]">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Agregar en este día</span>
+              </span>
+              <span className="text-[10px] font-mono text-cyan-400 font-bold">
+                {quickDate}
+              </span>
+            </div>
+
+            {/* 4 Type Selector Buttons with Dedicated Colors */}
+            <div className="grid grid-cols-4 gap-1">
+              <button
+                type="button"
+                onClick={() => setQuickType('note')}
+                className={`py-1.5 px-1 rounded-xl text-[10.5px] font-bold border transition-all text-center ${
+                  quickType === 'note'
+                    ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                    : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                }`}
               >
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+                🟨 Nota
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickType('task')}
+                className={`py-1.5 px-1 rounded-xl text-[10.5px] font-bold border transition-all text-center ${
+                  quickType === 'task'
+                    ? 'bg-emerald-500 text-slate-950 font-black border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                    : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                }`}
+              >
+                🟩 Tarea
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickType('meeting')}
+                className={`py-1.5 px-1 rounded-xl text-[10.5px] font-bold border transition-all text-center ${
+                  quickType === 'meeting'
+                    ? 'bg-blue-600 text-white font-black border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                    : 'bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20'
+                }`}
+              >
+                🟦 Reunión
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickType('alarm')}
+                className={`py-1.5 px-1 rounded-xl text-[10.5px] font-bold border transition-all text-center ${
+                  quickType === 'alarm'
+                    ? 'bg-rose-600 text-white font-black border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.5)]'
+                    : 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                }`}
+              >
+                🟥 Alarma
+              </button>
+            </div>
+
+            {/* Title Input */}
+            <div>
+              <input
+                type="text"
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                placeholder={
+                  quickType === 'note' ? 'Escribe la nota...' :
+                  quickType === 'task' ? 'Nombre de la tarea...' :
+                  quickType === 'meeting' ? 'Motivo de reunión / con quién...' :
+                  'Motivo de alarma o vencimiento...'
+                }
+                className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-[#F8FAFC] placeholder-slate-500 outline-none transition-colors font-medium"
+              />
+            </div>
+
+            {/* Date & Time Row - FREELY MODIFY DATE & HOUR */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[9.5px] font-bold text-slate-400 block mb-1">
+                  Fecha:
+                </label>
+                <input
+                  type="date"
+                  value={quickDate}
+                  onChange={(e) => {
+                    setQuickDate(e.target.value);
+                    setSelectedDateStr(e.target.value);
+                  }}
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 outline-none font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-[9.5px] font-bold text-slate-400 block mb-1">
+                  Hora (opcional):
+                </label>
+                <input
+                  type="time"
+                  value={quickTime}
+                  onChange={(e) => setQuickTime(e.target.value)}
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 outline-none font-bold"
+                />
+              </div>
+            </div>
+
+            {/* Obra selector & Submit button */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <select
+                  value={quickProjectId}
+                  onChange={(e) => setQuickProjectId(e.target.value)}
+                  className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-2.5 py-2 text-xs text-slate-200 outline-none font-bold"
+                >
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>🏗️ {p.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <button
                 type="submit"
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(59,130,246,0.3)] active:scale-95 shrink-0"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Agregar</span>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Guardar</span>
               </button>
             </div>
           </form>
 
           {/* List of Tasks for this Day */}
-          <div className="space-y-2.5 max-h-[480px] overflow-y-auto no-scrollbar pt-1">
+          <div className="space-y-2.5 max-h-[460px] overflow-y-auto no-scrollbar pt-1">
             {selectedDayEvents.length === 0 ? (
               <div className="py-8 text-center text-slate-500 text-xs italic">
                 No hay actividades registradas en esta fecha.
               </div>
             ) : (
               selectedDayEvents.map(evt => {
+                const typeStyle = getCalendarTypeStyle(evt.type);
                 const pColor = projectColorMap.get(evt.projectId) || PROJECT_COLOR_PALETTES[0];
                 return (
                   <div
@@ -871,12 +1138,22 @@ export function ExecutiveGlobalCalendar({
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${pColor.badge}`}>
-                        {evt.projectName}
-                      </span>
-                      {evt.isOverdue && (
-                        <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                          Vencida
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* Type badge with designated color */}
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${typeStyle.badgeClass} flex items-center gap-1`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${typeStyle.dotClass}`} />
+                          <span>{typeStyle.label}</span>
+                        </span>
+
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${pColor.badge}`}>
+                          {evt.projectName}
+                        </span>
+                      </div>
+
+                      {evt.time && (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-950/60 border border-blue-500/40 text-blue-300 flex items-center gap-1 shrink-0">
+                          <Clock className="w-3 h-3 text-cyan-400" />
+                          <span>{evt.time} hs</span>
                         </span>
                       )}
                     </div>
@@ -903,22 +1180,32 @@ export function ExecutiveGlobalCalendar({
                         )}
                         <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[#94A3B8]">
                           {evt.assignedTo && <span>👤 {evt.assignedTo}</span>}
-                          {evt.time && <span>🕒 {evt.time} hs</span>}
                         </div>
                       </div>
                     </div>
 
                     {/* Footer Actions */}
                     <div className="flex items-center justify-between pt-1.5 border-t border-[#29384C]/60 text-[11px]">
-                      {onSelectProject && (
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => onSelectProject(evt.projectId)}
-                          className="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                          onClick={() => handleOpenEditModal(evt)}
+                          className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 text-[10px]"
+                          title="Modificar fecha, hora, tipo u obra"
                         >
-                          <span>Ver obra</span>
-                          <ArrowRight className="w-3 h-3" />
+                          <Pencil className="w-3 h-3" />
+                          <span>Modificar</span>
                         </button>
-                      )}
+                        {onSelectProject && (
+                          <button
+                            onClick={() => onSelectProject(evt.projectId)}
+                            className="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1 text-[10px]"
+                          >
+                            <span>Ir a Obra</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
+
                       {onDeleteCalendarEvent && (
                         <button
                           onClick={() => onDeleteCalendarEvent(evt.projectId, evt.id)}
@@ -935,6 +1222,243 @@ export function ExecutiveGlobalCalendar({
           </div>
         </div>
       </div>
+
+      {/* FULL MODAL DIALOG: PROGRAMAR O MODIFICAR ACTIVIDAD / ALARMA */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-[#101D30] border border-[#29384C] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#29384C]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-blue-600/30 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center text-cyan-300">
+                  <CalendarDays className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">
+                    {editingEventId ? 'Modificar Actividad / Alarma' : 'Programar Actividad / Alarma'}
+                  </h3>
+                  <p className="text-[11px] text-[#94A3B8]">
+                    Personaliza título, fecha, hora, obra y categoría
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-[#081321] text-slate-400 hover:text-white flex items-center justify-center border border-[#29384C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveModal} className="space-y-4">
+              {/* 1. Selector de Tipo: Nota, Tarea, Reunión, Alarma con sus colores */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1.5">
+                  Tipo de Actividad / Título:
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalType('note')}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 ${
+                      modalType === 'note'
+                        ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/40'
+                        : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                    }`}
+                  >
+                    <span className="text-sm">🟨</span>
+                    <span>Nota</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalType('task')}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 ${
+                      modalType === 'task'
+                        ? 'bg-emerald-500 text-slate-950 font-black border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.5)] ring-2 ring-emerald-400/40'
+                        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                    }`}
+                  >
+                    <span className="text-sm">🟩</span>
+                    <span>Tarea</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalType('meeting')}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 ${
+                      modalType === 'meeting'
+                        ? 'bg-blue-600 text-white font-black border-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.5)] ring-2 ring-blue-400/40'
+                        : 'bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20'
+                    }`}
+                  >
+                    <span className="text-sm">🟦</span>
+                    <span>Reunión</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalType('alarm')}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 ${
+                      modalType === 'alarm'
+                        ? 'bg-rose-600 text-white font-black border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.5)] ring-2 ring-rose-400/40'
+                        : 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                    }`}
+                  >
+                    <span className="text-sm">🟥</span>
+                    <span>Alarma</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Título */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                  Título <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={modalTitle}
+                  onChange={(e) => setModalTitle(e.target.value)}
+                  placeholder={
+                    modalType === 'note' ? 'Ej: Nota sobre verificación de cañerías' :
+                    modalType === 'task' ? 'Ej: Hormigonado de losa 3er piso' :
+                    modalType === 'meeting' ? 'Ej: Reunión con electricista y director' :
+                    'Ej: Alarma: Vencimiento de seguro ART / Acopio materiales'
+                  }
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3.5 py-2.5 text-xs text-white font-bold outline-none"
+                />
+              </div>
+
+              {/* 3. Selección de Obra */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                  Obra Destino <span className="text-cyan-400">*</span>
+                </label>
+                <select
+                  value={modalProjectId}
+                  onChange={(e) => setModalProjectId(e.target.value)}
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3.5 py-2.5 text-xs text-white font-bold outline-none"
+                >
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>🏗️ {p.name} ({p.location || 'Mendoza'})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 4. Fecha y Hora */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                    Fecha <span className="text-cyan-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={modalDate}
+                    onChange={(e) => setModalDate(e.target.value)}
+                    className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3 py-2 text-xs text-white font-bold outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                    Hora (opcional)
+                  </label>
+                  <input
+                    type="time"
+                    value={modalTime}
+                    onChange={(e) => setModalTime(e.target.value)}
+                    className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3 py-2 text-xs text-white font-bold outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* 5. Observaciones / Detalles */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                  Descripción o Detalles (opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={modalDescription}
+                  onChange={(e) => setModalDescription(e.target.value)}
+                  placeholder="Detalles adicionales, recordatorio o instrucciones..."
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl p-3 text-xs text-slate-200 outline-none resize-none"
+                />
+              </div>
+
+              {/* 6. Responsable y Prioridad */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                    Responsable (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={modalAssignee}
+                    onChange={(e) => setModalAssignee(e.target.value)}
+                    placeholder="Ej: Ing. Pérez / Contratista"
+                    className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3 py-2 text-xs text-slate-200 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
+                    Prioridad
+                  </label>
+                  <select
+                    value={modalPriority}
+                    onChange={(e) => setModalPriority(e.target.value as any)}
+                    className="w-full bg-[#081321] border border-[#29384C] focus:border-cyan-400 rounded-2xl px-3 py-2 text-xs text-slate-200 outline-none"
+                  >
+                    <option value="low">Baja</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-between pt-3 border-t border-[#29384C] gap-2">
+                <div>
+                  {editingEventId && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteFromModal}
+                      className="px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Eliminar</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-[#081321] hover:bg-[#17263B] text-slate-300 font-bold text-xs border border-[#29384C]"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-xs shadow-lg shadow-blue-500/30 active:scale-95 transition-all"
+                  >
+                    {editingEventId ? 'Actualizar' : 'Guardar en Calendario'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
