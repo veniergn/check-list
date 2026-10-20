@@ -227,6 +227,7 @@ export interface MaterialOrder {
   items: MaterialOrderItem[];
   rawWhatsAppText?: string; // Texto original si provino de WhatsApp
   attachments?: MaterialOrderAttachment[]; // Imágenes o PDFs adjuntos
+  excelFile?: ContractorExcelFile; // Archivo Excel de materiales
   status: MaterialOrderStatus;
   receivedNotes?: string; // Detalle específico de qué faltó si llegó incompleto
   receivedAt?: string;
@@ -290,6 +291,7 @@ export interface Project {
   calendarEvents?: ProjectCalendarEvent[]; // Tareas, eventos y alarmas independientes por obra
   contractors?: ContractorProfile[]; // Cuadrillas y responsables técnicos personalizados con fotos
   materialOrders?: MaterialOrder[]; // Módulo 1: Gestión de pedidos de materiales por obra
+  materialsExcelFile?: ContractorExcelFile; // Planilla Excel cargada para cómputo y gestión de materiales de esta obra
   contractorCertificates?: ContractorCertificate[]; // Módulo 2: Certificados quincenales de contratistas
   savedReports?: SavedWorkReport[]; // Historial de informes anteriores guardados con fecha
   monthlyReportData?: {

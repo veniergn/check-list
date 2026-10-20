@@ -148,6 +148,31 @@ export function CertificatesFullView({
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Internal back navigation hook
+  useEffect(() => {
+    (window as any).__customSectionBackHandler = () => {
+      if (isEditorOpen) {
+        if (isDirty) {
+          if (confirm('Tienes cambios sin guardar. ¿Deseas cerrar el visor de todas formas?')) {
+            setIsEditorOpen(false);
+            return true;
+          }
+          return true;
+        }
+        setIsEditorOpen(false);
+        return true;
+      }
+      if (isNewContractorModalOpen) {
+        setIsNewContractorModalOpen(false);
+        return true;
+      }
+      return false;
+    };
+    return () => {
+      delete (window as any).__customSectionBackHandler;
+    };
+  }, [isEditorOpen, isNewContractorModalOpen, isDirty]);
+
   // 4. NEW CONTRACTOR MODAL
   const [isNewContractorModalOpen, setIsNewContractorModalOpen] = useState(false);
   const [newContractorName, setNewContractorName] = useState('');

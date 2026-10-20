@@ -661,6 +661,8 @@ export default function App() {
   }, []);
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+  const previousViewRef = useRef<ViewMode>('units');
+  const viewHistoryRef = useRef<ViewMode[]>(['dashboard']);
   const [selectedFloorKey, setSelectedFloorKey] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState('inicio');
@@ -669,10 +671,15 @@ export default function App() {
   const handleSelectNav = (tabId: string) => {
     setActiveNavTab(tabId);
     setIsMobileSidebarOpen(false);
-    // Reset vertical scroll to beginning of page immediately (Section 2 & 9)
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const mainEl = document.querySelector('main');
     if (mainEl) mainEl.scrollTop = 0;
+
+    // Record previous view before navigation
+    if (currentView !== 'dashboard') {
+      previousViewRef.current = currentView;
+      viewHistoryRef.current.push(currentView);
+    }
 
     if (tabId === 'inicio') {
       setCurrentView('dashboard');
@@ -1333,23 +1340,49 @@ export default function App() {
   };
 
   const handleBack = () => {
+    // 1. Si la sección actual (Materiales o Certificados) tiene navegación interna (cerrar Excel, modal, etc.)
+    if (typeof (window as any).__customSectionBackHandler === 'function') {
+      const handled = (window as any).__customSectionBackHandler();
+      if (handled) return; // Se manejó internamente dentro de la misma sección
+    }
+
     if (currentView === 'checklist') {
-      // Regresa de la unidad a la vista de unidades conservando el piso seleccionado
       setCurrentView('units');
       setSelectedUnitId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentView === 'units') {
-      // Si est� dentro de un piso espec�fico, primero vuelve a la lista general de pisos de la obra
       if (selectedFloorKey) {
         setSelectedFloorKey(null);
       } else {
-        // Si ya est� en la vista general de pisos, vuelve al Dashboard (Inicio)
+        const prev = viewHistoryRef.current.pop();
+        if (prev && prev !== 'units') {
+          setCurrentView(prev);
+        } else {
+          setCurrentView('dashboard');
+          setSelectedProjectId(null);
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (currentView === 'materials' || currentView === 'certificates') {
+      // Regresa a la hoja anterior (vista de unidades/pisos de la obra) en vez de saltar al inicio
+      const prev = viewHistoryRef.current.pop();
+      if (prev && prev !== currentView && prev !== 'dashboard') {
+        setCurrentView(prev);
+      } else if (selectedProjectId) {
+        setCurrentView('units');
+      } else {
         setCurrentView('dashboard');
-        setSelectedProjectId(null);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentView !== 'dashboard') {
-      setCurrentView('dashboard');
+      const prev = viewHistoryRef.current.pop();
+      if (prev && prev !== currentView) {
+        setCurrentView(prev);
+      } else if (selectedProjectId) {
+        setCurrentView('units');
+      } else {
+        setCurrentView('dashboard');
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -2700,6 +2733,21 @@ export default function App() {
     showToast('Trabajador eliminado del equipo', 'Trash2');
   };
 
+  // Obra Materials Excel Handler
+  const handleSaveProjectMaterialsExcel = (projectId: string, excelFile: ContractorExcelFile) => {
+    const updated = updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        return { ...p, materialsExcelFile: excelFile };
+      })
+    );
+    const targetProject = updated.find(p => p.id === projectId);
+    if (targetProject) {
+      backupMaterialsToDrive(targetProject.name, targetProject.materialOrders || []);
+    }
+    showToast('Planilla Excel de materiales guardada en la Nube', 'Check');
+  };
+
   // Materials Orders Handlers (Isolated per Project & synced to Supabase + Google Drive)
   const handleSaveMaterialOrder = (param1: string | MaterialOrder, param2?: MaterialOrder) => {
     const order: MaterialOrder = (typeof param1 === 'object' ? param1 : param2)!;
@@ -3297,7 +3345,9 @@ export default function App() {
               onSelectProject={handleSelectProject}
               onSaveOrder={handleSaveMaterialOrder}
               onDeleteOrder={handleDeleteMaterialOrder}
+              onSaveProjectMaterialsExcel={handleSaveProjectMaterialsExcel}
               onShowToast={showToast}
+              directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
               neonColor={localColors.neonColor || '#00f2fe'}
             />
           </ErrorBoundary>
