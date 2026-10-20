@@ -1399,7 +1399,7 @@ export default function App() {
     }
   };
 
-  // Delete project with security confirmation (PIN 2600)
+  // Delete project with security confirmation (PIN 2600) and persistent Cloud / Local sync
   const handleRequestDeleteProject = (projectId: string, projectName: string) => {
     setSecurityModal({
       isOpen: true,
@@ -1407,18 +1407,18 @@ export default function App() {
       itemName: projectName,
       itemType: 'project',
       onConfirm: () => {
-        setProjects(prev => prev.filter(p => p.id !== projectId));
+        updateProjectsAndSync(prev => prev.filter(p => p.id !== projectId));
         if (selectedProjectId === projectId) {
           setSelectedProjectId(null);
           setSelectedUnitId(null);
           setCurrentView('dashboard');
         }
-        showToast(`Obra "${projectName}" eliminada correctamente`, 'Trash2');
+        showToast(`Obra "${projectName}" eliminada permanentemente de la Nube`, 'Trash2');
       }
     });
   };
 
-  // Delete unit or common space with security confirmation (PIN 2600)
+  // Delete unit or common space with security confirmation (PIN 2600) and persistent Cloud / Local sync
   const handleRequestDeleteUnit = (unitId: string, unitName: string) => {
     setSecurityModal({
       isOpen: true,
@@ -1426,7 +1426,7 @@ export default function App() {
       itemName: unitName,
       itemType: 'unit',
       onConfirm: () => {
-        setProjects(prev => prev.map(proj => {
+        updateProjectsAndSync(prev => prev.map(proj => {
           if (proj.id !== selectedProjectId) return proj;
           return {
             ...proj,
@@ -1437,7 +1437,7 @@ export default function App() {
           setSelectedUnitId(null);
           setCurrentView('units');
         }
-        showToast(`"${unitName}" eliminado correctamente`, 'Trash2');
+        showToast(`"${unitName}" eliminado correctamente de la Nube`, 'Trash2');
       }
     });
   };

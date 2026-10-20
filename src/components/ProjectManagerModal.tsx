@@ -123,6 +123,7 @@ export function ProjectManagerModal({
   // Form Drawer / Modal State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const lastHandledTaskIdRef = useRef<string | null>(null);
 
   // Form Fields
   const [title, setTitle] = useState('');
@@ -265,14 +266,17 @@ export function ProjectManagerModal({
           }
         }
       }
-      if (selectedTaskId && project?.calendarEvents) {
+      if (selectedTaskId && selectedTaskId !== lastHandledTaskIdRef.current && project?.calendarEvents) {
+        lastHandledTaskIdRef.current = selectedTaskId;
         const found = project.calendarEvents.find(t => t.id === selectedTaskId);
         if (found) {
           handleEditTask(found);
         }
       }
+    } else {
+      lastHandledTaskIdRef.current = null;
     }
-  }, [isOpen, initialTab, initialDate, selectedTaskId, project?.calendarEvents]);
+  }, [isOpen, initialTab, initialDate, selectedTaskId]);
 
   const handleAddSubtask = () => {
     const trimmed = newSubtaskDraft.trim();
@@ -302,13 +306,26 @@ export function ProjectManagerModal({
     }));
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveForm = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && 'preventDefault' in e) {
+      e.preventDefault();
+    }
     if (!project) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) {
       onShowToast('Ingresa un título para la tarea', 'AlertCircle');
       return;
+    }
+
+    // Clean and validate dates (prevent bad input or truncated years)
+    let cleanDeadline = (deadlineDate || '').trim();
+    if (!cleanDeadline || cleanDeadline.length < 10) {
+      cleanDeadline = todayStr;
+    }
+
+    let cleanStartDate = (startDate || '').trim();
+    if (cleanStartDate && cleanStartDate.length < 10) {
+      cleanStartDate = todayStr;
     }
 
     const isAllSubtasksDone = subtasks.length > 0 && subtasks.every(s => s.completed);
@@ -331,8 +348,8 @@ export function ProjectManagerModal({
       description: description.trim() || undefined,
       assignedTo: assignedTo.trim() || undefined,
       assignedRole: assignedRole.trim() || undefined,
-      startDate: startDate || undefined,
-      date: deadlineDate || todayStr,
+      startDate: cleanStartDate || undefined,
+      date: cleanDeadline,
       time: time || undefined,
       type,
       priority,
@@ -346,9 +363,11 @@ export function ProjectManagerModal({
 
     onSaveTask(project.id, taskPayload);
     setIsEditorOpen(false);
+    setEditingTaskId(null);
+    lastHandledTaskIdRef.current = null;
     onShowToast(
       editingTaskId
-        ? 'Tarea actualizada en Nube y Google Drive'
+        ? '✓ Tarea guardada y actualizada correctamente'
         : '¡Tarea guardada en Project Manager y Drive!',
       'Check'
     );
@@ -1265,7 +1284,7 @@ export function ProjectManagerModal({
                   </button>
                 </div>
 
-                <form onSubmit={handleSaveForm} className="space-y-4">
+                <form onSubmit={handleSaveForm} noValidate className="space-y-4">
                   {/* Título */}
                   <div>
                     <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
@@ -1317,8 +1336,8 @@ export function ProjectManagerModal({
                     </div>
                   </div>
 
-                  {/* Fechas: Inicio y Límite */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Fechas: Inicio, Límite y Hora */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
                         Fecha Inicio
@@ -1331,30 +1350,28 @@ export function ProjectManagerModal({
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
-                          Fecha Límite *
-                        </label>
-                        <input
-                          type="date"
-                          required
-                          value={deadlineDate}
-                          onChange={(e) => setDeadlineDate(e.target.value)}
-                          className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
-                          Hora (opcional)
-                        </label>
-                        <input
-                          type="time"
-                          value={time}
-                          onChange={(e) => setTime(e.target.value)}
-                          className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
+                        Fecha Límite *
+                      </label>
+                      <input
+                        type="date"
+                        value={deadlineDate}
+                        onChange={(e) => setDeadlineDate(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-black uppercase text-slate-500 dark:text-[#94A3B8] mb-1">
+                        Hora (opcional)
+                      </label>
+                      <input
+                        type="time"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17263B] border border-slate-200 dark:border-[#29384C] text-slate-900 dark:text-white font-bold"
+                      />
                     </div>
                   </div>
 
@@ -1625,8 +1642,9 @@ export function ProjectManagerModal({
                         Cancelar
                       </button>
                       <button
-                        type="submit"
-                        className="px-5 py-2 rounded-xl text-xs font-black text-slate-950 shadow-md active:scale-95 transition-all"
+                        type="button"
+                        onClick={handleSaveForm}
+                        className="px-5 py-2 rounded-xl text-xs font-black text-slate-950 shadow-md active:scale-95 transition-all cursor-pointer"
                         style={{ backgroundColor: neonColor }}
                       >
                         {editingTaskId ? 'Guardar Cambios' : 'Crear Tarea'}

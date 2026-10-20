@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import {
   FileSpreadsheet,
+  ExternalLink,
   UploadCloud,
   Download,
   Printer,
@@ -199,6 +200,59 @@ export function CertificatesFullView({
   const persistContractors = (updatedList: ContractorProfile[]) => {
     if (!activeProject) return;
     onSaveContractors?.(activeProject.id, updatedList);
+  };
+
+  // -------------------------------------------------------------
+  // ABRIR ARCHIVO DIRECTAMENTE EN LA APP DE EXCEL (VENTANA APARTE)
+  // -------------------------------------------------------------
+  const handleOpenInDesktopExcel = () => {
+    if (!selectedContractor || !activeProject) return;
+
+    let blob: Blob;
+    const fileName = selectedContractor.excelFile?.fileName ||
+      ('Certificado_' + activeProject.name.replace(/\s+/g, '_') + '_' + selectedContractor.name.replace(/\s+/g, '_') + '.xlsx');
+
+    if (selectedContractor.excelFile?.base64Data) {
+      try {
+        const binary = atob(selectedContractor.excelFile.base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([bytes], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+      } catch (err) {
+        console.error('Error al generar blob:', err);
+        return;
+      }
+    } else {
+      const defaultTemplate = createDefaultBaseTemplate(selectedContractor.name, activeProject.name);
+      const wb = XLSX.utils.book_new();
+      Object.keys(defaultTemplate).forEach(name => {
+        const ws = XLSX.utils.aoa_to_sheet(defaultTemplate[name]);
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      });
+      const arrayBuf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      blob = new Blob([arrayBuf], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+
+    // 1. Descargar / lanzar para que Windows lo abra en Microsoft Excel
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // 2. Abrir también en ventana aparte
+    window.open(blobUrl, '_blank');
+
+    onShowToast?.('Abriendo "' + fileName + '" en la aplicación de Excel...', 'FileSpreadsheet');
   };
 
   // -------------------------------------------------------------
@@ -791,21 +845,33 @@ export function CertificatesFullView({
                           <span className="text-xs font-bold uppercase tracking-wider">Paso 2: Liquidación Quincenal</span>
                         </div>
                         <h4 className="text-sm font-black text-white">
-                          Abrir y Modificar Planilla
+                          Abrir Planilla de Excel
                         </h4>
                         <p className="text-[11px] text-slate-400 mt-1">
-                          Abre la planilla interactiva para actualizar avances, guardar los cambios y generar el PDF para pago.
+                          Abre el archivo directamente en la aplicación de Excel (ventana aparte) o modifícalo en la app.
                         </p>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={handleOpenExcelEditor}
-                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
-                      >
-                        <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
-                        <span>Abrir y Modificar Planilla Excel</span>
-                      </button>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={handleOpenInDesktopExcel}
+                          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 active:scale-95 transition-all cursor-pointer"
+                        >
+                          <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
+                          <span>Abrir en Excel (App de Escritorio / Ventana Aparte)</span>
+                          <ExternalLink className="w-3.5 h-3.5 ml-auto text-slate-950" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleOpenExcelEditor}
+                          className="w-full py-2 px-3 rounded-xl bg-[#17263B] hover:bg-[#1E324A] text-slate-300 hover:text-white text-xs font-bold border border-[#29384C] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Modificar Planilla en la App</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
