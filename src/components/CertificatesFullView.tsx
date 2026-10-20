@@ -148,6 +148,13 @@ export function CertificatesFullView({
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // 4. NEW CONTRACTOR MODAL
+  const [isNewContractorModalOpen, setIsNewContractorModalOpen] = useState(false);
+  const [newContractorName, setNewContractorName] = useState('');
+  const [newContractorRole, setNewContractorRole] = useState('');
+  const [newContractorPhone, setNewContractorPhone] = useState('');
+  const [newContractorDni, setNewContractorDni] = useState('');
+
   // Internal back navigation hook
   useEffect(() => {
     (window as any).__customSectionBackHandler = () => {
@@ -172,13 +179,6 @@ export function CertificatesFullView({
       delete (window as any).__customSectionBackHandler;
     };
   }, [isEditorOpen, isNewContractorModalOpen, isDirty]);
-
-  // 4. NEW CONTRACTOR MODAL
-  const [isNewContractorModalOpen, setIsNewContractorModalOpen] = useState(false);
-  const [newContractorName, setNewContractorName] = useState('');
-  const [newContractorRole, setNewContractorRole] = useState('');
-  const [newContractorPhone, setNewContractorPhone] = useState('');
-  const [newContractorDni, setNewContractorDni] = useState('');
 
   // Search contractors
   const [contractorSearch, setContractorSearch] = useState('');
