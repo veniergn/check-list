@@ -1310,7 +1310,11 @@ export default function App() {
     setSelectedProjectId(projectId);
     setSelectedUnitId(null);
     setSelectedFloorKey(null);
-    setCurrentView('units');
+    // Solo redirigir a 'units' si estamos en 'dashboard' o 'checklist'
+    // En 'materials', 'certificates', 'tasks', 'calendar', 'gantt' permanecemos en la misma vista mostrando la obra seleccionada
+    if (currentView === 'dashboard' || currentView === 'checklist') {
+      setCurrentView('units');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -2697,36 +2701,42 @@ export default function App() {
   };
 
   // Materials Orders Handlers (Isolated per Project & synced to Supabase + Google Drive)
-  const handleSaveMaterialOrder = (order: MaterialOrder) => {
+  const handleSaveMaterialOrder = (param1: string | MaterialOrder, param2?: MaterialOrder) => {
+    const order: MaterialOrder = (typeof param1 === 'object' ? param1 : param2)!;
+    const targetProjectId: string = (typeof param1 === 'string' ? param1 : order?.projectId) || order?.projectId || selectedProjectId || '';
+    if (!order || !targetProjectId) return;
+    const finalOrder = { ...order, projectId: targetProjectId };
+
     const updated = updateProjectsAndSync(prev =>
       prev.map(p => {
-        if (p.id !== order.projectId) return p;
+        if (p.id !== targetProjectId) return p;
         const currentOrders = p.materialOrders || [];
-        const existingIdx = currentOrders.findIndex(o => o.id === order.id);
+        const existingIdx = currentOrders.findIndex(o => o.id === finalOrder.id);
         let nextOrders: MaterialOrder[];
         if (existingIdx >= 0) {
-          nextOrders = currentOrders.map(o => o.id === order.id ? order : o);
+          nextOrders = currentOrders.map(o => o.id === finalOrder.id ? finalOrder : o);
         } else {
-          nextOrders = [order, ...currentOrders];
+          nextOrders = [finalOrder, ...currentOrders];
         }
         return { ...p, materialOrders: nextOrders };
       })
     );
-    const targetProject = updated.find(p => p.id === order.projectId);
+    const targetProject = updated.find(p => p.id === targetProjectId);
     if (targetProject) {
       backupMaterialsToDrive(targetProject.name, targetProject.materialOrders || []);
     }
   };
 
-  const handleDeleteMaterialOrder = (orderId: string, projectId: string) => {
+  const handleDeleteMaterialOrder = (arg1: string, arg2?: string) => {
     const updated = updateProjectsAndSync(prev =>
       prev.map(p => {
-        if (p.id !== projectId) return p;
-        const nextOrders = (p.materialOrders || []).filter(o => o.id !== orderId);
+        const matchesProject = p.id === arg1 || p.id === arg2;
+        if (!matchesProject && !p.materialOrders?.some(o => o.id === arg1 || o.id === arg2)) return p;
+        const nextOrders = (p.materialOrders || []).filter(o => o.id !== arg1 && o.id !== arg2);
         return { ...p, materialOrders: nextOrders };
       })
     );
-    const targetProject = updated.find(p => p.id === projectId);
+    const targetProject = updated.find(p => p.id === arg1 || p.id === arg2);
     if (targetProject) {
       backupMaterialsToDrive(targetProject.name, targetProject.materialOrders || []);
     }
@@ -2734,37 +2744,43 @@ export default function App() {
   };
 
   // Contractor Certificates Handlers (Biweekly isolation per project & contractor)
-  const handleSaveContractorCertificate = (cert: ContractorCertificate) => {
+  const handleSaveContractorCertificate = (param1: string | ContractorCertificate, param2?: ContractorCertificate) => {
+    const cert: ContractorCertificate = (typeof param1 === 'object' ? param1 : param2)!;
+    const targetProjectId: string = (typeof param1 === 'string' ? param1 : cert?.projectId) || cert?.projectId || selectedProjectId || '';
+    if (!cert || !targetProjectId) return;
+    const finalCert = { ...cert, projectId: targetProjectId };
+
     const updated = updateProjectsAndSync(prev =>
       prev.map(p => {
-        if (p.id !== cert.projectId) return p;
+        if (p.id !== targetProjectId) return p;
         const currentCerts = p.contractorCertificates || [];
-        const existingIdx = currentCerts.findIndex(c => c.id === cert.id);
+        const existingIdx = currentCerts.findIndex(c => c.id === finalCert.id);
         let nextCerts: ContractorCertificate[];
         if (existingIdx >= 0) {
-          nextCerts = currentCerts.map(c => c.id === cert.id ? cert : c);
+          nextCerts = currentCerts.map(c => c.id === finalCert.id ? finalCert : c);
         } else {
-          nextCerts = [cert, ...currentCerts];
+          nextCerts = [finalCert, ...currentCerts];
         }
         return { ...p, contractorCertificates: nextCerts };
       })
     );
-    const targetProject = updated.find(p => p.id === cert.projectId);
+    const targetProject = updated.find(p => p.id === targetProjectId);
     if (targetProject) {
       backupCertificatesToDrive(targetProject.name, targetProject.contractorCertificates || []);
     }
     showToast('Certificado quincenal guardado y registrado', 'Check');
   };
 
-  const handleDeleteContractorCertificate = (certId: string, projectId: string) => {
+  const handleDeleteContractorCertificate = (arg1: string, arg2?: string) => {
     const updated = updateProjectsAndSync(prev =>
       prev.map(p => {
-        if (p.id !== projectId) return p;
-        const nextCerts = (p.contractorCertificates || []).filter(c => c.id !== certId);
+        const matchesProject = p.id === arg1 || p.id === arg2;
+        if (!matchesProject && !p.contractorCertificates?.some(c => c.id === arg1 || c.id === arg2)) return p;
+        const nextCerts = (p.contractorCertificates || []).filter(c => c.id !== arg1 && c.id !== arg2);
         return { ...p, contractorCertificates: nextCerts };
       })
     );
-    const targetProject = updated.find(p => p.id === projectId);
+    const targetProject = updated.find(p => p.id === arg1 || p.id === arg2);
     if (targetProject) {
       backupCertificatesToDrive(targetProject.name, targetProject.contractorCertificates || []);
     }
@@ -3300,6 +3316,7 @@ export default function App() {
               onDeleteCertificate={handleDeleteContractorCertificate}
               onAddContractor={handleAddContractor}
               onDeleteContractor={handleDeleteContractor}
+              onSaveContractors={handleSaveContractors}
               onShowToast={showToast}
               directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
               neonColor={localColors.neonColor || '#00f2fe'}

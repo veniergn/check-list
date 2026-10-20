@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Boxes,
   Plus,
@@ -33,10 +33,11 @@ import { Project, MaterialOrder, MaterialOrderItem, MaterialOrderAttachment, Mat
 
 interface MaterialsFullViewProps {
   projects: Project[];
+  selectedProjectId?: string | null;
   activeProjectId?: string;
   onSelectProject?: (projectId: string) => void;
-  onSaveOrder: (projectId: string, order: MaterialOrder) => void;
-  onDeleteOrder: (projectId: string, orderId: string) => void;
+  onSaveOrder: (param1: string | MaterialOrder, param2?: MaterialOrder) => void;
+  onDeleteOrder: (arg1: string, arg2?: string) => void;
   neonColor?: string;
   onShowToast?: (msg: string, icon?: string) => void;
 }
@@ -59,6 +60,7 @@ const COMMON_UNITS = [
 
 export function MaterialsFullView({
   projects,
+  selectedProjectId,
   activeProjectId,
   onSelectProject,
   onSaveOrder,
@@ -68,8 +70,15 @@ export function MaterialsFullView({
 }: MaterialsFullViewProps) {
   // Current active project
   const [selectedPid, setSelectedPid] = useState<string>(() => {
-    return activeProjectId || projects[0]?.id || '';
+    return selectedProjectId || activeProjectId || projects[0]?.id || '';
   });
+
+  // Sync with external project selection (from Sidebar or TopHeader)
+  useEffect(() => {
+    if (selectedProjectId && selectedProjectId !== selectedPid) {
+      setSelectedPid(selectedProjectId);
+    }
+  }, [selectedProjectId]);
 
   const activeProject = useMemo(() => {
     return projects.find(p => p.id === selectedPid) || projects[0] || null;
@@ -515,6 +524,37 @@ export function MaterialsFullView({
             </span>
           </div>
         </div>
+
+        {/* ACTIVE OBRA DETAIL & ACTION CARD */}
+        {activeProject && (
+          <div className="bg-gradient-to-r from-[#101D30] via-[#0D1826] to-[#101D30] border border-cyan-500/30 p-4 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 font-bold text-lg shrink-0">
+                🏗️
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-cyan-400">Obra Activa:</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                    {orders.length} pedidos cargados
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-black text-white truncate">{activeProject.name}</h2>
+                <p className="text-[11px] text-[#94A3B8] truncate">{activeProject.location || 'Mendoza'} • Director: {activeProject.director || 'Arq. Venier Gastón'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>+ Cargar Listado de Materiales</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* SEARCH AND FILTER BAR */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

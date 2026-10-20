@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   FileSpreadsheet,
   Plus,
@@ -26,18 +26,23 @@ import {
   Percent,
   Copy,
   Receipt,
-  RotateCcw
+  RotateCcw,
+  Check
 } from 'lucide-react';
 import { Project, ContractorCertificate, ContractorPaymentItem, ContractorProfile } from '../types';
 import { DEFAULT_CONTRACTORS, getProjectContractors } from '../utils/pmContractors';
 
 interface CertificatesFullViewProps {
   projects: Project[];
+  selectedProjectId?: string | null;
   activeProjectId?: string;
   onSelectProject?: (projectId: string) => void;
-  onSaveCertificate: (projectId: string, certificate: ContractorCertificate) => void;
-  onDeleteCertificate: (projectId: string, certificateId: string) => void;
+  onSaveCertificate: (param1: string | ContractorCertificate, param2?: ContractorCertificate) => void;
+  onDeleteCertificate: (arg1: string, arg2?: string) => void;
   onSaveContractors?: (projectId: string, contractors: ContractorProfile[]) => void;
+  onAddContractor?: (projectId: string, contractor: any) => void;
+  onDeleteContractor?: (projectId: string, contractorId: string) => void;
+  directorName?: string;
   neonColor?: string;
   onShowToast?: (msg: string, icon?: string) => void;
 }
@@ -72,18 +77,29 @@ const DEFAULT_PERIODS = generateDefaultPeriods();
 
 export function CertificatesFullView({
   projects,
+  selectedProjectId,
   activeProjectId,
   onSelectProject,
   onSaveCertificate,
   onDeleteCertificate,
   onSaveContractors,
+  onAddContractor,
+  onDeleteContractor,
+  directorName = 'Arq. Venier Gastón',
   neonColor = '#00f2fe',
   onShowToast
 }: CertificatesFullViewProps) {
   // Current active project
   const [selectedPid, setSelectedPid] = useState<string>(() => {
-    return activeProjectId || projects[0]?.id || '';
+    return selectedProjectId || activeProjectId || projects[0]?.id || '';
   });
+
+  // Sync with external project selection (from Sidebar or TopHeader)
+  useEffect(() => {
+    if (selectedProjectId && selectedProjectId !== selectedPid) {
+      setSelectedPid(selectedProjectId);
+    }
+  }, [selectedProjectId]);
 
   const activeProject = useMemo(() => {
     return projects.find(p => p.id === selectedPid) || projects[0] || null;
