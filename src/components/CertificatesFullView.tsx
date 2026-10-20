@@ -1,35 +1,39 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
   FileSpreadsheet,
+  UploadCloud,
+  Download,
+  Printer,
   Plus,
   Search,
   Building2,
-  Calendar,
-  Clock,
+  Users,
   CheckCircle2,
   AlertTriangle,
-  Send,
-  Printer,
-  FileDown,
   Trash2,
   Pencil,
-  FileText,
-  User,
-  Users,
-  DollarSign,
-  Briefcase,
-  ChevronRight,
-  ChevronDown,
   X,
+  ChevronRight,
+  Calendar,
+  Clock,
   Sparkles,
-  Award,
-  Percent,
-  Copy,
-  Receipt,
-  RotateCcw,
-  Check
+  Check,
+  FileText,
+  Send,
+  RefreshCw,
+  Eye,
+  ArrowLeft,
+  DollarSign,
+  Briefcase
 } from 'lucide-react';
-import { Project, ContractorCertificate, ContractorPaymentItem, ContractorProfile } from '../types';
+import {
+  Project,
+  ContractorProfile,
+  ContractorExcelFile,
+  ContractorPdfSnapshot,
+  ContractorCertificate
+} from '../types';
 import { DEFAULT_CONTRACTORS, getProjectContractors } from '../utils/pmContractors';
 
 interface CertificatesFullViewProps {
@@ -37,8 +41,8 @@ interface CertificatesFullViewProps {
   selectedProjectId?: string | null;
   activeProjectId?: string;
   onSelectProject?: (projectId: string) => void;
-  onSaveCertificate: (param1: string | ContractorCertificate, param2?: ContractorCertificate) => void;
-  onDeleteCertificate: (arg1: string, arg2?: string) => void;
+  onSaveCertificate?: (param1: string | ContractorCertificate, param2?: ContractorCertificate) => void;
+  onDeleteCertificate?: (arg1: string, arg2?: string) => void;
   onSaveContractors?: (projectId: string, contractors: ContractorProfile[]) => void;
   onAddContractor?: (projectId: string, contractor: any) => void;
   onDeleteContractor?: (projectId: string, contractorId: string) => void;
@@ -47,33 +51,39 @@ interface CertificatesFullViewProps {
   onShowToast?: (msg: string, icon?: string) => void;
 }
 
-// Format currency ARS
-const formatARS = (amount: number): string => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0
-  }).format(amount || 0);
-};
-
-// Generate standard Quincena periods for the current year
-const generateDefaultPeriods = () => {
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-  const year = new Date().getFullYear();
-  const periods: string[] = [];
-
-  // Generate for current and surrounding months
-  for (let m = 0; m < 12; m++) {
-    periods.push(`1ra Quincena ${months[m]} ${year}`);
-    periods.push(`2da Quincena ${months[m]} ${year}`);
+// Generate column headers (A, B, C, ... Z, AA, AB...)
+const getColumnLetter = (colIndex: number): string => {
+  let letter = '';
+  while (colIndex >= 0) {
+    letter = String.fromCharCode((colIndex % 26) + 65) + letter;
+    colIndex = Math.floor(colIndex / 26) - 1;
   }
-  return periods;
+  return letter;
 };
 
-const DEFAULT_PERIODS = generateDefaultPeriods();
+// Create a default base certificate template sheet if contractor has no Excel yet
+const createDefaultBaseTemplate = (contractorName: string, obraName: string): { [sheetName: string]: (string | number | null)[][] } => {
+  const dateStr = new Date().toLocaleDateString('es-AR');
+  return {
+    'Certificado': [
+      ['CONTROL DE AVANCE DE OBRAS - PLANILLA DE CERTIFICACIÓN QUINCENAL', '', '', '', '', '', '', '', ''],
+      ['Obra:', obraName, '', 'Fecha:', dateStr, '', 'Período:', 'Quincenal', ''],
+      ['Contratista:', contractorName, '', 'Director Técnico:', 'Arq. Venier Gastón', '', 'Administrador:', 'veniergn@gmail.com', ''],
+      ['', '', '', '', '', '', '', '', ''],
+      ['N°', 'Ítem / Rubro / Tarea', 'Unidad', 'Cant. Contratada', 'Precio Unitario ($)', '% Avance Anterior', '% Avance Actual', '% Quincena', 'Monto a Cobrar ($)'],
+      [1, 'Replanteo y nivelación de obra', 'gl', 1, 150000, 100, 100, 0, 0],
+      [2, 'Mampostería de elevación', 'm2', 240, 14500, 25, 45, 20, 696000],
+      [3, 'Revoque grueso exterior', 'm2', 180, 9200, 10, 30, 20, 331200],
+      [4, 'Contrapisos y carpetas', 'm2', 120, 8000, 0, 15, 15, 144000],
+      [5, 'Instalaciones y canalizaciones', 'gl', 1, 350000, 20, 40, 20, 70000],
+      ['', '', '', '', '', '', '', '', ''],
+      ['', 'SUBTOTAL CERTIFICACIÓN QUINCENAL', '', '', '', '', '', '', 1241200],
+      ['', 'Anticipo entregado (-)', '', '', '', '', '', '', 0],
+      ['', 'Fondo de Reparo 5% (-)', '', '', '', '', '', '', 62060],
+      ['', 'TOTAL NETO A PAGAR ($)', '', '', '', '', '', '', 1179140]
+    ]
+  };
+};
 
 export function CertificatesFullView({
   projects,
@@ -83,18 +93,14 @@ export function CertificatesFullView({
   onSaveCertificate,
   onDeleteCertificate,
   onSaveContractors,
-  onAddContractor,
-  onDeleteContractor,
   directorName = 'Arq. Venier Gastón',
   neonColor = '#00f2fe',
   onShowToast
 }: CertificatesFullViewProps) {
-  // Current active project
-  const [selectedPid, setSelectedPid] = useState<string>(() => {
-    return selectedProjectId || activeProjectId || projects[0]?.id || '';
-  });
+  // 1. Current active project (isolated by Obra)
+  const initialPid = selectedProjectId || activeProjectId || projects[0]?.id || '';
+  const [selectedPid, setSelectedPid] = useState<string>(initialPid);
 
-  // Sync with external project selection (from Sidebar or TopHeader)
   useEffect(() => {
     if (selectedProjectId && selectedProjectId !== selectedPid) {
       setSelectedPid(selectedProjectId);
@@ -105,7 +111,7 @@ export function CertificatesFullView({
     return projects.find(p => p.id === selectedPid) || projects[0] || null;
   }, [projects, selectedPid]);
 
-  // Contractors for current project
+  // 2. Contractors for current project
   const contractors = useMemo(() => {
     if (!activeProject) return DEFAULT_CONTRACTORS;
     return getProjectContractors(activeProject);
@@ -116,371 +122,411 @@ export function CertificatesFullView({
     return contractors[0]?.id || '';
   });
 
+  // Ensure selectedContractor is valid when changing obra
+  useEffect(() => {
+    if (contractors.length > 0) {
+      const exists = contractors.some(c => c.id === selectedContractorId);
+      if (!exists) {
+        setSelectedContractorId(contractors[0].id);
+      }
+    } else {
+      setSelectedContractorId('');
+    }
+  }, [contractors, selectedContractorId]);
+
   const selectedContractor = useMemo(() => {
     return contractors.find(c => c.id === selectedContractorId) || contractors[0] || null;
   }, [contractors, selectedContractorId]);
 
-  // Search contractor
+  // Hidden file input for Excel upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 3. EXCEL EDITOR / VIEWER MODAL STATE
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editableSheets, setEditableSheets] = useState<{ [sheetName: string]: (string | number | null)[][] }>({});
+  const [activeSheetName, setActiveSheetName] = useState<string>('Certificado');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 4. NEW CONTRACTOR MODAL
+  const [isNewContractorModalOpen, setIsNewContractorModalOpen] = useState(false);
+  const [newContractorName, setNewContractorName] = useState('');
+  const [newContractorRole, setNewContractorRole] = useState('');
+  const [newContractorPhone, setNewContractorPhone] = useState('');
+  const [newContractorDni, setNewContractorDni] = useState('');
+
+  // Search contractors
   const [contractorSearch, setContractorSearch] = useState('');
 
   const filteredContractors = useMemo(() => {
-    return contractors.filter(c => {
-      if (!contractorSearch.trim()) return true;
-      const q = contractorSearch.toLowerCase();
-      return (c.name || '').toLowerCase().includes(q) || (c.role || '').toLowerCase().includes(q);
-    });
+    if (!contractorSearch.trim()) return contractors;
+    const q = contractorSearch.toLowerCase();
+    return contractors.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.role.toLowerCase().includes(q) ||
+      (c.phone || '').includes(q)
+    );
   }, [contractors, contractorSearch]);
 
-  // Current selected Quincena
-  const currentMonthIdx = new Date().getMonth();
-  const currentDay = new Date().getDate();
-  const defaultPeriodStr = `${currentDay <= 15 ? '1ra' : '2da'} Quincena ${DEFAULT_PERIODS[currentMonthIdx * 2].split(' ')[2]} ${new Date().getFullYear()}`;
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(defaultPeriodStr);
-
-  // Certificates list for this project
-  const projectCertificates = useMemo(() => {
-    if (!activeProject) return [];
-    return [...(activeProject.contractorCertificates || [])].sort((a, b) => {
-      return (b.lastModifiedAt || '').localeCompare(a.lastModifiedAt || '');
-    });
-  }, [activeProject]);
-
-  // Historical certificates for currently selected contractor
-  const contractorHistoryCertificates = useMemo(() => {
-    if (!selectedContractor) return [];
-    return projectCertificates.filter(cert => cert.contractorId === selectedContractor.id);
-  }, [projectCertificates, selectedContractor]);
-
-  // Current loaded / active certificate being edited in Excel sheet
-  const activeExistingCert = useMemo(() => {
-    if (!selectedContractor) return null;
-    return contractorHistoryCertificates.find(c => c.period === selectedPeriod) || null;
-  }, [contractorHistoryCertificates, selectedPeriod]);
-
-  // Planilla interactive items
-  const [items, setItems] = useState<ContractorPaymentItem[]>([
-    {
-      id: 'item_1',
-      taskDescription: 'Revoque grueso y fino en departamentos',
-      unit: 'm2',
-      contractedQuantity: 100,
-      unitPrice: 12000,
-      previousProgressPercent: 30,
-      currentProgressPercent: 60
-    }
-  ]);
-
-  const [advancePayment, setAdvancePayment] = useState<number>(0);
-  const [retentionPercent, setRetentionPercent] = useState<number>(0);
-  const [certNotes, setCertNotes] = useState<string>('');
-  const [certStatus, setCertStatus] = useState<'draft' | 'approved' | 'paid'>('draft');
-
-  // Modal State for Adding / Editing Contractor Profile
-  const [isContractorModalOpen, setIsContractorModalOpen] = useState(false);
-  const [editingContractorId, setEditingContractorId] = useState<string | null>(null);
-  const [contractorNameInput, setContractorNameInput] = useState('');
-  const [contractorRoleInput, setContractorRoleInput] = useState('');
-  const [contractorPhoneInput, setContractorPhoneInput] = useState('');
-  const [contractorDniInput, setContractorDniInput] = useState('');
-
-  // Sync state when activeExistingCert changes or period changes
-  const lastLoadedKeyRef = useRef<string>('');
-  const currentKey = `${selectedPid}_${selectedContractor?.id}_${selectedPeriod}_${activeExistingCert?.id || 'new'}`;
-
-  if (lastLoadedKeyRef.current !== currentKey) {
-    lastLoadedKeyRef.current = currentKey;
-    if (activeExistingCert) {
-      setItems(activeExistingCert.items.length > 0 ? activeExistingCert.items : [
-        {
-          id: `item_${Date.now()}`,
-          taskDescription: `Trabajos generales de ${selectedContractor?.role || 'obra'}`,
-          unit: 'gl',
-          contractedQuantity: 1,
-          unitPrice: 0,
-          previousProgressPercent: 0,
-          currentProgressPercent: 0
-        }
-      ]);
-      setAdvancePayment(activeExistingCert.advancePayment || 0);
-      setRetentionPercent(activeExistingCert.retentionPercent || 0);
-      setCertNotes(activeExistingCert.notes || '');
-      setCertStatus(activeExistingCert.status || 'draft');
-    } else {
-      // Default blank template for new period
-      setItems([
-        {
-          id: `item_${Date.now()}_1`,
-          taskDescription: `Tareas de ${selectedContractor?.role || 'obra'}`,
-          unit: 'm2',
-          contractedQuantity: 50,
-          unitPrice: 15000,
-          previousProgressPercent: 0,
-          currentProgressPercent: 50
-        }
-      ]);
-      setAdvancePayment(0);
-      setRetentionPercent(0);
-      setCertNotes('');
-      setCertStatus('draft');
-    }
-  }
-
-  // Row item updater
-  const handleUpdateItem = (id: string, field: keyof ContractorPaymentItem, value: any) => {
-    setItems(prev => prev.map(item => {
-      if (item.id !== id) return item;
-      return { ...item, [field]: value };
-    }));
-  };
-
-  const handleAddItem = () => {
-    setItems(prev => [
-      ...prev,
-      {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        taskDescription: '',
-        unit: 'm2',
-        contractedQuantity: 0,
-        unitPrice: 0,
-        previousProgressPercent: 0,
-        currentProgressPercent: 0
-      }
-    ]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    if (items.length <= 1) {
-      setItems([{
-        id: `item_${Date.now()}`,
-        taskDescription: '',
-        unit: 'un',
-        contractedQuantity: 0,
-        unitPrice: 0,
-        previousProgressPercent: 0,
-        currentProgressPercent: 0
-      }]);
-      return;
-    }
-    setItems(prev => prev.filter(i => i.id !== id));
-  };
-
-  const handleResetSheet = () => {
-    if (confirm('¿Deseas reiniciar la planilla a valores en blanco?')) {
-      setItems([
-        {
-          id: `item_${Date.now()}`,
-          taskDescription: '',
-          unit: 'un',
-          contractedQuantity: 0,
-          unitPrice: 0,
-          previousProgressPercent: 0,
-          currentProgressPercent: 0
-        }
-      ]);
-      setAdvancePayment(0);
-      setRetentionPercent(0);
-      setCertNotes('');
-      onShowToast?.('Planilla reiniciada', 'RotateCcw');
-    }
-  };
-
-  // Calculations for current interactive sheet
-  const sheetCalculations = useMemo(() => {
-    let subtotalPeriod = 0;
-    const computedRows = items.map(row => {
-      const prev = Math.max(0, Math.min(100, Number(row.previousProgressPercent) || 0));
-      const curr = Math.max(0, Math.min(100, Number(row.currentProgressPercent) || 0));
-      const periodPercent = Math.max(0, curr - prev);
-      const totalContractedAmount = (Number(row.contractedQuantity) || 0) * (Number(row.unitPrice) || 0);
-      const periodAmount = totalContractedAmount * (periodPercent / 100);
-      subtotalPeriod += periodAmount;
-
-      return {
-        ...row,
-        prev,
-        curr,
-        periodPercent,
-        periodAmount,
-        totalContractedAmount
-      };
-    });
-
-    const retentionAmount = subtotalPeriod * ((Number(retentionPercent) || 0) / 100);
-    const totalDeductions = (Number(advancePayment) || 0) + retentionAmount;
-    const totalPayable = Math.max(0, subtotalPeriod - totalDeductions);
-
-    return {
-      computedRows,
-      subtotalPeriod,
-      retentionAmount,
-      totalDeductions,
-      totalPayable
-    };
-  }, [items, advancePayment, retentionPercent]);
-
-  // Save Certificate Handler
-  const handleSaveCertificateSubmit = () => {
-    if (!activeProject || !selectedContractor) {
-      onShowToast?.('Selecciona una obra y un contratista', 'AlertCircle');
-      return;
-    }
-
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const formattedTimestamp = `${d}/${m}/${y}, ${hh}:${mm} hs`;
-
-    const certificatePayload: ContractorCertificate = {
-      id: activeExistingCert?.id || `cert_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      projectId: activeProject.id,
-      contractorId: selectedContractor.id,
-      contractorName: selectedContractor.name,
-      contractorRole: selectedContractor.role,
-      contractorDniCuit: selectedContractor.dniCuit,
-      contractorPhone: selectedContractor.phone,
-      period: selectedPeriod,
-      items: items.map(i => ({
-        id: i.id,
-        taskDescription: i.taskDescription.trim() || 'Tarea certificada',
-        unit: i.unit || 'un',
-        contractedQuantity: Number(i.contractedQuantity) || 0,
-        unitPrice: Number(i.unitPrice) || 0,
-        previousProgressPercent: Number(i.previousProgressPercent) || 0,
-        currentProgressPercent: Number(i.currentProgressPercent) || 0
-      })),
-      advancePayment: Number(advancePayment) || 0,
-      retentionPercent: Number(retentionPercent) || 0,
-      notes: certNotes.trim() || undefined,
-      subtotalPeriod: sheetCalculations.subtotalPeriod,
-      totalPayable: sheetCalculations.totalPayable,
-      status: certStatus,
-      lastModifiedAt: now.toISOString(),
-      lastModifiedFormatted: formattedTimestamp,
-      lastModifiedBy: 'veniergn@gmail.com'
-    };
-
-    onSaveCertificate(activeProject.id, certificatePayload);
-    onShowToast?.(`¡Certificado de ${selectedContractor.name} guardado con éxito!`, 'Check');
-  };
-
-  // Open Contractor Modal (Create or Edit)
-  const handleOpenAddContractor = () => {
-    setEditingContractorId(null);
-    setContractorNameInput('');
-    setContractorRoleInput('');
-    setContractorPhoneInput('');
-    setContractorDniInput('');
-    setIsContractorModalOpen(true);
-  };
-
-  const handleOpenEditContractor = (c: ContractorProfile) => {
-    setEditingContractorId(c.id);
-    setContractorNameInput(c.name);
-    setContractorRoleInput(c.role);
-    setContractorPhoneInput(c.phone || '');
-    setContractorDniInput(c.dniCuit || '');
-    setIsContractorModalOpen(true);
-  };
-
-  const handleSaveContractorProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contractorNameInput.trim()) {
-      onShowToast?.('Ingresa el nombre del contratista', 'AlertCircle');
-      return;
-    }
+  // -------------------------------------------------------------
+  // HELPER: Save contractor changes into project and sync
+  // -------------------------------------------------------------
+  const persistContractors = (updatedList: ContractorProfile[]) => {
     if (!activeProject) return;
+    onSaveContractors?.(activeProject.id, updatedList);
+  };
 
-    const colors = ['#00f2fe', '#38ef7d', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  // -------------------------------------------------------------
+  // BOTÓN 1: CARGAR / SUBIR ARCHIVO EXCEL DEL CONTRATISTA
+  // -------------------------------------------------------------
+  const handleTriggerUpload = () => {
+    if (!selectedContractor) {
+      onShowToast?.('Por favor selecciona un contratista primero', 'AlertTriangle');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
 
-    let updatedList: ContractorProfile[];
-    if (editingContractorId) {
-      updatedList = contractors.map(c => {
-        if (c.id !== editingContractorId) return c;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedContractor || !activeProject) return;
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+      // Convert all sheets to 2D arrays
+      const sheetsData: { [sheetName: string]: (string | number | null)[][] } = {};
+      workbook.SheetNames.forEach(sheetName => {
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as (string | number | null)[][];
+        sheetsData[sheetName] = data.length > 0 ? data : [['']];
+      });
+
+      // Binary to base64
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64Data = btoa(binary);
+
+      const now = new Date();
+      const formatted = now.toLocaleDateString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      }) + ', ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+
+      const firstSheet = workbook.SheetNames[0] || 'Hoja1';
+
+      const excelFileRecord: ContractorExcelFile = {
+        fileName: file.name,
+        fileSize: file.size,
+        uploadedAt: now.toISOString(),
+        lastModifiedAt: now.toISOString(),
+        lastModifiedFormatted: formatted,
+        lastModifiedBy: 'veniergn@gmail.com',
+        base64Data,
+        sheetsData,
+        activeSheetName: firstSheet
+      };
+
+      const updatedContractors = contractors.map(c => {
+        if (c.id !== selectedContractor.id) return c;
         return {
           ...c,
-          name: contractorNameInput.trim(),
-          role: contractorRoleInput.trim() || 'Contratista',
-          phone: contractorPhoneInput.trim() || undefined,
-          dniCuit: contractorDniInput.trim() || undefined,
-          initials: contractorNameInput.trim().slice(0, 2).toUpperCase()
+          excelFile: excelFileRecord
         };
       });
-    } else {
-      const newContractor: ContractorProfile = {
-        id: `cont_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        name: contractorNameInput.trim(),
-        role: contractorRoleInput.trim() || 'Contratista',
-        phone: contractorPhoneInput.trim() || undefined,
-        dniCuit: contractorDniInput.trim() || undefined,
-        color: randomColor,
-        initials: contractorNameInput.trim().slice(0, 2).toUpperCase()
-      };
-      updatedList = [...contractors, newContractor];
-      setSelectedContractorId(newContractor.id);
-    }
 
-    onSaveContractors?.(activeProject.id, updatedList);
-    setIsContractorModalOpen(false);
-    onShowToast?.('Contratista guardado correctamente', 'Check');
-  };
-
-  const handleDeleteContractor = (cId: string, cName: string) => {
-    if (!activeProject) return;
-    if (confirm(`¿Eliminar al contratista "${cName}" de esta obra?`)) {
-      const updatedList = contractors.filter(c => c.id !== cId);
-      onSaveContractors?.(activeProject.id, updatedList);
-      if (selectedContractorId === cId) {
-        setSelectedContractorId(updatedList[0]?.id || '');
-      }
-      onShowToast?.('Contratista eliminado', 'Trash2');
+      persistContractors(updatedContractors);
+      onShowToast?.('Archivo "' + file.name + '" cargado con éxito para ' + selectedContractor.name, 'Check');
+    } catch (err) {
+      console.error('Error al procesar archivo Excel:', err);
+      onShowToast?.('Error al leer el archivo Excel. Asegúrate de que sea .xlsx o .xls válido', 'AlertTriangle');
+    } finally {
+      e.target.value = '';
     }
   };
 
-  // WhatsApp share to contractor
-  const handleSendContractorWhatsApp = () => {
+  // -------------------------------------------------------------
+  // BOTÓN 2: ABRIR Y MODIFICAR EL ARCHIVO EXCEL EN LA APP
+  // -------------------------------------------------------------
+  const handleOpenExcelEditor = () => {
     if (!selectedContractor || !activeProject) return;
 
-    let text = `💵 *CERTIFICADO DE PAGO QUINCENAL - ${activeProject.name.toUpperCase()}*\n`;
-    text += `👤 *Contratista:* ${selectedContractor.name} (${selectedContractor.role})\n`;
-    text += `📅 *Período:* ${selectedPeriod}\n\n`;
-    text += `📋 *DESGLOSE DE TRABAJOS CERTIFICADOS:*\n`;
+    if (selectedContractor.excelFile && selectedContractor.excelFile.sheetsData) {
+      // Load existing user uploaded Excel sheets
+      setEditableSheets(JSON.parse(JSON.stringify(selectedContractor.excelFile.sheetsData)));
+      setActiveSheetName(selectedContractor.excelFile.activeSheetName || Object.keys(selectedContractor.excelFile.sheetsData)[0] || 'Hoja1');
+      setIsDirty(false);
+      setIsEditorOpen(true);
+    } else {
+      // Contractor has no Excel yet: generate base template and open directly
+      const defaultTemplate = createDefaultBaseTemplate(selectedContractor.name, activeProject.name);
+      setEditableSheets(defaultTemplate);
+      setActiveSheetName('Certificado');
+      setIsDirty(true);
+      setIsEditorOpen(true);
+      onShowToast?.('Se abrió la planilla base para este contratista. Puedes modificarla y guardarla.', 'Sparkles');
+    }
+  };
 
-    sheetCalculations.computedRows.forEach((r, idx) => {
-      text += `${idx + 1}. ${r.taskDescription}\n   Avance quincena: ${r.periodPercent}% → ${formatARS(r.periodAmount)}\n`;
+  // Cell modification handler
+  const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
+    setEditableSheets(prev => {
+      const currentRows = prev[activeSheetName] ? [...prev[activeSheetName]] : [];
+      while (currentRows.length <= rowIndex) {
+        currentRows.push([]);
+      }
+      const currentRow = [...(currentRows[rowIndex] || [])];
+      while (currentRow.length <= colIndex) {
+        currentRow.push('');
+      }
+      const numVal = Number(value);
+      currentRow[colIndex] = !isNaN(numVal) && value.trim() !== '' ? numVal : value;
+      currentRows[rowIndex] = currentRow;
+
+      return {
+        ...prev,
+        [activeSheetName]: currentRows
+      };
+    });
+    setIsDirty(true);
+  };
+
+  // Add Row
+  const handleAddRow = () => {
+    setEditableSheets(prev => {
+      const currentRows = prev[activeSheetName] ? [...prev[activeSheetName]] : [];
+      const colCount = currentRows[0]?.length || 8;
+      const newEmptyRow = new Array(colCount).fill('');
+      return {
+        ...prev,
+        [activeSheetName]: [...currentRows, newEmptyRow]
+      };
+    });
+    setIsDirty(true);
+  };
+
+  // -------------------------------------------------------------
+  // GUARDAR CAMBIOS EN EL ARCHIVO EXCEL (PERSISTENCIA Y PRÓXIMA QUINCENA)
+  // -------------------------------------------------------------
+  const handleSaveExcelChanges = () => {
+    if (!selectedContractor || !activeProject) return;
+
+    setIsSaving(true);
+    try {
+      const wb = XLSX.utils.book_new();
+      const sheetNames = Object.keys(editableSheets);
+
+      sheetNames.forEach(name => {
+        const rows = editableSheets[name] || [];
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      });
+
+      const newBase64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+      const now = new Date();
+      const formatted = now.toLocaleDateString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      }) + ', ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+
+      const fileName = selectedContractor.excelFile?.fileName ||
+        ('Certificado_' + activeProject.name.replace(/\s+/g, '_') + '_' + selectedContractor.name.replace(/\s+/g, '_') + '.xlsx');
+
+      const updatedExcel: ContractorExcelFile = {
+        fileName,
+        fileSize: Math.round(newBase64.length * 0.75),
+        uploadedAt: selectedContractor.excelFile?.uploadedAt || now.toISOString(),
+        lastModifiedAt: now.toISOString(),
+        lastModifiedFormatted: formatted,
+        lastModifiedBy: 'veniergn@gmail.com',
+        base64Data: newBase64,
+        sheetsData: editableSheets,
+        activeSheetName
+      };
+
+      const updatedContractors = contractors.map(c => {
+        if (c.id !== selectedContractor.id) return c;
+        return {
+          ...c,
+          excelFile: updatedExcel
+        };
+      });
+
+      persistContractors(updatedContractors);
+      setIsDirty(false);
+      onShowToast?.('✓ Planilla guardada exitosamente. Lista para la próxima quincena.', 'Check');
+    } catch (err) {
+      console.error('Error al guardar Excel:', err);
+      onShowToast?.('Error al guardar los cambios en el Excel', 'AlertTriangle');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // GENERAR / GUARDAR PDF DEL ARCHIVO EXCEL CON FIRMAS
+  // -------------------------------------------------------------
+  const handleExportAndSavePdf = () => {
+    if (!selectedContractor || !activeProject) return;
+
+    // 1. Guardar primero los cambios del Excel
+    handleSaveExcelChanges();
+
+    // 2. Registrar en el historial de PDFs emitidos
+    const now = new Date();
+    const formatted = now.toLocaleDateString('es-AR', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    }) + ', ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+
+    const newPdfSnapshot: ContractorPdfSnapshot = {
+      id: 'pdf_' + Date.now(),
+      title: 'Certificado ' + selectedContractor.name + ' - ' + now.toLocaleDateString('es-AR'),
+      period: 'Quincena ' + now.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }),
+      generatedAt: now.toISOString(),
+      generatedFormatted: formatted,
+      generatedBy: 'veniergn@gmail.com'
+    };
+
+    const currentHistory = selectedContractor.pdfHistory || [];
+    const updatedContractors = contractors.map(c => {
+      if (c.id !== selectedContractor.id) return c;
+      return {
+        ...c,
+        pdfHistory: [newPdfSnapshot, ...currentHistory]
+      };
     });
 
-    text += `\n💰 *Subtotal Quincena:* ${formatARS(sheetCalculations.subtotalPeriod)}\n`;
-    if (advancePayment > 0) text += `🔻 *Adelantos entregados:* -${formatARS(advancePayment)}\n`;
-    if (retentionPercent > 0) text += `🔒 *Fondo de reparo (${retentionPercent}%):* -${formatARS(sheetCalculations.retentionAmount)}\n`;
-    text += `\n✅ *TOTAL NETO A COBRAR:* *${formatARS(sheetCalculations.totalPayable)}*\n`;
-    text += `\n_Última modificación: ${activeExistingCert?.lastModifiedFormatted || 'Hoy'} por veniergn@gmail.com_`;
+    persistContractors(updatedContractors);
 
-    const phoneClean = (selectedContractor.phone || '').replace(/[^0-9]/g, '');
-    const url = phoneClean
-      ? `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(text)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    // 3. Lanzar ventana de impresión para guardar PDF
+    setTimeout(() => {
+      window.print();
+    }, 250);
 
-    window.open(url, '_blank');
+    onShowToast?.('PDF generado y registrado en el historial del contratista', 'Check');
   };
 
-  // Clean Print Handler
-  const handlePrintCertificate = () => {
-    window.print();
+  // -------------------------------------------------------------
+  // DESCARGAR ARCHIVO .XLSX DIRECTO
+  // -------------------------------------------------------------
+  const handleDownloadXlsx = () => {
+    if (!selectedContractor) return;
+
+    const fileName = selectedContractor.excelFile?.fileName ||
+      ('Certificado_' + selectedContractor.name.replace(/\s+/g, '_') + '.xlsx');
+
+    if (selectedContractor.excelFile?.base64Data) {
+      try {
+        const binary = atob(selectedContractor.excelFile.base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        onShowToast?.('Descargando ' + fileName, 'Check');
+      } catch (err) {
+        console.error('Error al descargar:', err);
+      }
+    } else {
+      const wb = XLSX.utils.book_new();
+      const sheetNames = Object.keys(editableSheets);
+      sheetNames.forEach(name => {
+        const rows = editableSheets[name] || [];
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      });
+      XLSX.writeFile(wb, fileName);
+    }
   };
+
+  // -------------------------------------------------------------
+  // QUITAR ARCHIVO EXCEL DEL CONTRATISTA
+  // -------------------------------------------------------------
+  const handleRemoveExcel = () => {
+    if (!selectedContractor || !activeProject) return;
+    if (confirm('¿Eliminar el archivo Excel asociado a "' + selectedContractor.name + '"?')) {
+      const updatedContractors = contractors.map(c => {
+        if (c.id !== selectedContractor.id) return c;
+        const copy = { ...c };
+        delete copy.excelFile;
+        return copy;
+      });
+      persistContractors(updatedContractors);
+      onShowToast?.('Archivo Excel desvinculado', 'Trash2');
+    }
+  };
+
+  // -------------------------------------------------------------
+  // CREAR NUEVO CONTRATISTA
+  // -------------------------------------------------------------
+  const handleCreateContractor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContractorName.trim() || !activeProject) return;
+
+    const newC: ContractorProfile = {
+      id: 'c_' + Date.now(),
+      name: newContractorName.trim(),
+      role: newContractorRole.trim() || 'Contratista General',
+      phone: newContractorPhone.trim() || undefined,
+      dniCuit: newContractorDni.trim() || undefined,
+      color: '#00f2fe',
+      initials: newContractorName.trim().slice(0, 2).toUpperCase()
+    };
+
+    const updatedList = [...contractors, newC];
+    persistContractors(updatedList);
+    setSelectedContractorId(newC.id);
+    setIsNewContractorModalOpen(false);
+    setNewContractorName('');
+    setNewContractorRole('');
+    setNewContractorPhone('');
+    setNewContractorDni('');
+    onShowToast?.('Contratista "' + newC.name + '" agregado con éxito', 'Check');
+  };
+
+  // Current active sheet rows for editor
+  const currentSheetRows = useMemo(() => {
+    return editableSheets[activeSheetName] || [];
+  }, [editableSheets, activeSheetName]);
+
+  // Max columns count in current sheet
+  const maxCols = useMemo(() => {
+    let max = 6;
+    currentSheetRows.forEach(row => {
+      if (row.length > max) max = row.length;
+    });
+    return Math.max(max, 8);
+  }, [currentSheetRows]);
 
   return (
-    <div className="space-y-6 select-none animate-in fade-in duration-200">
-      {/* 1. TOP HEADER: Title, Project Selector, Quick Stats */}
-      <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5 relative overflow-hidden print:hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-6 pb-20 select-none">
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx, .xls"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#29384C]">
+      {/* 1. TOP HEADER & PROJECT SELECTOR (AISLAMIENTO ESTRICTO POR OBRA) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600/30 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600/30 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] shrink-0">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
@@ -489,36 +535,27 @@ export function CertificatesFullView({
                   Certificados de Contratistas
                 </h1>
                 <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                  Quincenales
+                  Planillas Excel
                 </span>
               </div>
               <p className="text-xs text-[#94A3B8]">
-                Planilla interactiva de liquidación quincenal por operario con exportación, impresión y constancia histórica
+                Gestión quincenal por archivo Excel de cada contratista, modificación en vivo y guardado en PDF
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleOpenAddContractor}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#081321] hover:bg-[#17263B] text-cyan-300 font-bold text-xs border border-cyan-500/40 transition-all active:scale-95 shadow-sm"
-            >
-              <Plus className="w-4 h-4 text-cyan-400" />
-              <span>+ Nuevo Contratista</span>
-            </button>
-          </div>
         </div>
 
-        {/* PROJECT SELECTOR (AISLAMIENTO ESTRICTO POR OBRA) */}
+        {/* PROJECT SELECTOR BAR */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#081321]/80 p-3 rounded-2xl border border-[#29384C]">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             <span className="text-[11px] font-black uppercase text-[#94A3B8] flex items-center gap-1.5 shrink-0 px-1">
               <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-              Obra:
+              Obra Activa:
             </span>
             {projects.map(p => {
               const isSelected = p.id === activeProject?.id;
-              const certCount = (p.contractorCertificates || []).length;
+              const pContractors = getProjectContractors(p);
+              const withExcelCount = pContractors.filter(c => c.excelFile).length;
               return (
                 <button
                   key={p.id}
@@ -533,612 +570,720 @@ export function CertificatesFullView({
                   }`}
                 >
                   <span>🏗️ {p.name}</span>
-                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-[#17263B] text-slate-400'}`}>
-                    {certCount} cert.
+                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    isSelected ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-[#17263B] text-slate-400'
+                  }`}>
+                    {withExcelCount}/{pContractors.length} Excel
                   </span>
                 </button>
               );
             })}
           </div>
 
-          <div className="text-xs text-[#94A3B8] flex items-center gap-2">
+          <div className="text-[11px] text-[#94A3B8] flex items-center gap-2">
             <span>Admin:</span>
-            <span className="font-mono text-cyan-300 font-bold bg-[#101D30] px-2 py-0.5 rounded border border-[#29384C]">
+            <span className="font-mono font-bold text-cyan-300 bg-cyan-950/40 px-2 py-0.5 rounded-lg border border-cyan-800/40">
               veniergn@gmail.com
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2. MAIN 2-COLUMN LAYOUT: CONTRACTORS LIST (4 COLS) + INTERACTIVE EXCEL SHEET (8 COLS) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN: CONTRACTORS LIST (4 COLS) */}
-        <div className="lg:col-span-4 bg-[#101D30] border border-[#29384C] rounded-3xl p-4 sm:p-5 shadow-xl space-y-4 print:hidden">
-          <div className="flex items-center justify-between pb-2 border-b border-[#29384C]">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-black text-white">Contratistas en Obra</h2>
-            </div>
-            <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded-lg">
-              {contractors.length}
-            </span>
-          </div>
-
-          {/* Search contractor */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={contractorSearch}
-              onChange={(e) => setContractorSearch(e.target.value)}
-              placeholder="Buscar por nombre o rubro..."
-              className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
-            />
-          </div>
-
-          {/* Contractors Listing Cards */}
-          <div className="space-y-2 max-h-[560px] overflow-y-auto no-scrollbar pt-1">
-            {filteredContractors.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs italic">
-                No se encontraron contratistas.
+      {/* 2. MAIN SPLIT VIEW: CONTRACTORS LIST (LEFT) & CONTRACTOR EXCEL CONTROLS (RIGHT) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* LEFT COLUMN: LIST OF CONTRACTORS (4 COLS) */}
+        <div className="lg:col-span-4 space-y-3">
+          <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-4 space-y-3 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-xs font-black uppercase text-white tracking-wider">
+                  Contratistas ({contractors.length})
+                </h3>
               </div>
-            ) : (
-              filteredContractors.map(c => {
-                const isSelected = c.id === selectedContractor?.id;
-                const cCerts = projectCertificates.filter(cert => cert.contractorId === c.id);
-                const totalPaid = cCerts.reduce((acc, curr) => acc + (curr.totalPayable || 0), 0);
+              <button
+                onClick={() => setIsNewContractorModalOpen(true)}
+                className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center gap-1 transition-all active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Agregar</span>
+              </button>
+            </div>
 
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => setSelectedContractorId(c.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer relative group ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-emerald-500/20 to-[#101D30] border-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/40'
-                        : 'bg-[#081321] border-[#29384C] hover:border-slate-500 hover:bg-[#17263B]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
+            {/* Contractor search */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={contractorSearch}
+                onChange={(e) => setContractorSearch(e.target.value)}
+                placeholder="Buscar contratista o rubro..."
+                className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
+              />
+            </div>
+
+            {/* List */}
+            <div className="space-y-1.5 max-h-[560px] overflow-y-auto no-scrollbar pt-1">
+              {filteredContractors.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400">
+                  No se encontraron contratistas en esta obra.
+                </div>
+              ) : (
+                filteredContractors.map(c => {
+                  const isSelected = c.id === selectedContractor?.id;
+                  const hasExcel = Boolean(c.excelFile);
+
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedContractorId(c.id)}
+                      className={`w-full text-left p-3 rounded-2xl transition-all flex items-center justify-between gap-3 border ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/10 border-emerald-400/60 shadow-lg shadow-emerald-500/10'
+                          : 'bg-[#081321]/60 hover:bg-[#17263B] border-[#29384C]/60 text-slate-300'
+                      }`}
+                    >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-slate-950 text-xs shrink-0 shadow-sm"
                           style={{ backgroundColor: c.color || '#00f2fe' }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-950 font-black text-xs shrink-0 shadow-sm"
                         >
                           {c.initials || c.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold leading-tight truncate ${isSelected ? 'text-white font-black' : 'text-slate-200'}`}>
-                            {c.name}
-                          </p>
-                          <p className="text-[11px] text-emerald-400 font-medium truncate mt-0.5">
-                            {c.role || 'Contratista'}
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-white truncate">{c.name}</h4>
+                          <p className="text-[10px] text-[#94A3B8] truncate">{c.role}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {hasExcel ? (
+                              <span className="text-[9px] font-mono font-bold text-emerald-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                Excel listo
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-mono text-slate-500">
+                                Sin archivo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isSelected ? 'text-emerald-400 translate-x-0.5' : 'text-slate-600'}`} />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: MAIN CONTRACTOR CARD & TWO ACTION BUTTONS (8 COLS) */}
+        <div className="lg:col-span-8 space-y-4">
+          {selectedContractor ? (
+            <div className="space-y-4">
+              {/* CONTRACTOR EXECUTIVE CARD */}
+              <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-5 shadow-xl space-y-5">
+                {/* Contractor info top */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#29384C]">
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      style={{ backgroundColor: selectedContractor.color || '#00f2fe' }}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-950 font-black text-base shadow-md shrink-0"
+                    >
+                      {selectedContractor.initials || selectedContractor.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                          Contratista de {activeProject?.name}
+                        </span>
+                      </div>
+                      <h2 className="text-lg sm:text-xl font-black text-white">
+                        {selectedContractor.name}
+                      </h2>
+                      <p className="text-xs text-[#94A3B8]">
+                        Rubro: <span className="text-white font-bold">{selectedContractor.role}</span>
+                        {selectedContractor.dniCuit && <span> • DNI/CUIT: {selectedContractor.dniCuit}</span>}
+                        {selectedContractor.phone && <span> • Tel: {selectedContractor.phone}</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">Director Técnico</span>
+                    <span className="text-xs font-bold text-white">{directorName}</span>
+                  </div>
+                </div>
+
+                {/* ========================================================= */}
+                {/* LOS DOS BOTONES PRINCIPALES PEDIDOS POR EL USUARIO */}
+                {/* ========================================================= */}
+                <div className="bg-[#081321] border border-[#29384C] p-5 rounded-3xl space-y-4">
+                  <div>
+                    <h3 className="text-xs font-black uppercase text-emerald-300 tracking-wider flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                      <span>Gestión de Certificado por Archivo Excel</span>
+                    </h3>
+                    <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                      Sube tu propio archivo Excel preparado para este contratista, ábrelo en la app para modificar los avances de la quincena y genera el PDF firmado.
+                    </p>
+                  </div>
+
+                  {/* GRID DE LOS DOS BOTONES */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* BOTÓN 1: CARGAR / SUBIR ARCHIVO EXCEL */}
+                    <div className="bg-[#101D30] border border-blue-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-md hover:border-blue-400 transition-all">
+                      <div>
+                        <div className="flex items-center gap-2 text-blue-400 mb-1">
+                          <UploadCloud className="w-4 h-4" />
+                          <span className="text-xs font-bold uppercase tracking-wider">Paso 1: Archivo Base</span>
+                        </div>
+                        <h4 className="text-sm font-black text-white">
+                          {selectedContractor.excelFile ? 'Actualizar / Reemplazar Excel' : 'Cargar Archivo Excel'}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          {selectedContractor.excelFile
+                            ? ('Archivo activo: "' + selectedContractor.excelFile.fileName + '"')
+                            : 'Sube el archivo Excel (.xlsx / .xls) que ya tienes preparado para este contratista.'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleTriggerUpload}
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                      >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{selectedContractor.excelFile ? 'Cambiar Archivo Excel' : 'Cargar Archivo Excel (.xlsx)'}</span>
+                      </button>
+                    </div>
+
+                    {/* BOTÓN 2: ABRIR Y MODIFICAR ARCHIVO EXCEL */}
+                    <div className="bg-[#101D30] border border-emerald-500/40 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-md hover:border-emerald-400 transition-all">
+                      <div>
+                        <div className="flex items-center gap-2 text-emerald-400 mb-1">
+                          <FileSpreadsheet className="w-4 h-4" />
+                          <span className="text-xs font-bold uppercase tracking-wider">Paso 2: Liquidación Quincenal</span>
+                        </div>
+                        <h4 className="text-sm font-black text-white">
+                          Abrir y Modificar Planilla
+                        </h4>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Abre la planilla interactiva para actualizar avances, guardar los cambios y generar el PDF para pago.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleOpenExcelEditor}
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
+                        <span>Abrir y Modificar Planilla Excel</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ESTADO DEL ARCHIVO EXCEL CARGADO */}
+                  {selectedContractor.excelFile ? (
+                    <div className="p-3.5 rounded-2xl bg-[#101D30]/90 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold text-sm shrink-0">
+                          📊
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-white">
+                              {selectedContractor.excelFile.fileName}
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              Activo
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-[#94A3B8]">
+                            Última modificación: {selectedContractor.excelFile.lastModifiedFormatted || 'Hoy'} por {selectedContractor.excelFile.lastModifiedBy || 'veniergn@gmail.com'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-cyan-300 block font-bold">
-                          {formatARS(totalPaid)}
-                        </span>
-                        <span className="text-[9px] text-[#94A3B8]">
-                          {cCerts.length} cert.
-                        </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleDownloadXlsx}
+                          className="px-3 py-1.5 rounded-xl bg-[#17263B] hover:bg-[#1E324A] text-slate-300 hover:text-white border border-[#29384C] text-[11px] font-bold flex items-center gap-1.5 transition-all"
+                          title="Descargar copia del Excel a tu computadora"
+                        >
+                          <Download className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Descargar .xlsx</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveExcel}
+                          className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all"
+                          title="Quitar archivo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-
-                    {/* Edit / Delete quick buttons */}
-                    <div className="flex items-center justify-between pt-2 mt-2 border-t border-[#29384C]/60 text-[10px]">
-                      <span className="text-slate-400">
-                        {c.phone ? `📱 ${c.phone}` : 'Sin teléfono'}
+                  ) : (
+                    <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                      <span>
+                        Este contratista aún no tiene un archivo Excel subido. Puedes cargarlo ahora con el botón azul o presionar <strong>"Abrir y Modificar Planilla Excel"</strong> para comenzar con una planilla modelo preconfigurada.
                       </span>
-                      <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEditContractor(c);
-                          }}
-                          className="text-cyan-400 hover:text-cyan-300 font-bold"
-                          title="Editar contratista"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteContractor(c.id, c.name);
-                          }}
-                          className="text-slate-500 hover:text-rose-400"
-                          title="Eliminar contratista"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
                     </div>
+                  )}
+                </div>
+
+                {/* HISTORIAL DE CERTIFICADOS / PDFS EMITIDOS */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Historial de Certificados y PDFs Emitidos</span>
+                    </h4>
+                    <span className="text-[10px] text-slate-400">
+                      {(selectedContractor.pdfHistory || []).length} emitidos
+                    </span>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
 
-        {/* RIGHT COLUMN: INTERACTIVE EXCEL-STYLE SHEET (8 COLS) */}
-        <div className="lg:col-span-8 bg-[#101D30] border border-[#29384C] rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5 print:border-none print:shadow-none print:p-0 print:bg-white print:text-black">
-          {/* Header of Certificate: Contractor Info & Quincena Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#29384C] print:border-b-2 print:border-black">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-slate-950 text-base shadow-md shrink-0 print:border print:border-black"
-                style={{ backgroundColor: selectedContractor?.color || '#00f2fe' }}
-              >
-                {selectedContractor?.initials || selectedContractor?.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-black text-white print:text-black">
-                    {selectedContractor?.name || 'Selecciona un contratista'}
-                  </h2>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 print:border-black print:text-black">
-                    {selectedContractor?.role || 'Trabajo General'}
-                  </span>
-                </div>
-                <p className="text-xs text-[#94A3B8] print:text-gray-600">
-                  Obra: <strong className="text-white print:text-black">{activeProject?.name}</strong> • Ubicación: {activeProject?.location}
-                </p>
-              </div>
-            </div>
-
-            {/* Selector de Quincena */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-[#94A3B8] print:text-black mb-0.5">
-                  Período Quincenal:
-                </label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-1.5 text-xs text-white font-bold outline-none print:text-black print:border-black print:bg-white"
-                >
-                  {DEFAULT_PERIODS.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Pill */}
-              <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-[#94A3B8] print:hidden mb-0.5">
-                  Estado:
-                </label>
-                <select
-                  value={certStatus}
-                  onChange={(e) => setCertStatus(e.target.value as any)}
-                  className="bg-[#081321] border border-[#29384C] rounded-xl px-2.5 py-1.5 text-xs text-emerald-300 font-bold outline-none print:hidden"
-                >
-                  <option value="draft">Borrador</option>
-                  <option value="approved">Aprobado</option>
-                  <option value="paid">Pagado</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* INTERACTIVE EXCEL-STYLE SPREADSHEET TABLE */}
-          <div className="bg-[#081321] rounded-2xl border border-[#29384C] overflow-hidden print:border print:border-black print:bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-[#17263B] text-[10px] font-black uppercase text-[#94A3B8] border-b border-[#29384C] print:bg-gray-100 print:text-black print:border-b">
-                    <th className="py-2.5 px-2 w-8 text-center">#</th>
-                    <th className="py-2.5 px-3 min-w-[200px]">Ítem / Tarea / Concepto</th>
-                    <th className="py-2.5 px-2 w-16 text-center">Unidad</th>
-                    <th className="py-2.5 px-2 w-20 text-right">Cant.</th>
-                    <th className="py-2.5 px-2 w-24 text-right">Precio Unit.</th>
-                    <th className="py-2.5 px-2 w-16 text-center">% Ant.</th>
-                    <th className="py-2.5 px-2 w-16 text-center">% Act.</th>
-                    <th className="py-2.5 px-2 w-16 text-center text-cyan-300 print:text-black">% Quin.</th>
-                    <th className="py-2.5 px-3 w-28 text-right text-emerald-300 print:text-black">Monto Quin.</th>
-                    <th className="py-2.5 px-2 w-10 text-center print:hidden"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#29384C]/60 print:divide-gray-300">
-                  {sheetCalculations.computedRows.map((row, idx) => (
-                    <tr key={row.id} className="hover:bg-[#101D30]/60 transition-colors print:hover:bg-white">
-                      <td className="py-2 px-2 text-center text-slate-500 font-mono text-[11px] print:text-black">
-                        {idx + 1}
-                      </td>
-
-                      <td className="py-1.5 px-2">
-                        <input
-                          type="text"
-                          value={row.taskDescription}
-                          onChange={(e) => handleUpdateItem(row.id, 'taskDescription', e.target.value)}
-                          placeholder="Descripción de la tarea o avance..."
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-2.5 py-1 text-xs text-white font-bold outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-1.5 px-1">
-                        <input
-                          type="text"
-                          value={row.unit}
-                          onChange={(e) => handleUpdateItem(row.id, 'unit', e.target.value)}
-                          placeholder="m2"
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-1 py-1 text-xs text-center text-slate-300 outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-1.5 px-1">
-                        <input
-                          type="number"
-                          step="any"
-                          value={row.contractedQuantity || ''}
-                          onChange={(e) => handleUpdateItem(row.id, 'contractedQuantity', e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-1 py-1 text-xs text-right text-white font-mono font-bold outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-1.5 px-1">
-                        <input
-                          type="number"
-                          step="any"
-                          value={row.unitPrice || ''}
-                          onChange={(e) => handleUpdateItem(row.id, 'unitPrice', e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-1 py-1 text-xs text-right text-white font-mono font-bold outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-1.5 px-1">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={row.previousProgressPercent || ''}
-                          onChange={(e) => handleUpdateItem(row.id, 'previousProgressPercent', e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-1 py-1 text-xs text-center text-slate-400 font-mono outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-1.5 px-1">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={row.currentProgressPercent || ''}
-                          onChange={(e) => handleUpdateItem(row.id, 'currentProgressPercent', e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-[#101D30] border border-[#29384C] focus:border-cyan-400 rounded-lg px-1 py-1 text-xs text-center text-cyan-300 font-mono font-bold outline-none print:border-none print:bg-white print:text-black print:p-0"
-                        />
-                      </td>
-
-                      <td className="py-2 px-2 text-center font-mono font-black text-cyan-400 print:text-black">
-                        {row.periodPercent}%
-                      </td>
-
-                      <td className="py-2 px-3 text-right font-mono font-black text-emerald-400 print:text-black">
-                        {formatARS(row.periodAmount)}
-                      </td>
-
-                      <td className="py-2 px-2 text-center print:hidden">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(row.id)}
-                          className="text-slate-500 hover:text-rose-400 font-bold p-1 text-sm"
-                          title="Eliminar fila"
-                        >
-                          ×
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Table bottom controls */}
-            <div className="flex items-center justify-between p-2.5 bg-[#17263B]/40 border-t border-[#29384C] print:hidden">
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-xs font-bold flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Agregar Fila</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResetSheet}
-                className="px-3 py-1 rounded-xl text-slate-400 hover:text-white text-xs font-medium flex items-center gap-1"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Limpiar Planilla</span>
-              </button>
-            </div>
-          </div>
-
-          {/* DEDUCTIONS & TOTALS SUMMARY CARD */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
-            <div className="sm:col-span-7 space-y-2">
-              <label className="block text-[11px] font-bold text-slate-300 print:text-black">
-                Observaciones del Certificado (opcional):
-              </label>
-              <textarea
-                rows={3}
-                value={certNotes}
-                onChange={(e) => setCertNotes(e.target.value)}
-                placeholder="Detalle de trabajos adicionales, deducción de materiales o condiciones de pago..."
-                className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-2xl p-3 text-xs text-white outline-none resize-none print:border print:border-black print:text-black print:bg-white"
-              />
-
-              {/* AUDIT TRAIL RECORD */}
-              <div className="text-[11px] text-[#94A3B8] font-mono bg-[#081321] p-2.5 rounded-xl border border-[#29384C] print:border-none print:text-black">
-                <span className="text-slate-400 font-bold">Última modificación: </span>
-                <span className="text-cyan-300 print:text-black">
-                  {activeExistingCert?.lastModifiedFormatted || 'Pendiente de guardado'}
-                </span>
-                <span className="text-slate-400 font-bold"> por </span>
-                <span className="text-white font-bold print:text-black">veniergn@gmail.com</span>
-              </div>
-            </div>
-
-            {/* TOTALS BOX */}
-            <div className="sm:col-span-5 bg-[#081321] p-4 rounded-2xl border border-[#29384C] space-y-2.5 print:border print:border-black print:bg-white">
-              <div className="flex items-center justify-between text-xs text-slate-300 print:text-black">
-                <span>Subtotal Trabajos Quincena:</span>
-                <span className="font-mono font-bold text-white print:text-black">
-                  {formatARS(sheetCalculations.subtotalPeriod)}
-                </span>
-              </div>
-
-              {/* Adelantos Entregados */}
-              <div className="flex items-center justify-between text-xs gap-2">
-                <span className="text-rose-400 font-medium">(-) Adelantos entregados:</span>
-                <div className="w-28">
-                  <input
-                    type="number"
-                    min="0"
-                    value={advancePayment || ''}
-                    onChange={(e) => setAdvancePayment(Number(e.target.value) || 0)}
-                    placeholder="$ 0"
-                    className="w-full bg-[#101D30] border border-[#29384C] focus:border-rose-400 rounded-lg px-2 py-0.5 text-xs text-right text-rose-300 font-mono font-bold outline-none print:border print:border-black print:text-black print:bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Fondo de Reparo */}
-              <div className="flex items-center justify-between text-xs gap-2">
-                <span className="text-amber-400 font-medium">(-) Fondo de reparo (%):</span>
-                <div className="w-28 flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={retentionPercent || ''}
-                    onChange={(e) => setRetentionPercent(Number(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-full bg-[#101D30] border border-[#29384C] focus:border-amber-400 rounded-lg px-2 py-0.5 text-xs text-right text-amber-300 font-mono font-bold outline-none print:border print:border-black print:text-black print:bg-white"
-                  />
-                  <span className="text-amber-400 text-xs">%</span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-[#29384C] pt-2 print:border-black">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs font-black uppercase text-emerald-400 print:text-black tracking-wider">
-                    Total Neto a Pagar:
-                  </span>
-                  <span className="text-lg sm:text-xl font-black font-mono text-emerald-400 print:text-black drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                    {formatARS(sheetCalculations.totalPayable)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SIGNATURE BLOCKS FOR PRINTING ONLY */}
-          <div className="hidden print:grid grid-cols-2 gap-12 pt-16 mt-8 border-t-2 border-black">
-            <div className="text-center">
-              <div className="border-t border-black w-48 mx-auto mb-1"></div>
-              <p className="font-bold text-xs">{selectedContractor?.name}</p>
-              <p className="text-[10px] text-gray-600">Contratista / Operario</p>
-            </div>
-            <div className="text-center">
-              <div className="border-t border-black w-48 mx-auto mb-1"></div>
-              <p className="font-bold text-xs">Msc. Arq. Venier Gastón</p>
-              <p className="text-[10px] text-gray-600">Director de Obra • veniergn@gmail.com</p>
-            </div>
-          </div>
-
-          {/* BOTTOM ACTIONS BAR: GUARDAR, IMPRIMIR, WHATSAPP, HISTORIAL */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#29384C] print:hidden">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePrintCertificate}
-                className="px-3.5 py-2 rounded-xl bg-[#081321] hover:bg-[#17263B] text-slate-200 border border-[#29384C] text-xs font-bold flex items-center gap-1.5 transition-colors"
-                title="Imprimir certificado oficial o guardar como PDF"
-              >
-                <Printer className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Imprimir / PDF</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSendContractorWhatsApp}
-                className="px-3.5 py-2 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                title="Enviar detalle por WhatsApp al contratista"
-              >
-                <Send className="w-3.5 h-3.5 text-emerald-400" />
-                <span>WhatsApp Contratista</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {activeExistingCert && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('¿Eliminar este certificado del historial?')) {
-                      onDeleteCertificate(activeProject.id, activeExistingCert.id);
-                    }
-                  }}
-                  className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Eliminar</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSaveCertificateSubmit}
-                className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center gap-2"
-              >
-                <Check className="w-4 h-4 stroke-[3]" />
-                <span>Guardar Certificado Quincenal</span>
-              </button>
-            </div>
-          </div>
-
-          {/* PREVIOUS CERTIFICATES HISTORY FOR THIS CONTRACTOR */}
-          {contractorHistoryCertificates.length > 0 && (
-            <div className="pt-4 border-t border-[#29384C] space-y-2.5 print:hidden">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Receipt className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Historial de Certificados Anteriores ({contractorHistoryCertificates.length})</span>
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {contractorHistoryCertificates.map(c => {
-                  const isCurrent = c.period === selectedPeriod;
-                  return (
-                    <div
-                      key={c.id}
-                      onClick={() => setSelectedPeriod(c.period)}
-                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition-colors ${
-                        isCurrent
-                          ? 'bg-emerald-500/15 border-emerald-400/60 text-white font-bold'
-                          : 'bg-[#081321] border-[#29384C] text-slate-300 hover:bg-[#17263B]'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold truncate">{c.period}</p>
-                        <p className="text-[10px] text-[#94A3B8]">{c.lastModifiedFormatted || c.lastModifiedAt?.slice(0, 10)}</p>
-                      </div>
-                      <span className="font-mono font-black text-emerald-400 ml-2">
-                        {formatARS(c.totalPayable)}
-                      </span>
+                  {(selectedContractor.pdfHistory || []).length === 0 ? (
+                    <div className="p-4 rounded-2xl bg-[#081321] border border-[#29384C] text-center text-xs text-slate-500">
+                      Aún no se han emitido PDFs para este contratista. Al abrir la planilla y presionar "Generar / Guardar PDF", cada certificado quedará registrado aquí.
                     </div>
-                  );
-                })}
+                  ) : (
+                    <div className="space-y-2">
+                      {(selectedContractor.pdfHistory || []).map(snap => (
+                        <div
+                          key={snap.id}
+                          className="p-3 rounded-2xl bg-[#081321] border border-[#29384C] flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div className="min-w-0">
+                              <span className="font-bold text-white truncate block">{snap.title}</span>
+                              <span className="text-[10px] text-slate-400">
+                                {snap.period || 'Quincena'} • {snap.generatedFormatted} por {snap.generatedBy}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleOpenExcelEditor();
+                              setTimeout(() => window.print(), 400);
+                            }}
+                            className="px-2.5 py-1 rounded-xl bg-[#101D30] hover:bg-[#17263B] text-cyan-300 border border-cyan-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0"
+                          >
+                            <Printer className="w-3 h-3" />
+                            <span>Reimprimir</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+          ) : (
+            <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-12 text-center text-slate-400 space-y-3">
+              <Users className="w-10 h-10 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">Selecciona un contratista</h3>
+              <p className="text-xs max-w-sm mx-auto">
+                Elige un operario de la columna izquierda para cargar su archivo Excel o abrir su planilla de certificación.
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 3. MODAL DE CREACIÓN / EDICIÓN DE CONTRATISTA */}
-      {isContractorModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-[#101D30] border border-[#29384C] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#29384C]">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-black text-white">
-                  {editingContractorId ? 'Modificar Contratista' : 'Nuevo Contratista para la Obra'}
-                </h3>
-              </div>
+      {/* ========================================================================= */}
+      {/* 3. VISOR / EDITOR INTERACTIVO DE EXCEL (PANTALLA COMPLETA / MODAL) */}
+      {/* ========================================================================= */}
+      {isEditorOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col animate-in fade-in duration-200">
+          {/* Top Bar of Excel Editor */}
+          <div className="bg-[#081321] border-b border-[#29384C] px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setIsContractorModalOpen(false)}
-                className="w-8 h-8 rounded-xl bg-[#081321] text-slate-400 hover:text-white flex items-center justify-center border border-[#29384C]"
+                onClick={() => {
+                  if (isDirty) {
+                    if (confirm('Tienes cambios sin guardar. ¿Deseas cerrar el visor de todas formas?')) {
+                      setIsEditorOpen(false);
+                    }
+                  } else {
+                    setIsEditorOpen(false);
+                  }
+                }}
+                className="p-2 rounded-xl bg-[#101D30] hover:bg-[#17263B] text-slate-300 hover:text-white border border-[#29384C] transition-all"
+                title="Cerrar visor de Excel"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold shrink-0">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-white">
+                      {selectedContractor?.excelFile?.fileName || 'Planilla_Certificado.xlsx'}
+                    </h3>
+                    {isDirty && (
+                      <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        Modificaciones sin guardar
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#94A3B8]">
+                    Contratista: <span className="text-white font-bold">{selectedContractor?.name}</span> ({selectedContractor?.role}) • Obra: <span className="text-emerald-400 font-bold">{activeProject?.name}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ACTION BUTTONS IN TOP BAR */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAddRow}
+                className="px-3 py-2 rounded-xl bg-[#101D30] hover:bg-[#17263B] text-slate-300 hover:text-white border border-[#29384C] text-xs font-bold flex items-center gap-1.5 transition-all"
+                title="Agregar nueva fila al final"
+              >
+                <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                <span>+ Fila</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadXlsx}
+                className="px-3 py-2 rounded-xl bg-[#101D30] hover:bg-[#17263B] text-slate-300 hover:text-white border border-[#29384C] text-xs font-bold flex items-center gap-1.5 transition-all"
+                title="Descargar archivo .xlsx modificado"
+              >
+                <Download className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden sm:inline">Descargar .xlsx</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportAndSavePdf}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+                title="Generar e imprimir el PDF formal con firmas"
+              >
+                <Printer className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Generar / Guardar PDF</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSaveExcelChanges}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50"
+                title="Guardar modificaciones en la nube para la próxima quincena"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsEditorOpen(false)}
+                className="p-2 rounded-xl bg-[#101D30] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-[#29384C] transition-all ml-1"
+                title="Cerrar"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+          </div>
 
-            <form onSubmit={handleSaveContractorProfile} className="space-y-3.5">
+          {/* Sheet tabs bar if multiple sheets exist */}
+          {Object.keys(editableSheets).length > 1 && (
+            <div className="bg-[#0b1626] border-b border-[#29384C] px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              <span className="text-[10px] font-bold uppercase text-slate-500 px-1">Hojas:</span>
+              {Object.keys(editableSheets).map(sheetName => (
+                <button
+                  key={sheetName}
+                  onClick={() => setActiveSheetName(sheetName)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    activeSheetName === sheetName
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-[#101D30]'
+                  }`}
+                >
+                  {sheetName}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Excel Grid Viewer and In-Place Editor */}
+          <div className="flex-1 overflow-auto bg-[#050C16] p-4 font-mono text-xs select-text">
+            <div className="inline-block min-w-full bg-[#081321] rounded-2xl border border-[#29384C] shadow-2xl overflow-hidden">
+              <table className="border-collapse w-full">
+                {/* Column letters row */}
+                <thead>
+                  <tr className="bg-[#0b1626] border-b border-[#29384C]">
+                    <th className="w-12 px-2 py-2 text-center text-[10px] font-black text-slate-500 border-r border-[#29384C] bg-[#081321] sticky left-0 z-10">
+                      #
+                    </th>
+                    {Array.from({ length: maxCols }).map((_, colIdx) => (
+                      <th
+                        key={colIdx}
+                        className="px-3 py-2 text-center text-[11px] font-bold text-slate-400 border-r border-[#29384C]/60 min-w-[130px]"
+                      >
+                        {getColumnLetter(colIdx)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                {/* Rows and editable cells */}
+                <tbody>
+                  {currentSheetRows.map((row, rowIdx) => {
+                    const isHeaderRow = rowIdx === 0 || rowIdx === 4;
+                    const isTotalRow = String(row[1] || '').includes('TOTAL') || String(row[0] || '').includes('TOTAL');
+
+                    return (
+                      <tr
+                        key={rowIdx}
+                        className={`border-b border-[#29384C]/40 transition-colors ${
+                          isHeaderRow
+                            ? 'bg-[#101D30]/90 font-bold'
+                            : isTotalRow
+                            ? 'bg-emerald-950/25 font-bold'
+                            : rowIdx % 2 === 0
+                            ? 'bg-[#081321]/60'
+                            : 'bg-[#0D1826]/60'
+                        }`}
+                      >
+                        {/* Row number */}
+                        <td className="w-12 px-2 py-1.5 text-center text-[10px] font-bold text-slate-500 border-r border-[#29384C] bg-[#0b1626] sticky left-0 z-10 select-none">
+                          {rowIdx + 1}
+                        </td>
+
+                        {/* Cells */}
+                        {Array.from({ length: maxCols }).map((_, colIdx) => {
+                          const val = row[colIdx] !== null && row[colIdx] !== undefined ? String(row[colIdx]) : '';
+                          const isNumeric = !isNaN(Number(val)) && val.trim() !== '';
+
+                          return (
+                            <td
+                              key={colIdx}
+                              className="border-r border-[#29384C]/40 p-0 hover:bg-emerald-500/10 focus-within:bg-cyan-500/15 focus-within:ring-1 focus-within:ring-cyan-400 transition-all"
+                            >
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={(e) => handleCellChange(rowIdx, colIdx, e.target.value)}
+                                className={`w-full h-full px-2.5 py-1.5 bg-transparent text-xs outline-none transition-colors ${
+                                  isHeaderRow
+                                    ? 'text-cyan-300 font-bold'
+                                    : isTotalRow
+                                    ? 'text-emerald-300 font-black'
+                                    : isNumeric
+                                    ? 'text-right text-emerald-200'
+                                    : 'text-left text-slate-200'
+                                }`}
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Quick helper tip */}
+            <div className="mt-3 text-[11px] text-slate-500 flex items-center justify-between px-2">
+              <span>💡 Haz clic en cualquier celda para modificarla. Presiona "Guardar Cambios" para salvar el archivo y tenerlo listo la próxima quincena.</span>
+              <span>Total de filas: {currentSheetRows.length}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. MODAL: AGREGAR NUEVO CONTRATISTA */}
+      {/* ========================================================================= */}
+      {isNewContractorModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#101D30] border border-[#29384C] w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#29384C] pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-base font-black text-white">Nuevo Contratista</h3>
+              </div>
+              <button
+                onClick={() => setIsNewContractorModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateContractor} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                  Nombre y Apellido <span className="text-rose-400">*</span>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Nombre y Apellido *
                 </label>
                 <input
-                  type="text"
                   required
-                  value={contractorNameInput}
-                  onChange={(e) => setContractorNameInput(e.target.value)}
-                  placeholder="Ej: Marcelo Gómez"
-                  className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none"
+                  type="text"
+                  value={newContractorName}
+                  onChange={(e) => setNewContractorName(e.target.value)}
+                  placeholder="Ej: Marcelo Fernández"
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                  Trabajo / Rubro que realiza <span className="text-rose-400">*</span>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Trabajo / Rubro que realiza *
                 </label>
                 <input
-                  type="text"
                   required
-                  value={contractorRoleInput}
-                  onChange={(e) => setContractorRoleInput(e.target.value)}
-                  placeholder="Ej: Albañilería / Plomería / Pintura"
-                  className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none"
+                  type="text"
+                  value={newContractorRole}
+                  onChange={(e) => setNewContractorRole(e.target.value)}
+                  placeholder="Ej: Yesería, Pintura, Herrería, Albañilería"
+                  className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                    Teléfono / WhatsApp:
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Teléfono
                   </label>
                   <input
                     type="text"
-                    value={contractorPhoneInput}
-                    onChange={(e) => setContractorPhoneInput(e.target.value)}
-                    placeholder="Ej: 2615123456"
+                    value={newContractorPhone}
+                    onChange={(e) => setNewContractorPhone(e.target.value)}
+                    placeholder="Ej: +54 9 261 555-1234"
                     className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                    DNI / CUIT (opcional):
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    DNI / CUIT
                   </label>
                   <input
                     type="text"
-                    value={contractorDniInput}
-                    onChange={(e) => setContractorDniInput(e.target.value)}
-                    placeholder="Ej: 20-33445566-7"
+                    value={newContractorDni}
+                    onChange={(e) => setNewContractorDni(e.target.value)}
+                    placeholder="Ej: 20-33445566-9"
                     className="w-full bg-[#081321] border border-[#29384C] focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-[#29384C]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#29384C]">
                 <button
                   type="button"
-                  onClick={() => setIsContractorModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-[#081321] hover:bg-[#17263B] text-slate-300 font-bold text-xs border border-[#29384C]"
+                  onClick={() => setIsNewContractorModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-[#081321] text-slate-400 hover:text-white text-xs font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-md transition-all active:scale-95"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
                 >
-                  {editingContractorId ? 'Guardar Cambios' : 'Crear Contratista'}
+                  Guardar Contratista
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 5. VISTA DE IMPRESIÓN EXCLUSIVA (PRINT-ONLY) PARA GENERAR EL PDF FORMAL */}
+      {/* ========================================================================= */}
+      <div className="hidden print:block fixed inset-0 bg-white text-black p-8 z-[99999] overflow-visible">
+        {/* MEMBRETE EJECUTIVO */}
+        <div className="border-b-2 border-black pb-4 mb-4 flex justify-between items-start">
+          <div>
+            <h1 className="text-lg font-black uppercase tracking-wider text-black">
+              CERTIFICADO DE AVANCE Y LIQUIDACIÓN DE CONTRATISTA
+            </h1>
+            <p className="text-xs text-gray-800 font-bold mt-1">
+              OBRA: <span className="uppercase">{activeProject?.name}</span> ({activeProject?.location || 'Mendoza'})
+            </p>
+            <p className="text-xs text-gray-700">
+              CONTRATISTA: <span className="font-bold text-black">{selectedContractor?.name}</span> • ESPECIALIDAD: <span className="font-bold text-black">{selectedContractor?.role}</span>
+            </p>
+            {selectedContractor?.dniCuit && (
+              <p className="text-[11px] text-gray-600">DNI/CUIT: {selectedContractor.dniCuit}</p>
+            )}
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-black text-black">{directorName}</p>
+            <p className="text-[11px] text-gray-700 font-semibold">Dirección Técnica de Obras</p>
+            <p className="text-[10px] text-gray-500 mt-1">
+              Fecha: {new Date().toLocaleDateString('es-AR')} {new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
+            </p>
+            <p className="text-[10px] text-gray-500">
+              Archivo Fuente: {selectedContractor?.excelFile?.fileName || 'Planilla_Excel.xlsx'}
+            </p>
+          </div>
+        </div>
+
+        {/* TABLA FORMAL DE CELDAS EXCEL */}
+        <table className="w-full border-collapse border border-black text-[10px] my-3">
+          <tbody>
+            {currentSheetRows.map((row, rIdx) => {
+              const isHeader = rIdx === 0 || rIdx === 4;
+              const isTotal = String(row[1] || '').includes('TOTAL') || String(row[0] || '').includes('TOTAL');
+
+              return (
+                <tr
+                  key={rIdx}
+                  className={`${
+                    isHeader
+                      ? 'bg-gray-200 font-black'
+                      : isTotal
+                      ? 'bg-gray-100 font-black border-t-2 border-black'
+                      : ''
+                  }`}
+                >
+                  {row.slice(0, maxCols).map((cell, cIdx) => (
+                    <td
+                      key={cIdx}
+                      className="border border-gray-400 px-2 py-1 text-black"
+                    >
+                      {cell !== null && cell !== undefined ? String(cell) : ''}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* BLOQUE DE FIRMAS FORMALES */}
+        <div className="mt-16 pt-6 flex justify-around items-end">
+          <div className="text-center w-64 border-t border-black pt-2">
+            <p className="text-xs font-bold text-black">{selectedContractor?.name}</p>
+            <p className="text-[10px] text-gray-600">Firma del Contratista / Operario</p>
+          </div>
+          <div className="text-center w-64 border-t border-black pt-2">
+            <p className="text-xs font-bold text-black">{directorName}</p>
+            <p className="text-[10px] text-gray-600">Dirección Técnica y Certificaciones</p>
+          </div>
+        </div>
+
+        {/* PIE DE PÁGINA */}
+        <div className="mt-8 text-center text-[9px] text-gray-500 border-t border-gray-300 pt-2">
+          Documento emitido y respaldado bajo el usuario veniergn@gmail.com • Control de Avance de Obras
+        </div>
+      </div>
     </div>
   );
 }

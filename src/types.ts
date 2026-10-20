@@ -141,6 +141,29 @@ export interface ProjectCalendarEvent {
   updatedAt?: string; // Timestamp ISO para sincronización multi-dispositivo determinista
 }
 
+export interface ContractorExcelFile {
+  fileName: string;
+  fileSize?: number;
+  uploadedAt: string; // ISO timestamp
+  lastModifiedAt?: string; // ISO timestamp
+  lastModifiedFormatted?: string; // "20/10/2026, 14:15 hs"
+  lastModifiedBy?: string; // "veniergn@gmail.com"
+  base64Data?: string; // Raw .xlsx base64 string
+  sheetsData?: { [sheetName: string]: (string | number | null)[][] }; // 2D matrix of cells
+  activeSheetName?: string;
+  notes?: string;
+}
+
+export interface ContractorPdfSnapshot {
+  id: string;
+  title: string;
+  period?: string;
+  generatedAt: string;
+  generatedFormatted: string;
+  generatedBy: string; // "veniergn@gmail.com"
+  notes?: string;
+}
+
 export interface ContractorProfile {
   id: string;
   name: string;
@@ -148,6 +171,10 @@ export interface ContractorProfile {
   avatarUrl?: string;
   color: string;
   initials: string;
+  phone?: string;
+  dniCuit?: string;
+  excelFile?: ContractorExcelFile; // Archivo Excel cargado específicamente para este contratista
+  pdfHistory?: ContractorPdfSnapshot[]; // Registro histórico de certificados/PDFs emitidos
 }
 
 export type ProjectManagerTask = ProjectCalendarEvent;
