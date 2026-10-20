@@ -164,6 +164,86 @@ export interface SavedWorkReport {
   data: any; // snapshot completo de agustinData o andesData
 }
 
+
+// ==========================================
+// MÓDULO 1: GESTIÓN DE MATERIALES POR OBRA
+// ==========================================
+export type MaterialOrderStatus = 'pending' | 'in_transit' | 'received_complete' | 'received_incomplete';
+
+export interface MaterialOrderItem {
+  id: string;
+  name: string;
+  quantity: string | number;
+  unit?: string; // bolsas, m3, barras, un, kg, rollos, etc.
+  notes?: string;
+}
+
+export interface MaterialOrderAttachment {
+  id: string;
+  name: string;
+  type: 'image' | 'pdf';
+  url: string; // Base64 dataUrl or public URL
+  size?: number;
+}
+
+export interface MaterialOrder {
+  id: string;
+  projectId: string; // Aislamiento estricto por obra
+  orderNumber?: number; // ej: #001
+  title?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  timestamp: string; // ISO timestamp
+  createdAtFormatted: string; // "20/10/2026, 12:45 hs"
+  requestedBy?: string; // Capataz, Encargado, Director
+  supplier?: string; // Corralón / Proveedor
+  items: MaterialOrderItem[];
+  rawWhatsAppText?: string; // Texto original si provino de WhatsApp
+  attachments?: MaterialOrderAttachment[]; // Imágenes o PDFs adjuntos
+  status: MaterialOrderStatus;
+  receivedNotes?: string; // Detalle específico de qué faltó si llegó incompleto
+  receivedAt?: string;
+  notes?: string;
+  updatedAt?: string;
+  updatedBy?: string; // "veniergn@gmail.com"
+}
+
+// ==========================================
+// MÓDULO 2: CERTIFICADOS DE CONTRATISTAS
+// ==========================================
+export interface ContractorPaymentItem {
+  id: string;
+  taskDescription: string; // Rubro / Tarea / Concepto certificado
+  unit: string; // m2, ml, un, gl, bocas, kg
+  contractedQuantity: number; // Cantidad total contratada
+  unitPrice: number; // Precio unitario ($)
+  previousProgressPercent: number; // % avance anterior
+  currentProgressPercent: number; // % avance actual acumulado
+}
+
+export interface ContractorCertificate {
+  id: string;
+  projectId: string; // Aislamiento estricto por obra
+  contractorId: string; // ID del contratista
+  contractorName: string; // Nombre y apellido
+  contractorRole: string; // Trabajo / Especialidad / Rubro
+  contractorDniCuit?: string;
+  contractorPhone?: string;
+  period: string; // ej: "1ra Quincena Octubre 2026"
+  startDate?: string;
+  endDate?: string;
+  items: ContractorPaymentItem[];
+  advancePayment?: number; // Adelantos entregados ($)
+  retentionPercent?: number; // Fondo de reparo (% ej: 5%)
+  notes?: string;
+  subtotalPeriod: number; // Suma montos de la quincena
+  totalPayable: number; // Monto neto final a pagar
+  status: 'draft' | 'approved' | 'paid';
+  lastModifiedAt: string; // ISO timestamp
+  lastModifiedFormatted: string; // "20/10/2026, 12:45 hs"
+  lastModifiedBy: string; // "veniergn@gmail.com"
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -182,6 +262,8 @@ export interface Project {
   milestones?: Milestone[];
   calendarEvents?: ProjectCalendarEvent[]; // Tareas, eventos y alarmas independientes por obra
   contractors?: ContractorProfile[]; // Cuadrillas y responsables técnicos personalizados con fotos
+  materialOrders?: MaterialOrder[]; // Módulo 1: Gestión de pedidos de materiales por obra
+  contractorCertificates?: ContractorCertificate[]; // Módulo 2: Certificados quincenales de contratistas
   savedReports?: SavedWorkReport[]; // Historial de informes anteriores guardados con fecha
   monthlyReportData?: {
     template?: 'parque_agustin' | 'parque_andes' | string;
@@ -247,7 +329,7 @@ export interface LocalColors {
   isBoldText?: boolean;
 }
 
-export type ViewMode = 'dashboard' | 'units' | 'checklist' | 'tasks' | 'calendar' | 'gantt' | 'contractors' | 'settings';
+export type ViewMode = 'dashboard' | 'units' | 'checklist' | 'tasks' | 'calendar' | 'gantt' | 'contractors' | 'settings' | 'materials' | 'certificates';
 export type StatusFilter = 'all' | 'completed' | 'in_progress' | 'pending';
 export type TaskFilter = 'all' | 'pending' | 'completed';
 export type AppTheme = 'theme-original' | 'theme-glass';

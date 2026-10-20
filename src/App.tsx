@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Building2, DoorOpen, Image as ImageIcon, FileText, Download, ShieldCheck, PenTool } from 'lucide-react';
-import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto } from './types';
+import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto, MaterialOrder, ContractorCertificate } from './types';
 import { getProjectContractors } from './utils/pmContractors';
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
 import { compressImageFile, calculateUnitProgress, hexToRgba, parseUnitFloor } from './utils/calculations';
@@ -11,6 +11,8 @@ import { TasksFullView } from './components/TasksFullView';
 import { CalendarFullView } from './components/CalendarFullView';
 import { GanttFullView } from './components/GanttFullView';
 import { ContractorsFullView } from './components/ContractorsFullView';
+import { MaterialsFullView } from './components/MaterialsFullView';
+import { CertificatesFullView } from './components/CertificatesFullView';
 import { SettingsAppearanceView } from './components/SettingsAppearanceView';
 import { ProjectCoverModal } from './components/ProjectCoverModal';
 import { ContractorPhotoModal } from './components/ContractorPhotoModal';
@@ -37,7 +39,7 @@ import { loadCloudData, saveProjectsToCloud, saveLogosToCloud, subscribeToCloudD
 import { CloudSetupModal } from './components/CloudSetupModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
-import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive } from './lib/driveUpload';
+import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
 const STORAGE_KEY_LOGOS = 'CONTROL_AVANCE_LOGOS_V4';
@@ -700,7 +702,9 @@ export default function App() {
       setCroquisModalTargetUnitId(selectedUnitId || undefined);
       setIsCroquisModalOpen(true);
     } else if (tabId === 'materiales') {
-      showToast('Módulo de gestión y solicitud de materiales');
+      setCurrentView('materials');
+    } else if (tabId === 'certificados') {
+      setCurrentView('certificates');
     } else if (tabId === 'equipo') {
       setCurrentView('contractors');
     } else if (tabId === 'configuracion' || tabId === 'settings') {
@@ -2692,6 +2696,81 @@ export default function App() {
     showToast('Trabajador eliminado del equipo', 'Trash2');
   };
 
+  // Materials Orders Handlers (Isolated per Project & synced to Supabase + Google Drive)
+  const handleSaveMaterialOrder = (order: MaterialOrder) => {
+    const updated = updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== order.projectId) return p;
+        const currentOrders = p.materialOrders || [];
+        const existingIdx = currentOrders.findIndex(o => o.id === order.id);
+        let nextOrders: MaterialOrder[];
+        if (existingIdx >= 0) {
+          nextOrders = currentOrders.map(o => o.id === order.id ? order : o);
+        } else {
+          nextOrders = [order, ...currentOrders];
+        }
+        return { ...p, materialOrders: nextOrders };
+      })
+    );
+    const targetProject = updated.find(p => p.id === order.projectId);
+    if (targetProject) {
+      backupMaterialsToDrive(targetProject.name, targetProject.materialOrders || []);
+    }
+  };
+
+  const handleDeleteMaterialOrder = (orderId: string, projectId: string) => {
+    const updated = updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const nextOrders = (p.materialOrders || []).filter(o => o.id !== orderId);
+        return { ...p, materialOrders: nextOrders };
+      })
+    );
+    const targetProject = updated.find(p => p.id === projectId);
+    if (targetProject) {
+      backupMaterialsToDrive(targetProject.name, targetProject.materialOrders || []);
+    }
+    showToast('Pedido de materiales eliminado', 'Trash2');
+  };
+
+  // Contractor Certificates Handlers (Biweekly isolation per project & contractor)
+  const handleSaveContractorCertificate = (cert: ContractorCertificate) => {
+    const updated = updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== cert.projectId) return p;
+        const currentCerts = p.contractorCertificates || [];
+        const existingIdx = currentCerts.findIndex(c => c.id === cert.id);
+        let nextCerts: ContractorCertificate[];
+        if (existingIdx >= 0) {
+          nextCerts = currentCerts.map(c => c.id === cert.id ? cert : c);
+        } else {
+          nextCerts = [cert, ...currentCerts];
+        }
+        return { ...p, contractorCertificates: nextCerts };
+      })
+    );
+    const targetProject = updated.find(p => p.id === cert.projectId);
+    if (targetProject) {
+      backupCertificatesToDrive(targetProject.name, targetProject.contractorCertificates || []);
+    }
+    showToast('Certificado quincenal guardado y registrado', 'Check');
+  };
+
+  const handleDeleteContractorCertificate = (certId: string, projectId: string) => {
+    const updated = updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const nextCerts = (p.contractorCertificates || []).filter(c => c.id !== certId);
+        return { ...p, contractorCertificates: nextCerts };
+      })
+    );
+    const targetProject = updated.find(p => p.id === projectId);
+    if (targetProject) {
+      backupCertificatesToDrive(targetProject.name, targetProject.contractorCertificates || []);
+    }
+    showToast('Certificado quincenal eliminado', 'Trash2');
+  };
+
   // Save Director Technical Profile Photo with dual cloud sync
   const handleSaveDirectorPhoto = (avatarUrl: string) => {
     const updatedLogos: CustomLogos = {
@@ -3187,6 +3266,43 @@ export default function App() {
               onAddContractor={handleAddContractor}
               onDeleteContractor={handleDeleteContractor}
               onShowToast={showToast}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'materials' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar la gestión de materiales"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <MaterialsFullView
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
+              onSaveOrder={handleSaveMaterialOrder}
+              onDeleteOrder={handleDeleteMaterialOrder}
+              onShowToast={showToast}
+              neonColor={localColors.neonColor || '#00f2fe'}
+            />
+          </ErrorBoundary>
+        )}
+
+        {currentView === 'certificates' && (
+          <ErrorBoundary
+            fallbackTitle="Error al cargar los certificados de contratistas"
+            onReset={() => setCurrentView('dashboard')}
+          >
+            <CertificatesFullView
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
+              onSaveCertificate={handleSaveContractorCertificate}
+              onDeleteCertificate={handleDeleteContractorCertificate}
+              onAddContractor={handleAddContractor}
+              onDeleteContractor={handleDeleteContractor}
+              onShowToast={showToast}
+              directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
+              neonColor={localColors.neonColor || '#00f2fe'}
             />
           </ErrorBoundary>
         )}

@@ -8,6 +8,7 @@ import {
   FileText,
   PenTool,
   Boxes,
+  FileSpreadsheet,
   Users,
   BarChart3,
   Settings,
@@ -78,6 +79,7 @@ export function SidebarNav({
     { id: 'documentos', label: 'Documentos', icon: FileText },
     { id: 'croquis', label: 'Croquis', icon: PenTool },
     { id: 'materiales', label: 'Materiales', icon: Boxes },
+    { id: 'certificados', label: 'Certificados', icon: FileSpreadsheet },
     { id: 'equipo', label: 'Equipo', icon: Users },
     { id: 'reportes', label: 'Reportes', icon: BarChart3 }
   ];
@@ -89,6 +91,8 @@ export function SidebarNav({
     if (id === 'tareas' && currentView === 'tasks') return true;
     if (id === 'calendario' && currentView === 'calendar') return true;
     if (id === 'gantt' && currentView === 'gantt') return true;
+    if (id === 'materiales' && currentView === 'materials') return true;
+    if (id === 'certificados' && currentView === 'certificates') return true;
     if (id === 'equipo' && currentView === 'contractors') return true;
     if (id === 'configuracion' && currentView === 'settings') return true;
     return false;

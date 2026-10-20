@@ -176,4 +176,68 @@ export async function syncProjectManagerToDrive(projectName: string, tasks: any[
   }
 }
 
+/**
+ * Realiza un respaldo en formato JSON de todos los pedidos de materiales de una obra
+ * y lo guarda directamente en Google Drive bajo la cuenta veniergn@gmail.com.
+ */
+export async function backupMaterialsToDrive(projectName: string, orders: any[]): Promise<UploadResponse> {
+  try {
+    const payload = {
+      project: projectName,
+      system: 'Gestión de Materiales por Obra',
+      adminUser: 'veniergn@gmail.com',
+      syncedAt: new Date().toISOString(),
+      ordersCount: orders.length,
+      orders: orders
+    };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64Data = typeof window !== 'undefined'
+      ? btoa(unescape(encodeURIComponent(jsonStr)))
+      : Buffer.from(jsonStr).toString('base64');
 
+    const cleanName = (projectName || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `Materiales_${cleanName}_backup.json`;
+
+    return await uploadFileToDrive({
+      base64: `data:application/json;base64,${base64Data}`,
+      filename,
+      mimeType: 'application/json'
+    });
+  } catch (err: any) {
+    console.warn('Aviso backup materiales a Google Drive:', err);
+    return { success: false, url: '', error: err?.message };
+  }
+}
+
+/**
+ * Realiza un respaldo en formato JSON de todas las planillas de certificados de contratistas
+ * de una obra y lo guarda directamente en Google Drive bajo la cuenta veniergn@gmail.com.
+ */
+export async function backupCertificatesToDrive(projectName: string, certificates: any[]): Promise<UploadResponse> {
+  try {
+    const payload = {
+      project: projectName,
+      system: 'Certificados de Contratistas (Quincenales)',
+      adminUser: 'veniergn@gmail.com',
+      syncedAt: new Date().toISOString(),
+      certificatesCount: certificates.length,
+      certificates: certificates
+    };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64Data = typeof window !== 'undefined'
+      ? btoa(unescape(encodeURIComponent(jsonStr)))
+      : Buffer.from(jsonStr).toString('base64');
+
+    const cleanName = (projectName || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `Certificados_${cleanName}_backup.json`;
+
+    return await uploadFileToDrive({
+      base64: `data:application/json;base64,${base64Data}`,
+      filename,
+      mimeType: 'application/json'
+    });
+  } catch (err: any) {
+    console.warn('Aviso backup certificados a Google Drive:', err);
+    return { success: false, url: '', error: err?.message };
+  }
+}
