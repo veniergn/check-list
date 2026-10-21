@@ -39,10 +39,10 @@ import { loadCloudData, saveProjectsToCloud, saveLogosToCloud, subscribeToCloudD
 import { CloudSetupModal } from './components/CloudSetupModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
-import { setActiveEntrySoundId } from './utils/entrySounds';
+import { setActiveEntrySoundId, getActiveEntrySoundId, EntrySoundId } from './utils/entrySounds';
 import { saveLocalImage, getLocalImage, getAllLocalImages } from './utils/localImageStore';
 import { enqueueDriveUpload, subscribeToDriveUploads, processDriveQueue } from './utils/driveQueue';
-import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive } from './lib/driveUpload';
+import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive, syncProjectsMasterToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
 const STORAGE_KEY_LOGOS = 'CONTROL_AVANCE_LOGOS_V4';
@@ -70,7 +70,14 @@ const isDarkColor = (color?: string): boolean => {
 };
 
 const normalizeCustomLogos = (raw?: CustomLogos | null): CustomLogos => {
-  const soundId = raw?.entrySound || 'crystal_chime';
+  let soundId: EntrySoundId = 'crystal_chime';
+  if (raw?.entrySound) {
+    soundId = raw.entrySound as EntrySoundId;
+  } else {
+    try {
+      soundId = getActiveEntrySoundId();
+    } catch {}
+  }
   try {
     setActiveEntrySoundId(soundId);
   } catch {}
@@ -203,6 +210,99 @@ function countTotalPhotos(projs: Project[]): number {
     }
   }
   return count;
+}
+
+
+/**
+ * Deduplica y unifica canónicamente proyectos por nombre normalizado (evita duplicados como 3 "I3").
+ * Fusiona unidades, croquis, planos, eventos y contratistas en un único registro canónico.
+ */
+export function deduplicateProjects(projects: Project[]): Project[] {
+  if (!Array.isArray(projects) || projects.length === 0) return [];
+
+  let deletedIds = new Set<string>();
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('control_avance_deleted_project_ids') : null;
+    if (raw) deletedIds = new Set(JSON.parse(raw));
+  } catch (e) {}
+
+  const map = new Map<string, Project>();
+
+  for (const proj of projects) {
+    if (!proj || !proj.name) continue;
+    if (deletedIds.has(proj.id)) continue;
+
+    const normKey = proj.name.trim().toLowerCase();
+
+    if (!map.has(normKey)) {
+      map.set(normKey, { ...proj });
+    } else {
+      const existing = map.get(normKey)!;
+
+      // Merge units by normalized name or ID
+      const unitMap = new Map<string, Unit>();
+      (existing.units || []).forEach(u => {
+        const uKey = (u.name || u.id).trim().toLowerCase();
+        unitMap.set(uKey, u);
+      });
+
+      (proj.units || []).forEach(u => {
+        const uKey = (u.name || u.id).trim().toLowerCase();
+        if (!unitMap.has(uKey)) {
+          unitMap.set(uKey, u);
+        } else {
+          const curr = unitMap.get(uKey)!;
+          const mergedSketches = [...(curr.sketches || [])];
+          (u.sketches || []).forEach(sk => {
+            if (!mergedSketches.some(s => s.id === sk.id)) {
+              mergedSketches.push(sk);
+            }
+          });
+          const mergedBlueprints = [...(curr.blueprints || [])];
+          (u.blueprints || []).forEach(bp => {
+            if (!mergedBlueprints.some(b => b.id === bp.id)) {
+              mergedBlueprints.push(bp);
+            }
+          });
+          unitMap.set(uKey, {
+            ...curr,
+            sketches: mergedSketches,
+            blueprints: mergedBlueprints
+          });
+        }
+      });
+
+      // Merge Calendar Events
+      const eventMap = new Map<string, any>();
+      (existing.calendarEvents || []).forEach(e => eventMap.set(e.id, e));
+      (proj.calendarEvents || []).forEach(e => eventMap.set(e.id, e));
+
+      // Merge Saved Reports
+      const reportMap = new Map<string, any>();
+      (existing.savedReports || []).forEach(r => reportMap.set(r.id, r));
+      (proj.savedReports || []).forEach(r => reportMap.set(r.id, r));
+
+      // Merge Contractors
+      const contractorMap = new Map<string, any>();
+      (existing.contractors || []).forEach(c => contractorMap.set(c.id || c.name, c));
+      (proj.contractors || []).forEach(c => contractorMap.set(c.id || c.name, c));
+
+      map.set(normKey, {
+        ...existing,
+        location: existing.location || proj.location,
+        director: existing.director || proj.director,
+        units: Array.from(unitMap.values()),
+        calendarEvents: Array.from(eventMap.values()),
+        savedReports: Array.from(reportMap.values()),
+        contractors: Array.from(contractorMap.values()),
+        monthlyReportData: existing.monthlyReportData || proj.monthlyReportData,
+        materialsExcelFile: existing.materialsExcelFile || proj.materialsExcelFile,
+        coverImageUrl: existing.coverImageUrl || proj.coverImageUrl
+      });
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 export function mergeProjectsWithLocalState(remoteProjects: Project[], localProjects: Project[]): Project[] {
@@ -382,16 +482,14 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
     }
   } catch (e) {}
 
-  // Preserve any custom locally created projects that do not exist in remote (excluding stale sample mock IDs, deleted IDs, and ghost A3)
-  const mockIds = new Set(['proj_parque_los_andes', 'proj_parque_agustin']);
+  // Preserve any custom locally created projects that do not exist in remote
+  const remoteNames = new Set(remoteProjects.map(rp => rp.name.trim().toLowerCase()));
   const localOnlyProjects = localProjects.filter(lp =>
     !remoteIds.has(lp.id) &&
-    !mockIds.has(lp.id) &&
-    !deletedIds.has(lp.id) &&
-    lp.name !== 'A3' &&
-    lp.id !== 'proj_1791986760557'
+    !remoteNames.has(lp.name.trim().toLowerCase()) &&
+    !deletedIds.has(lp.id)
   );
-  return [...mergedRemote.filter(p => p.name !== 'A3' && p.id !== 'proj_1791986760557'), ...localOnlyProjects];
+  return deduplicateProjects([...mergedRemote, ...localOnlyProjects]);
 }
 
 export default function App() {
@@ -401,8 +499,8 @@ export default function App() {
       if (stored) {
         const rawParsed = JSON.parse(stored);
         if (Array.isArray(rawParsed) && rawParsed.length > 0) {
-          // Filter out deleted projects & ghost A3 immediately from local storage
-          const parsed = rawParsed.filter((p: Project) => p.name !== 'A3' && p.id !== 'proj_1791986760557');
+          // Deduplicate and filter out deleted projects
+          const parsed = deduplicateProjects(rawParsed);
           // Retrocompatibility check for photos array & upgrade legacy names
           parsed.forEach((p: Project) => {
             if (p.name === 'Torre Alvear' || p.id === 'proj_torre_alvear') {
@@ -1033,15 +1131,16 @@ export default function App() {
     projectsRef.current = projects;
   }, [projects]);
 
-  // Synchronous, deterministic project updater with immediate localStorage persistence and Supabase sync
+  // Synchronous, deterministic project updater with immediate localStorage persistence, Supabase sync and Google Drive Master
   const updateProjectsAndSync = (updater: (prev: Project[]) => Project[]) => {
     lastLocalEditTimeRef.current = Date.now();
-    const nextProjects = updater(projectsRef.current);
+    const updated = updater(projectsRef.current);
+    const nextProjects = deduplicateProjects(updated);
     projectsRef.current = nextProjects;
     setProjects(nextProjects);
 
     try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(nextProjects));
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(nextProjects)));
     } catch (e) {
       console.warn('LocalStorage error on update:', e);
     }
@@ -1050,6 +1149,9 @@ export default function App() {
     saveProjectsToCloud(nextProjects).then(res => {
       setCloudStatus(res.status);
     });
+
+    // Guardado y respaldo continuo en la Base de Datos Maestra de Google Drive (veniergn@gmail.com)
+    syncProjectsMasterToDrive(nextProjects);
 
     return nextProjects;
   };
@@ -1228,6 +1330,7 @@ export default function App() {
 
         projectsRef.current = updated;
         saveProjectsToCloud(updated);
+        syncProjectsMasterToDrive(updated);
         return updated;
       });
 
@@ -2410,31 +2513,22 @@ export default function App() {
       units: newUnits
     };
 
-    setProjects(prev => [newProject, ...prev]);
+    updateProjectsAndSync(prev => [newProject, ...prev]);
     setIsNewProjectModalOpen(false);
     setSelectedProjectId(newProject.id);
     setSelectedUnitId(null);
     setCurrentView('units');
-    showToast(`Obra "${payload.name}" creada con ${newUnits.length} espacios`, 'Check');
+    showToast(`Obra "${payload.name}" creada y guardada con éxito en Nube y Google Drive`, 'Check');
   };
 
   // Update Project Data (Ficha Técnica y Administrativa)
   const handleSaveProjectData = (updatedData: Partial<Project>) => {
     if (!editingProject) return;
-    setProjects(prev => {
-      const updated = prev.map(p => {
-        if (p.id !== editingProject.id) return p;
-        return { ...p, ...updatedData };
-      });
-      try {
-        localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('LocalStorage error:', e);
-      }
-      saveProjectsToCloud(updated);
-      return updated;
-    });
-    showToast('Ficha técnica y administrativa actualizada', 'Check');
+    updateProjectsAndSync(prev => prev.map(p => {
+      if (p.id !== editingProject.id) return p;
+      return { ...p, ...updatedData };
+    }));
+    showToast('Ficha técnica y administrativa actualizada y sincronizada', 'Check');
   };
 
   // Generic Update Project Handler (used by MonthlyWorkReportModal, etc.)

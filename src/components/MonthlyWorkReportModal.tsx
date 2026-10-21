@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Project, SavedWorkReport } from '../types';
 import { compressImageFile } from '../utils/calculations';
+import { uploadFileToDrive } from '../lib/driveUpload';
 import {
   Save,
   History as HistoryIcon,
@@ -717,14 +718,36 @@ export function MonthlyWorkReportModal({
         const base64 = event.target?.result as string;
         if (!base64) return;
 
-        if (activeUploadTarget.startsWith('gallery_')) {
-          const itemId = activeUploadTarget.replace('gallery_', '');
+        const currentTarget = activeUploadTarget;
+        // 1. Vista previa inmediata
+        if (currentTarget.startsWith('gallery_')) {
+          const itemId = currentTarget.replace('gallery_', '');
           handleUpdateGalleryItem(itemId, { photo: base64 });
         } else if (activeTemplate === 'parque_agustin') {
-          updateAgustinData({ [activeUploadTarget]: base64 });
+          updateAgustinData({ [currentTarget]: base64 });
         } else {
-          updateAndesData({ [activeUploadTarget]: base64 });
+          updateAndesData({ [currentTarget]: base64 });
         }
+
+        // 2. Subida en segundo plano a Google Drive (veniergn@gmail.com) para no saturar Supabase
+        uploadFileToDrive({
+          base64,
+          filename: `informe_${(project?.name || 'obra').replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.jpg`,
+          mimeType: file.type || 'image/jpeg'
+        }).then(res => {
+          if (res && res.success && res.url) {
+            if (currentTarget.startsWith('gallery_')) {
+              const itemId = currentTarget.replace('gallery_', '');
+              handleUpdateGalleryItem(itemId, { photo: res.url });
+            } else if (activeTemplate === 'parque_agustin') {
+              updateAgustinData({ [currentTarget]: res.url });
+            } else {
+              updateAndesData({ [currentTarget]: res.url });
+            }
+          }
+        }).catch(err => {
+          console.warn('Aviso subida de foto de informe a Google Drive:', err);
+        });
       };
       reader.readAsDataURL(file);
     } finally {

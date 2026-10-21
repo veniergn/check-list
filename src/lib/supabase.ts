@@ -92,7 +92,10 @@ export async function saveLogosToCloud(logos: CustomLogos): Promise<{ success: b
     const cloudLogosPayload = {
       header: logos.header,
       banner: logos.banner,
-      directorAvatarUrl: logos.directorAvatarUrl
+      directorAvatarUrl: logos.directorAvatarUrl,
+      entrySound: logos.entrySound || 'crystal_chime',
+      appName: logos.appName,
+      sidebarLogo: logos.sidebarLogo
     };
 
     const { error } = await supabase

@@ -313,3 +313,72 @@ export async function backupCertificatesToDrive(projectName: string, certificate
     return { success: false, url: '', error: err?.message };
   }
 }
+
+
+/**
+ * Guarda y actualiza la Base de Datos Maestra completa de Obras directamente en Google Drive (veniergn@gmail.com).
+ * Esto garantiza que ninguna información dependa exclusivamente de Supabase y evita saturar la memoria.
+ */
+let isSyncingMaster = false;
+let pendingMasterSync: any = null;
+
+export async function syncProjectsMasterToDrive(projects: any[]): Promise<UploadResponse> {
+  if (isSyncingMaster) {
+    pendingMasterSync = projects;
+    return { success: true, url: '' };
+  }
+
+  isSyncingMaster = true;
+  try {
+    const cleanProjects = projects.map(p => ({
+      ...p,
+      contractors: (p.contractors || []).map((c: any) => {
+        if (c.excelFile?.base64Data && c.excelFile.driveFileId) {
+          const { base64Data, ...rest } = c.excelFile;
+          return { ...c, excelFile: rest };
+        }
+        return c;
+      })
+    }));
+
+    const payload = {
+      system: 'Control de Avance - Base de Datos Maestra',
+      adminUser: 'veniergn@gmail.com',
+      lastSyncedAt: new Date().toISOString(),
+      projectsCount: cleanProjects.length,
+      projects: cleanProjects
+    };
+
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64Data = typeof window !== 'undefined'
+      ? btoa(unescape(encodeURIComponent(jsonStr)))
+      : Buffer.from(jsonStr).toString('base64');
+
+    const filename = 'Control_Avance_Master_Database.json';
+
+    const res = await uploadFileToDrive({
+      base64: `data:application/json;base64,${base64Data}`,
+      filename,
+      mimeType: 'application/json'
+    });
+
+    if (res.success && res.url) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('control_avance_drive_master_url', res.url);
+        localStorage.setItem('control_avance_drive_master_synced_at', new Date().toISOString());
+      }
+    }
+
+    return res;
+  } catch (err: any) {
+    console.warn('Aviso sincronización base maestra en Google Drive:', err);
+    return { success: false, url: '', error: err?.message };
+  } finally {
+    isSyncingMaster = false;
+    if (pendingMasterSync) {
+      const next = pendingMasterSync;
+      pendingMasterSync = null;
+      syncProjectsMasterToDrive(next);
+    }
+  }
+}
