@@ -1,7 +1,7 @@
 /**
- * Utility for uploading files (photos, plans, sketches) to Google Drive.
- * Communicates with the backend /api/upload endpoint (Vite dev server / Netlify function)
- * or directly with Google Apps Script Web App if configured in client env.
+ * High-Performance Resilient Google Drive File Uploader
+ * Direct upload to user's Google Drive via Google Apps Script Web App (veniergn@gmail.com)
+ * Automatically optimizes images, handles redirects, and provides direct CDN URLs.
  */
 
 export const DEFAULT_GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4EZXFIWDFZx72UjMV2xCaH0A66aV2wNyiD2m95yzQG6xKqT-pkvuxnKJjYD7Oh_4uDw/exec';
@@ -24,6 +24,7 @@ export interface UploadResponse {
   success: boolean;
   url: string;
   fileId?: string;
+  webViewLink?: string;
   error?: string;
 }
 
@@ -34,57 +35,128 @@ export function isDriveUrl(url?: string): boolean {
          url.startsWith('https://docs.google.com');
 }
 
+/**
+ * Optimizes base64 images client-side before transmission.
+ * Reduces 10MB camera shots to ~150KB in milliseconds, saving bandwidth and preventing timeouts.
+ */
+export function compressBase64Image(base64: string, maxDim: number = 1400, quality: number = 0.76): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !base64 || !base64.startsWith('data:image')) {
+      return resolve(base64);
+    }
+    // If already small (< 250KB), no need to re-compress
+    if (base64.length < 250000) {
+      return resolve(base64);
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(base64);
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const result = canvas.toDataURL('image/jpeg', quality);
+        resolve(result);
+      } catch {
+        resolve(base64);
+      }
+    };
+    img.onerror = () => resolve(base64);
+    img.src = base64;
+  });
+}
+
+/**
+ * Uploads a file (photo, sketch, PDF or JSON backup) directly to Google Drive
+ */
 export async function uploadFileToDrive(options: UploadOptions): Promise<UploadResponse> {
-  const { base64, filename, mimeType } = options;
+  let { base64, filename, mimeType } = options;
 
   if (!base64) {
     return { success: false, url: '', error: 'No se proveyó contenido para el archivo.' };
   }
 
-  // 1. Check if direct client-side Google Apps Script URL is set (or fallback to default Gmail Web App)
+  // If already an online URL, return immediately
+  if (isDriveUrl(base64) || base64.startsWith('http://') || base64.startsWith('https://')) {
+    return { success: true, url: base64 };
+  }
+
+  // Pre-compress images to ultra-fast web size
+  if (base64.startsWith('data:image')) {
+    try {
+      base64 = await compressBase64Image(base64, 1400, 0.76);
+    } catch (e) {
+      console.warn('Compresión previa omitida:', e);
+    }
+  }
+
+  // 1. Direct client-side upload to Google Apps Script Web App
   const directAppsScriptUrl = getGoogleAppsScriptUrl();
 
   if (directAppsScriptUrl && directAppsScriptUrl.trim().startsWith('http')) {
     try {
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 35000) : null;
+
       const response = await fetch(directAppsScriptUrl.trim(), {
         method: 'POST',
-        // 'text/plain;charset=utf-8' prevents CORS preflight issues with Google Apps Script
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           base64,
           filename: filename || `archivo_${Date.now()}.jpg`,
           mimeType: mimeType || 'image/jpeg'
-        })
+        }),
+        signal: controller?.signal
       });
 
+      if (timeoutId) clearTimeout(timeoutId);
+
       const resData = await response.json();
-      if (resData && resData.success && resData.url) {
+      if (resData && resData.success && (resData.url || resData.fileId)) {
+        const fileId = resData.fileId;
+        const directCdnUrl = fileId
+          ? `https://lh3.googleusercontent.com/d/${fileId}`
+          : (resData.url || '');
+
         return {
           success: true,
-          url: resData.url,
-          fileId: resData.fileId
+          url: directCdnUrl,
+          fileId: fileId,
+          webViewLink: resData.webViewLink
         };
       }
       if (resData && resData.error) {
         return { success: false, url: '', error: resData.error };
       }
     } catch (e: any) {
-      console.warn('Fallo intento directo con Google Apps Script, intentando /api/upload...', e);
+      console.warn('Aviso: Falló subida directa a Google Apps Script, intentando /api/upload...', e?.message || e);
     }
   }
 
-  // 2. Call /api/upload endpoint (handled by Vite locally and Netlify Functions in production)
+  // 2. Fallback to /api/upload endpoint
   try {
     const res = await fetch('/api/upload', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        base64,
-        filename,
-        mimeType
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64, filename, mimeType })
     });
 
     if (!res.ok) {
@@ -98,7 +170,7 @@ export async function uploadFileToDrive(options: UploadOptions): Promise<UploadR
       return {
         success: false,
         url: '',
-        error: `Error del servidor (${res.status}): ${errText}`
+        error: `Servidor de subida (${res.status}): ${errText}`
       };
     }
 
@@ -108,7 +180,7 @@ export async function uploadFileToDrive(options: UploadOptions): Promise<UploadR
     return {
       success: false,
       url: '',
-      error: `No se pudo conectar con el servidor de subida: ${err.message || String(err)}`
+      error: `No se pudo conectar con el servicio de subida: ${err.message || String(err)}`
     };
   }
 }

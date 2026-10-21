@@ -40,6 +40,8 @@ import { CloudSetupModal } from './components/CloudSetupModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
 import { setActiveEntrySoundId } from './utils/entrySounds';
+import { saveLocalImage, getLocalImage, getAllLocalImages } from './utils/localImageStore';
+import { enqueueDriveUpload, subscribeToDriveUploads, processDriveQueue } from './utils/driveQueue';
 import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
@@ -88,9 +90,16 @@ const normalizeCustomLogos = (raw?: CustomLogos | null): CustomLogos => {
 const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
   return projs.map(p => ({
     ...p,
+    contractors: p.contractors?.map(c => {
+      if (c.excelFile?.base64Data) {
+        const { base64Data, ...restExcel } = c.excelFile;
+        return { ...c, excelFile: restExcel };
+      }
+      return c;
+    }),
     units: p.units?.map(u => ({
       ...u,
-      sketches: u.sketches?.map(s => ({
+      sketches: (u.sketches || []).map(s => ({
         id: s.id,
         title: s.title,
         createdAt: s.createdAt,
@@ -98,8 +107,8 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
         unitName: s.unitName,
         projectId: s.projectId,
         projectName: s.projectName,
-        dataUrl: s.dataUrl?.startsWith('http') ? s.dataUrl : ''
-      })) || [],
+        dataUrl: s.dataUrl?.startsWith('http') ? s.dataUrl : (s.dataUrl && s.dataUrl.length > 400000 ? '' : (s.dataUrl || ''))
+      })),
       blueprints: u.blueprints?.map(b => ({
         id: b.id,
         name: b.name,
@@ -116,7 +125,7 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
           photos: i.photos?.map(ph => ({
             id: ph.id,
             timestamp: ph.timestamp,
-            dataUrl: ph.dataUrl || ''
+            dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 400000 ? '' : (ph.dataUrl || ''))
           })) || []
         }))
       }))
@@ -255,10 +264,34 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
         }
       });
 
-      // Sketches: merge by ID non-destructively
+      // Sketches: merge by ID non-destructively (never overwrite valid local sketch with empty URL)
       const sketchMap = new Map<string, SketchDocument>();
-      (localUnit.sketches || []).forEach(s => sketchMap.set(s.id, s));
-      (remoteUnit.sketches || []).forEach(s => sketchMap.set(s.id, s));
+      (localUnit.sketches || []).forEach(s => {
+        if (s && s.id) sketchMap.set(s.id, s);
+      });
+      (remoteUnit.sketches || []).forEach(remoteSketch => {
+        if (!remoteSketch || !remoteSketch.id) return;
+        const localSketch = sketchMap.get(remoteSketch.id);
+        if (!localSketch) {
+          sketchMap.set(remoteSketch.id, remoteSketch);
+        } else {
+          const localUrl = localSketch.dataUrl || '';
+          const remoteUrl = remoteSketch.dataUrl || '';
+          if (remoteUrl.startsWith('http')) {
+            sketchMap.set(remoteSketch.id, remoteSketch);
+          } else if (localUrl.startsWith('http')) {
+            sketchMap.set(remoteSketch.id, localSketch);
+          } else if (localUrl && !remoteUrl) {
+            sketchMap.set(remoteSketch.id, localSketch);
+          } else if (!localUrl && remoteUrl) {
+            sketchMap.set(remoteSketch.id, remoteSketch);
+          } else if (remoteUrl.length >= localUrl.length) {
+            sketchMap.set(remoteSketch.id, remoteSketch);
+          } else {
+            sketchMap.set(remoteSketch.id, localSketch);
+          }
+        }
+      });
 
       // Trades & Items: merge photos by ID non-destructively
       const mergedTrades = (remoteUnit.trades || []).map(remoteTrade => {
@@ -1099,6 +1132,109 @@ export default function App() {
 
     initCloud();
 
+    // Iniciar procesador de cola de Drive y rehidratar imágenes locales desde IndexedDB
+    processDriveQueue();
+
+    getAllLocalImages().then(localBlobs => {
+      if (localBlobs && localBlobs.size > 0) {
+        setProjects(prev => {
+          let hasRestored = false;
+          const updated = prev.map(p => ({
+            ...p,
+            units: p.units.map(u => {
+              const updatedSketches = (u.sketches || []).map(s => {
+                if ((!s.dataUrl || s.dataUrl.length < 50) && localBlobs.has(s.id)) {
+                  hasRestored = true;
+                  return { ...s, dataUrl: localBlobs.get(s.id)! };
+                }
+                return s;
+              });
+
+              const updatedTrades = u.trades.map(t => ({
+                ...t,
+                items: t.items.map(i => ({
+                  ...i,
+                  photos: (i.photos || []).map(ph => {
+                    if ((!ph.dataUrl || ph.dataUrl.length < 50) && localBlobs.has(ph.id)) {
+                      hasRestored = true;
+                      return { ...ph, dataUrl: localBlobs.get(ph.id)! };
+                    }
+                    return ph;
+                  })
+                }))
+              }));
+
+              return {
+                ...u,
+                sketches: updatedSketches,
+                trades: updatedTrades
+              };
+            })
+          }));
+
+          if (hasRestored) {
+            projectsRef.current = updated;
+            return updated;
+          }
+          return prev;
+        });
+      }
+    });
+
+    // Suscribirse a las subidas completadas de Google Drive para actualizar URLs en tiempo real
+    const unsubscribeDriveUploads = subscribeToDriveUploads((item, driveUrl) => {
+      setProjects(prev => {
+        const updated = prev.map(p => {
+          if (p.id !== item.projectId) return p;
+          return {
+            ...p,
+            units: p.units.map(u => {
+              if (u.id !== item.unitId) return u;
+
+              const updatedSketches = (u.sketches || []).map(s => {
+                if (s.id === item.targetId) {
+                  return { ...s, dataUrl: driveUrl };
+                }
+                return s;
+              });
+
+              const updatedTrades = u.trades.map(t => {
+                if (item.tradeId && t.id !== item.tradeId) return t;
+                return {
+                  ...t,
+                  items: t.items.map(it => {
+                    if (item.itemId && it.id !== item.itemId) return it;
+                    return {
+                      ...it,
+                      photos: (it.photos || []).map(ph => {
+                        if (ph.id === item.targetId || ph.id === `photo_${item.targetId}` || ph.id.includes(item.targetId)) {
+                          return { ...ph, dataUrl: driveUrl };
+                        }
+                        return ph;
+                      })
+                    };
+                  })
+                };
+              });
+
+              return {
+                ...u,
+                sketches: updatedSketches,
+                trades: updatedTrades
+              };
+            })
+          };
+        });
+
+        projectsRef.current = updated;
+        saveProjectsToCloud(updated);
+        return updated;
+      });
+
+      showToast(`☁️ ${item.type === 'sketch' ? 'Croquis' : 'Foto'} respaldado en tu Google Drive (${item.unitName || 'Unidad'})`, 'Check');
+    });
+
+
     // Auto-refresh when tab is focused / unlocked on mobile or notebook
     const handleVisibilityOrFocus = async () => {
       // If user recently made a change (within 12s), do NOT pull and overwrite local unsaved changes
@@ -1151,6 +1287,7 @@ export default function App() {
 
     return () => {
       if (unsubscribe) unsubscribe();
+      if (unsubscribeDriveUploads) unsubscribeDriveUploads();
       window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
       clearInterval(heartbeatInterval);
@@ -1915,10 +2052,11 @@ export default function App() {
     const dateString = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const timestamp = `${dateString}, ${timeString} hs`;
-
     const photoId = `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // 1. Mostrar de inmediato la foto en estado local con la imagen comprimida para respuesta visual instant�nea
+    // 1. Guardar de inmediato en almacenamiento indestructible IndexedDB (< 5ms)
+    saveLocalImage(photoId, dataUrl);
+
     const initialPhoto = {
       id: photoId,
       dataUrl: dataUrl,
@@ -1927,9 +2065,11 @@ export default function App() {
 
     const targetProjId = selectedProjectId;
     const targetUId = selectedUnitId;
+    const activeProj = projectsRef.current.find(p => p.id === targetProjId);
+    const activeUnit = activeProj?.units?.find(u => u.id === targetUId);
 
+    // 2. Respuesta instantánea en interfaz local (< 5ms)
     let updatedList: Project[] = [];
-
     setProjects(prev => {
       const updated = prev.map(proj => {
         if (proj.id !== targetProjId) return proj;
@@ -1963,77 +2103,24 @@ export default function App() {
     });
 
     try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedList));
-    } catch (e) {
-      console.warn('LocalStorage error on initial photo add:', e);
-    }
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedList)));
+    } catch (e) {}
 
-    showToast('📸 Foto guardada. Sincronizando con Google Drive (Gmail)...', 'Camera');
+    showToast('📸 Foto guardada al instante. Respaldando en Google Drive...', 'Camera');
 
-    // 2. Subida en segundo plano sin congelar la app (permite tomar fotos rapido una tras otra)
-    (async () => {
-      let finalDriveUrl = dataUrl;
-      if (dataUrl && dataUrl.startsWith('data:') && !isDriveUrl(dataUrl)) {
-        try {
-          const uploadRes = await uploadFileToDrive({
-            base64: dataUrl,
-            filename: `inspeccion_${tradeId}_${itemId}_${Date.now()}.jpg`,
-            mimeType: 'image/jpeg'
-          });
-
-          if (uploadRes && uploadRes.success && uploadRes.url) {
-            finalDriveUrl = uploadRes.url;
-          }
-        } catch (uploadErr) {
-          console.warn('Error al subir foto a Google Drive:', uploadErr);
-        }
-      }
-
-      let listToCloud = updatedList;
-      if (finalDriveUrl !== dataUrl) {
-        setProjects(prev => {
-          const updated = prev.map(proj => {
-            if (proj.id !== targetProjId) return proj;
-            return {
-              ...proj,
-              units: proj.units.map(u => {
-                if (u.id !== targetUId) return u;
-                return {
-                  ...u,
-                  trades: u.trades.map(t => ({
-                    ...t,
-                    items: t.items.map(item => {
-                      if (item.id !== itemId) return item;
-                      return {
-                        ...item,
-                        photos: (item.photos || []).map(p => p.id === photoId ? { ...p, dataUrl: finalDriveUrl } : p)
-                      };
-                    })
-                  }))
-                };
-              })
-            };
-          });
-          projectsRef.current = updated;
-          listToCloud = updated;
-          return updated;
-        });
-
-        try {
-          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(listToCloud));
-        } catch (e) {}
-      }
-
-      setCloudStatus('syncing');
-      saveProjectsToCloud(listToCloud).then(res => {
-        setCloudStatus(res.status);
-        if (isDriveUrl(finalDriveUrl)) {
-          showToast('☁️ Foto respaldada en tu Google Drive (Gmail) y en la Nube', 'Check');
-        } else {
-          showToast('☁️ Foto guardada en la Nube', 'Check');
-        }
-      });
-    })();
+    // 3. Encolar para subida garantizada a Google Drive en segundo plano
+    const filename = `inspeccion_${(activeProj?.name || 'obra').replace(/\s+/g, '_')}_${tradeId}_${itemId}_${Date.now()}.jpg`;
+    enqueueDriveUpload({
+      type: 'photo',
+      projectId: targetProjId,
+      projectName: activeProj?.name,
+      unitId: targetUId,
+      unitName: activeUnit?.name,
+      tradeId,
+      itemId,
+      targetId: photoId,
+      filename
+    }, dataUrl);
   };
 
   // Delete photo from item and persist immediately to Supabase Cloud
@@ -2155,7 +2242,16 @@ export default function App() {
     lastLocalEditTimeRef.current = Date.now();
     const sketchId = sketch.id;
 
-    // 1. Guardado instantaneo local (Respuesta inmediata en 5ms, sin congelar la pantalla)
+    // 1. Guardar de inmediato en almacenamiento indestructible IndexedDB (< 5ms)
+    saveLocalImage(sketchId, sketch.dataUrl);
+
+    let newPhotoId = '';
+    if (sketch.tradeId && sketch.itemId) {
+      newPhotoId = `photo_sk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      saveLocalImage(newPhotoId, sketch.dataUrl);
+    }
+
+    // 2. Respuesta instantánea en interfaz local (< 5ms)
     let updatedProjectsList: Project[] = [];
     setProjects(prev => {
       const updated = prev.map(proj => {
@@ -2166,9 +2262,9 @@ export default function App() {
             if (u.id !== unitId) return u;
 
             let updatedTrades = u.trades;
-            if (sketch.tradeId && sketch.itemId) {
+            if (sketch.tradeId && sketch.itemId && newPhotoId) {
               const newPhoto: InspectionPhoto = {
-                id: `photo_sk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                id: newPhotoId,
                 dataUrl: sketch.dataUrl,
                 timestamp: sketch.createdAt || new Date().toLocaleString()
               };
@@ -2202,67 +2298,24 @@ export default function App() {
     });
 
     try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedProjectsList));
-    } catch (e) {
-      console.warn('LocalStorage error on sketch save:', e);
-    }
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
+    } catch (e) {}
 
-    showToast(`💾 Croquis guardado en ${sketch.unitName || 'departamento'}. Subiendo a Google Drive...`, 'PenTool');
+    showToast(`💾 Croquis guardado al instante en ${sketch.unitName || 'departamento'}. Respaldando en Google Drive...`, 'PenTool');
 
-    // 2. Subida en segundo plano a Google Drive (Gmail del usuario) y Supabase
-    (async () => {
-      let finalUrl = sketch.dataUrl;
-      if (sketch.dataUrl && sketch.dataUrl.startsWith('data:') && !isDriveUrl(sketch.dataUrl)) {
-        try {
-          const uploadRes = await uploadFileToDrive({
-            base64: sketch.dataUrl,
-            filename: `croquis_${(sketch.projectName || 'obra').replace(/\s+/g, '_')}_${(sketch.unitName || 'unidad').replace(/\s+/g, '_')}_${Date.now()}.jpg`,
-            mimeType: 'image/jpeg'
-          });
-          if (uploadRes && uploadRes.success && uploadRes.url) {
-            finalUrl = uploadRes.url;
-          }
-        } catch (err) {
-          console.warn('Error subiendo croquis a Drive:', err);
-        }
-      }
-
-      // Si se subio a Drive, actualizar la URL permanente
-      let listToSync = updatedProjectsList;
-      if (finalUrl !== sketch.dataUrl) {
-        setProjects(prev => {
-          const updated = prev.map(proj => {
-            if (proj.id !== projectId) return proj;
-            return {
-              ...proj,
-              units: proj.units.map(u => {
-                if (u.id !== unitId) return u;
-                return {
-                  ...u,
-                  sketches: (u.sketches || []).map(s => s.id === sketchId ? { ...s, dataUrl: finalUrl } : s)
-                };
-              })
-            };
-          });
-          listToSync = updated;
-          projectsRef.current = updated;
-          return updated;
-        });
-        try {
-          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(listToSync));
-        } catch (e) {}
-      }
-
-      setCloudStatus('syncing');
-      saveProjectsToCloud(listToSync).then(res => {
-        setCloudStatus(res.status);
-        if (isDriveUrl(finalUrl)) {
-          showToast(`☁️ Croquis guardado en Google Drive y Nube (${sketch.unitName || 'Unidad'})`, 'Check');
-        } else {
-          showToast(`☁️ Croquis sincronizado en la Nube (${sketch.unitName || 'Unidad'})`, 'Check');
-        }
-      });
-    })();
+    // 3. Encolar para subida garantizada a Google Drive en segundo plano
+    const filename = `croquis_${(sketch.projectName || 'obra').replace(/\s+/g, '_')}_${(sketch.unitName || 'unidad').replace(/\s+/g, '_')}_${Date.now()}.jpg`;
+    enqueueDriveUpload({
+      type: 'sketch',
+      projectId,
+      projectName: sketch.projectName,
+      unitId,
+      unitName: sketch.unitName,
+      tradeId: sketch.tradeId,
+      itemId: sketch.itemId,
+      targetId: sketchId,
+      filename
+    }, sketch.dataUrl);
   };
 
   // Delete Croquis sketch from unit and sync to Supabase Cloud
