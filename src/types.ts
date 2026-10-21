@@ -339,6 +339,7 @@ export interface CustomLogos {
   directorAvatarUrl?: string; // Foto de perfil del profesional a cargo
   directorName?: string;
   directorRole?: string;
+  entrySound?: string;
 }
 
 export interface LocalColors {

@@ -39,6 +39,7 @@ import { loadCloudData, saveProjectsToCloud, saveLogosToCloud, subscribeToCloudD
 import { CloudSetupModal } from './components/CloudSetupModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
+import { setActiveEntrySoundId } from './utils/entrySounds';
 import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
@@ -66,11 +67,19 @@ const isDarkColor = (color?: string): boolean => {
   return false;
 };
 
-const normalizeCustomLogos = (raw?: CustomLogos | null): CustomLogos => ({
-  header: normalizeLogo(raw?.header),
-  banner: normalizeLogo(raw?.banner),
-  directorAvatarUrl: raw?.directorAvatarUrl || ''
-});
+const normalizeCustomLogos = (raw?: CustomLogos | null): CustomLogos => {
+  const soundId = raw?.entrySound || 'crystal_chime';
+  try {
+    setActiveEntrySoundId(soundId);
+  } catch {}
+  return {
+    ...(raw || {}),
+    header: normalizeLogo(raw?.header),
+    banner: normalizeLogo(raw?.banner),
+    directorAvatarUrl: raw?.directorAvatarUrl || '',
+    entrySound: soundId
+  };
+};
 
 /**
  * Genera una versión ligera de proyectos para localStorage excluyendo los blobs pesados de fotos.
@@ -331,10 +340,25 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
     };
   });
 
-  // Preserve any custom locally created projects that do not exist in remote (excluding stale sample mock IDs)
+  // Read deleted project IDs to never resurrect deleted projects from stale local storage
+  let deletedIds = new Set<string>();
+  try {
+    const raw = localStorage.getItem('control_avance_deleted_project_ids');
+    if (raw) {
+      deletedIds = new Set(JSON.parse(raw));
+    }
+  } catch (e) {}
+
+  // Preserve any custom locally created projects that do not exist in remote (excluding stale sample mock IDs, deleted IDs, and ghost A3)
   const mockIds = new Set(['proj_parque_los_andes', 'proj_parque_agustin']);
-  const localOnlyProjects = localProjects.filter(lp => !remoteIds.has(lp.id) && !mockIds.has(lp.id));
-  return [...mergedRemote, ...localOnlyProjects];
+  const localOnlyProjects = localProjects.filter(lp =>
+    !remoteIds.has(lp.id) &&
+    !mockIds.has(lp.id) &&
+    !deletedIds.has(lp.id) &&
+    lp.name !== 'A3' &&
+    lp.id !== 'proj_1791986760557'
+  );
+  return [...mergedRemote.filter(p => p.name !== 'A3' && p.id !== 'proj_1791986760557'), ...localOnlyProjects];
 }
 
 export default function App() {
@@ -342,8 +366,10 @@ export default function App() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_PROJECTS);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        const rawParsed = JSON.parse(stored);
+        if (Array.isArray(rawParsed) && rawParsed.length > 0) {
+          // Filter out deleted projects & ghost A3 immediately from local storage
+          const parsed = rawParsed.filter((p: Project) => p.name !== 'A3' && p.id !== 'proj_1791986760557');
           // Retrocompatibility check for photos array & upgrade legacy names
           parsed.forEach((p: Project) => {
             if (p.name === 'Torre Alvear' || p.id === 'proj_torre_alvear') {
@@ -1407,6 +1433,16 @@ export default function App() {
       itemName: projectName,
       itemType: 'project',
       onConfirm: () => {
+        try {
+          const raw = localStorage.getItem('control_avance_deleted_project_ids');
+          const deletedList = raw ? JSON.parse(raw) : [];
+          if (!deletedList.includes(projectId)) {
+            deletedList.push(projectId);
+            localStorage.setItem('control_avance_deleted_project_ids', JSON.stringify(deletedList));
+          }
+        } catch (e) {
+          console.warn('Error saving deleted project ID:', e);
+        }
         updateProjectsAndSync(prev => prev.filter(p => p.id !== projectId));
         if (selectedProjectId === projectId) {
           setSelectedProjectId(null);
@@ -2895,6 +2931,9 @@ export default function App() {
   const handleSaveAppearance = (newLogos: CustomLogos, newColors: LocalColors) => {
     setLogos(newLogos);
     setLocalColors(newColors);
+    if (newLogos.entrySound) {
+      setActiveEntrySoundId(newLogos.entrySound);
+    }
     try {
       localStorage.setItem(STORAGE_KEY_LOGOS, JSON.stringify(newLogos));
       localStorage.setItem(STORAGE_KEY_LOCAL_COLORS, JSON.stringify(newColors));
@@ -2918,8 +2957,10 @@ export default function App() {
       sidebarLogoSize: 36,
       sidebarLogoAlign: 'left',
       sidebarShowText: true,
-      appName: 'CONTROL DE AVANCE'
+      appName: 'CONTROL DE AVANCE',
+      entrySound: 'crystal_chime'
     };
+    setActiveEntrySoundId('crystal_chime');
     const defaultColors: LocalColors = {
       appBackground: '#081321',
       presentationBackground: '#101D30',

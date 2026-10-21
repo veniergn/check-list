@@ -17,8 +17,17 @@ import {
   Moon,
   ShieldCheck,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Volume2,
+  Play,
+  Music
 } from 'lucide-react';
+import {
+  ENTRY_SOUNDS,
+  EntrySoundId,
+  playEntrySound,
+  setActiveEntrySoundId
+} from '../utils/entrySounds';
 import { CustomLogos, LocalColors, Project, AppTheme } from '../types';
 import { compressImageFile } from '../utils/calculations';
 
@@ -78,7 +87,7 @@ export function SettingsAppearanceView({
   onShowToast
 }: SettingsAppearanceViewProps) {
   // Active Tab: 'identity' | 'colors' | 'typography' | 'layout'
-  const [activeTab, setActiveTab] = useState<'identity' | 'colors' | 'typography' | 'layout'>('identity');
+  const [activeTab, setActiveTab] = useState<'identity' | 'colors' | 'typography' | 'layout' | 'sound'>('identity');
 
   // Draft state for Logos & Identity
   const [draftLogos, setDraftLogos] = useState<CustomLogos>({
@@ -91,7 +100,8 @@ export function SettingsAppearanceView({
     appName: currentLogos.appName || 'CONTROL DE AVANCE',
     directorAvatarUrl: currentLogos.directorAvatarUrl || '',
     directorName: currentLogos.directorName || 'Arq. Venier Gastón',
-    directorRole: currentLogos.directorRole || 'Director Técnico'
+    directorRole: currentLogos.directorRole || 'Director Técnico',
+    entrySound: currentLogos.entrySound || 'crystal_chime'
   });
 
   // Draft state for Colors & Theme
@@ -153,6 +163,7 @@ export function SettingsAppearanceView({
 
   // Preview Changes
   const handleApplyPreview = () => {
+    setActiveEntrySoundId(draftLogos.entrySound || 'crystal_chime');
     onPreviewAppearance?.(draftLogos, draftColors);
     if (onToggleTheme && draftTheme !== theme) {
       onToggleTheme(draftTheme);
@@ -162,6 +173,7 @@ export function SettingsAppearanceView({
 
   // Save Changes
   const handleSave = () => {
+    setActiveEntrySoundId(draftLogos.entrySound || 'crystal_chime');
     onSaveAppearance(draftLogos, draftColors);
     if (onToggleTheme && draftTheme !== theme) {
       onToggleTheme(draftTheme);
@@ -180,8 +192,10 @@ export function SettingsAppearanceView({
         sidebarLogoSize: 36,
         sidebarLogoAlign: 'left',
         sidebarShowText: true,
-        appName: 'CONTROL DE AVANCE'
+        appName: 'CONTROL DE AVANCE',
+        entrySound: 'crystal_chime'
       });
+      setActiveEntrySoundId('crystal_chime');
       setDraftColors({
         appBackground: '#081321',
         presentationBackground: '#101D30',
@@ -298,6 +312,18 @@ export function SettingsAppearanceView({
         >
           <Layout className="w-4 h-4" />
           <span>D. Diseño & Tema</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sound')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === 'sound'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-[#94A3B8] hover:text-white hover:bg-[#17263B]'
+          }`}
+        >
+          <Volume2 className="w-4 h-4 text-emerald-400" />
+          <span>E. Sonido de Ingreso</span>
         </button>
       </div>
 
@@ -875,6 +901,143 @@ export function SettingsAppearanceView({
                 Tarjetas translúcidas con desenfoque de fondo y estilo moderno de interfaz.
               </p>
             </button>
+          </div>
+        </div>
+      )}
+      {/* TAB CONTENT E: SONIDO DE INGRESO */}
+      {activeTab === 'sound' && (
+        <div className="space-y-6">
+          <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-base font-black text-white">Sonido de Ingreso al Tocar el Tilde</h2>
+                </div>
+                <p className="text-xs text-[#94A3B8] mt-1">
+                  Elige entre 5 sonidos armónicos optimizados que se reproducirán al pulsar el tilde verde de bienvenida para ingresar a la aplicación.
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs font-semibold self-start sm:self-auto">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>Compatible con Tablets iPad y Android</span>
+              </div>
+            </div>
+
+            {/* Sound Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ENTRY_SOUNDS.map(sound => {
+                const isSelected = (draftLogos.entrySound || 'crystal_chime') === sound.id;
+                return (
+                  <div
+                    key={sound.id}
+                    onClick={() => {
+                      setDraftLogos(prev => ({ ...prev, entrySound: sound.id }));
+                      setActiveEntrySoundId(sound.id);
+                      playEntrySound(sound.id);
+                      onShowToast?.(`Sonido "${sound.name}" seleccionado`, 'Volume2');
+                    }}
+                    className={`relative group cursor-pointer p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
+                      isSelected
+                        ? 'bg-blue-600/15 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/80'
+                        : 'bg-[#17263B] border-[#29384C] hover:border-slate-500 hover:bg-[#1d2f47]'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-[10px] font-black uppercase px-2 py-0.5 rounded border"
+                          style={{
+                            borderColor: `${sound.accentColor}40`,
+                            backgroundColor: `${sound.accentColor}15`,
+                            color: sound.accentColor
+                          }}
+                        >
+                          {sound.badge}
+                        </span>
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                            isSelected
+                              ? 'bg-emerald-500 border-emerald-400 text-black'
+                              : 'border-slate-600 group-hover:border-slate-400'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                        {sound.name}
+                      </h3>
+                      <p className="text-[11px] font-mono text-cyan-400/90">
+                        {sound.subtitle}
+                      </p>
+                      <p className="text-xs text-[#94A3B8] leading-relaxed">
+                        {sound.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-[#29384C]/60 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400">
+                        {isSelected ? '✓ Seleccionado' : 'Click para activar'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playEntrySound(sound.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#20324c] hover:bg-emerald-600 hover:text-white text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all active:scale-95 shadow-sm"
+                        title="Escuchar muestra de audio"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>Escuchar</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Interactive Live Tilde Test Simulator */}
+            <div className="mt-8 pt-6 border-t border-[#29384C] flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0B1523] p-6 rounded-2xl border border-dashed border-[#29384C]">
+              <div className="space-y-1.5 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Simulador de Ingreso</span>
+                </div>
+                <h4 className="text-sm font-black text-white">
+                  Prueba el Tilde Verde con el sonido seleccionado
+                </h4>
+                <p className="text-xs text-[#94A3B8] max-w-lg">
+                  Toca el logo del tilde para reproducir el sonido configurado exactamente como lo experimentarás al abrir la aplicación.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentId = draftLogos.entrySound || 'crystal_chime';
+                    playEntrySound(currentId);
+                    onShowToast?.('¡Tilde pulsado! Sonido de ingreso reproducido', 'Sparkles');
+                  }}
+                  className="relative group p-4 rounded-3xl bg-black/60 border border-emerald-500/30 hover:border-emerald-400 shadow-[0_0_25px_rgba(34,197,94,0.3)] hover:shadow-[0_0_40px_rgba(34,197,94,0.6)] transition-all active:scale-90 flex items-center justify-center cursor-pointer"
+                  title="Pulsar tilde para probar sonido"
+                >
+                  <div className="absolute inset-0 rounded-3xl bg-emerald-500/10 blur-xl group-hover:bg-emerald-500/25 transition-all pointer-events-none" />
+                  <img
+                    src="/icon.png?v=5"
+                    alt="Tilde Verde"
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.8)] pointer-events-none group-hover:scale-110 transition-transform"
+                  />
+                </button>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 animate-pulse font-bold">
+                  Toca para probar
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
