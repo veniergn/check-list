@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Building2, DoorOpen, Image as ImageIcon, FileText, Download, ShieldCheck, PenTool } from 'lucide-react';
-import { Project, Unit, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto, MaterialOrder, ContractorCertificate } from './types';
+import { Project, Unit, UnitNote, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto, MaterialOrder, ContractorCertificate } from './types';
 import { getProjectContractors } from './utils/pmContractors';
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
 import { compressImageFile, calculateUnitProgress, hexToRgba, parseUnitFloor } from './utils/calculations';
@@ -105,6 +105,18 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
       return c;
     }),
     units: p.units?.map(u => ({
+      ...u,
+      notes: (u.notes || []).map(n => ({
+        id: n.id,
+        title: n.title,
+        description: n.description,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        completed: !!n.completed,
+        completedAt: n.completedAt,
+        priority: n.priority,
+        targetDate: n.targetDate
+      })),
       ...u,
       sketches: (u.sketches || []).map(s => ({
         id: s.id,
@@ -264,10 +276,17 @@ export function deduplicateProjects(projects: Project[]): Project[] {
               mergedBlueprints.push(bp);
             }
           });
+          const mergedNotes = [...(curr.notes || [])];
+          (u.notes || []).forEach(nt => {
+            if (!mergedNotes.some(n => n.id === nt.id)) {
+              mergedNotes.push(nt);
+            }
+          });
           unitMap.set(uKey, {
             ...curr,
             sketches: mergedSketches,
-            blueprints: mergedBlueprints
+            blueprints: mergedBlueprints,
+            notes: mergedNotes
           });
         }
       });
@@ -441,10 +460,30 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
         };
       });
 
+      // Notes: merge by ID non-destructively
+      const noteMap = new Map<string, UnitNote>();
+      (localUnit.notes || []).forEach(n => {
+        if (n && n.id) noteMap.set(n.id, n);
+      });
+      (remoteUnit.notes || []).forEach(remoteNote => {
+        if (!remoteNote || !remoteNote.id) return;
+        const localNote = noteMap.get(remoteNote.id);
+        if (!localNote) {
+          noteMap.set(remoteNote.id, remoteNote);
+        } else {
+          const remoteTime = new Date(remoteNote.updatedAt || remoteNote.createdAt || 0).getTime();
+          const localTime = new Date(localNote.updatedAt || localNote.createdAt || 0).getTime();
+          if (remoteTime >= localTime) {
+            noteMap.set(remoteNote.id, remoteNote);
+          }
+        }
+      });
+
       return {
         ...remoteUnit,
         blueprints: Array.from(bpMap.values()),
         sketches: Array.from(sketchMap.values()),
+        notes: Array.from(noteMap.values()),
         trades: mergedTrades
       };
     });
@@ -2659,6 +2698,141 @@ export default function App() {
     });
   };
 
+  // Unit Notes Management (Cosas a Realizar y Recordatorios por Depto)
+  const handleSaveUnitNote = (unitId: string, noteData: Omit<UnitNote, 'id' | 'createdAt'> & { id?: string }) => {
+    lastLocalEditTimeRef.current = Date.now();
+    const noteId = noteData.id || `note_${Date.now()}`;
+    const nowIso = new Date().toISOString();
+
+    let updatedProjectsList: Project[] = [];
+    setProjects(prev => {
+      const updated = prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== unitId) return u;
+            const currentNotes = u.notes || [];
+            const existingIndex = currentNotes.findIndex(n => n.id === noteId);
+            let updatedNotes: UnitNote[];
+            if (existingIndex >= 0) {
+              updatedNotes = [...currentNotes];
+              updatedNotes[existingIndex] = {
+                ...updatedNotes[existingIndex],
+                ...noteData,
+                id: noteId,
+                updatedAt: nowIso
+              };
+            } else {
+              const newNote: UnitNote = {
+                ...noteData,
+                id: noteId,
+                createdAt: nowIso,
+                updatedAt: nowIso,
+                completed: !!noteData.completed
+              };
+              updatedNotes = [newNote, ...currentNotes];
+            }
+            return { ...u, notes: updatedNotes };
+          })
+        };
+      });
+      updatedProjectsList = updated;
+      projectsRef.current = updated;
+      return updated;
+    });
+
+    try {
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
+    } catch (e) {
+      console.warn('LocalStorage error on note save:', e);
+    }
+
+    setCloudStatus('syncing');
+    saveProjectsToCloud(updatedProjectsList).then(res => {
+      setCloudStatus(res.status);
+      showToast('Nota guardada y sincronizada en la Nube', 'Check');
+    });
+  };
+
+  const handleDeleteUnitNote = (unitId: string, noteId: string) => {
+    lastLocalEditTimeRef.current = Date.now();
+    let updatedProjectsList: Project[] = [];
+    setProjects(prev => {
+      const updated = prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== unitId) return u;
+            const updatedNotes = (u.notes || []).filter(n => n.id !== noteId);
+            return { ...u, notes: updatedNotes };
+          })
+        };
+      });
+      updatedProjectsList = updated;
+      projectsRef.current = updated;
+      return updated;
+    });
+
+    try {
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
+    } catch (e) {
+      console.warn('LocalStorage error on note delete:', e);
+    }
+
+    setCloudStatus('syncing');
+    saveProjectsToCloud(updatedProjectsList).then(res => {
+      setCloudStatus(res.status);
+      showToast('Nota eliminada en la Nube', 'Trash2');
+    });
+  };
+
+  const handleToggleUnitNote = (unitId: string, noteId: string) => {
+    lastLocalEditTimeRef.current = Date.now();
+    const nowIso = new Date().toISOString();
+    let updatedProjectsList: Project[] = [];
+    let isNowCompleted = false;
+
+    setProjects(prev => {
+      const updated = prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== unitId) return u;
+            const updatedNotes = (u.notes || []).map(n => {
+              if (n.id !== noteId) return n;
+              isNowCompleted = !n.completed;
+              return {
+                ...n,
+                completed: isNowCompleted,
+                completedAt: isNowCompleted ? nowIso : undefined,
+                updatedAt: nowIso
+              };
+            });
+            return { ...u, notes: updatedNotes };
+          })
+        };
+      });
+      updatedProjectsList = updated;
+      projectsRef.current = updated;
+      return updated;
+    });
+
+    try {
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
+    } catch (e) {
+      console.warn('LocalStorage error on note toggle:', e);
+    }
+
+    setCloudStatus('syncing');
+    saveProjectsToCloud(updatedProjectsList).then(res => {
+      setCloudStatus(res.status);
+      showToast(isNowCompleted ? 'Nota marcada como realizada ✔' : 'Nota marcada como pendiente', 'Check');
+    });
+  };
+
   // Create Unit
   const handleCreateUnit = (unitName: string, unitType?: 'unit' | 'common_area') => {
     if (!selectedProjectId) return;
@@ -3448,6 +3622,9 @@ export default function App() {
                 setCroquisModalTargetUnitId(unitId || selectedUnitId || undefined);
                 setIsCroquisModalOpen(true);
               }}
+              onSaveUnitNote={handleSaveUnitNote}
+              onDeleteUnitNote={handleDeleteUnitNote}
+              onToggleUnitNote={handleToggleUnitNote}
             />
           </ErrorBoundary>
         )}

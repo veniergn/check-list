@@ -56,6 +56,18 @@ export interface SketchDocument {
   itemName?: string;
 }
 
+export interface UnitNote {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+  completed?: boolean;
+  completedAt?: string;
+  priority?: 'normal' | 'important' | 'urgent';
+  targetDate?: string;
+}
+
 export interface Unit {
   id: string;
   name: string;
@@ -72,6 +84,7 @@ export interface Unit {
   signedAt?: string; // Timestamp
   isLocked?: boolean; // Frozen/locked state
   sketches?: SketchDocument[]; // Registered hand-drawn croquis
+  notes?: UnitNote[]; // Notas y recordatorios técnicos del departamento
 }
 
 export interface Milestone {

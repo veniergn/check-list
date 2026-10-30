@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileText,
+  StickyNote,
   Check,
   X,
   Camera,
@@ -33,13 +34,14 @@ import {
   SlidersHorizontal,
   ArrowLeft
 } from 'lucide-react';
-import { Project, Unit, TaskFilter, InspectionItem, Trade } from '../types';
+import { Project, Unit, UnitNote, TaskFilter, InspectionItem, Trade } from '../types';
 import { calculateUnitProgress, getUnitItemCounts, isUnitCommonArea, isTradeMatchingFilter, hexToRgba, parseUnitFloor } from '../utils/calculations';
 import { MASTER_TRADES_TEMPLATE } from '../data/initialData';
 import { ItemObservationModal } from './ItemObservationModal';
 import { AddItemScopeModal } from './AddItemScopeModal';
 import { AnimatedCircularProgress } from './AnimatedCircularProgress';
 import { ExecutiveDonutChart } from './ExecutiveDonutChart';
+import { UnitNotesModal } from './UnitNotesModal';
 
 function WhatsAppIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -91,6 +93,9 @@ interface ChecklistViewProps {
   onUnlockUnit?: (unitId: string) => void;
   onOpenBlueprints?: () => void;
   onOpenCroquis?: (unitId?: string) => void;
+  onSaveUnitNote?: (unitId: string, note: Omit<UnitNote, 'id' | 'createdAt'> & { id?: string }) => void;
+  onDeleteUnitNote?: (unitId: string, noteId: string) => void;
+  onToggleUnitNote?: (unitId: string, noteId: string) => void;
 }
 
 export function ChecklistView({
@@ -122,12 +127,17 @@ export function ChecklistView({
   onAddTrade,
   onDeleteTrade,
   onOpenCroquis,
+  onSaveUnitNote,
+  onDeleteUnitNote,
+  onToggleUnitNote,
   neonColor = '#00f2fe'
 }: ChecklistViewProps) {
   const [activeTradeId, setActiveTradeId] = useState<string | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [selectedTradeFilter, setSelectedTradeFilter] = useState<string>('all');
   const [taskStatusFilter, setTaskStatusFilter] = useState<TaskFilter>('all');
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const pendingNotesCount = useMemo(() => (unit.notes || []).filter(n => !n.completed).length, [unit.notes]);
   const [tradeSectionTab, setTradeSectionTab] = useState<'filter' | 'manage'>('filter');
   const [newTradeNameDraft, setNewTradeNameDraft] = useState<string>('');
   const [newTradeScope, setNewTradeScope] = useState<'current_unit' | 'all_units'>('current_unit');
@@ -549,6 +559,20 @@ export function ChecklistView({
                   <span>Planos ({unit.blueprints?.length || 0})</span>
                 </button>
               )}
+
+              {/* Botón NOTAS para tareas y recordatorios de este departamento */}
+              <button
+                type="button"
+                onClick={() => setIsNotesModalOpen(true)}
+                className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                title="Anotar y consultar todas las cosas a hacer en este depto para recordarlas y compartirlas por WhatsApp"
+              >
+                <StickyNote className="w-3.5 h-3.5 text-amber-400" />
+                <span>Notas ({unit.notes?.length || 0})</span>
+                {pendingNotesCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title={`${pendingNotesCount} nota(s) pendiente(s)`} />
+                )}
+              </button>
 
               {onOpenSignatureModal && (
                 <button
@@ -1544,6 +1568,18 @@ export function ChecklistView({
             <span>📐 Ver Planos ({unit.blueprints?.length || 0})</span>
           </button>
         </div>
+      )}
+      {/* Modal de Notas y Recordatorios de la Unidad */}
+      {isNotesModalOpen && (
+        <UnitNotesModal
+          isOpen={isNotesModalOpen}
+          onClose={() => setIsNotesModalOpen(false)}
+          projectName={project.name}
+          unit={unit}
+          onSaveNote={(uId, note) => onSaveUnitNote?.(uId, note)}
+          onDeleteNote={(uId, noteId) => onDeleteUnitNote?.(uId, noteId)}
+          onToggleNote={(uId, noteId) => onToggleUnitNote?.(uId, noteId)}
+        />
       )}
     </section>
   );

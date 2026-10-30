@@ -8,6 +8,7 @@ import {
   Clock,
   Circle,
   FileText,
+  StickyNote,
   ArrowRight,
   ArrowLeft,
   ChevronRight,
