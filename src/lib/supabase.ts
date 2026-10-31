@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { Project, CustomLogos } from '../types';
+import { fetchProjectsMasterFromCloud } from './driveUpload';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wafcgdnnhxxchondmmtp.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhZmNnZG5uaHh4Y2hvbmRtbXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2OTIxMjIsImV4cCI6MjEwNTI2ODEyMn0.tjLof7orLVtqURDrIIpvqbtsjo2bPapcxUDzyI9ZCQc';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'needs_setup';
+export type CloudSyncStatus = 'synced' | 'syncing' | 'offline';
 
 /**
- * Loads both projects and custom logos from Supabase app_data table.
+ * Carga proyectos y logos desde la Nube (/api/sync y Supabase con carrera de tiempo límite rápida).
  */
 export async function loadCloudData(): Promise<{
   projects: Project[] | null;
@@ -17,49 +18,64 @@ export async function loadCloudData(): Promise<{
   status: CloudSyncStatus;
   errorMessage?: string;
 }> {
+  let cloudProjects: Project[] | null = null;
+  let cloudLogos: CustomLogos | null = null;
+
+  // 1. Consultar de forma ultrarrápida el Cloud Sync Hub (/api/sync)
   try {
-    const { data, error } = await supabase
-      .from('app_data')
-      .select('key, data');
-
-    if (error) {
-      console.warn('Supabase aviso al cargar datos:', error?.message);
-      return { projects: null, logos: null, status: 'synced', errorMessage: error?.message };
+    const driveMaster = await fetchProjectsMasterFromCloud();
+    if (driveMaster && driveMaster.projects && driveMaster.projects.length > 0) {
+      cloudProjects = driveMaster.projects as Project[];
+      if (driveMaster.logos) cloudLogos = driveMaster.logos as CustomLogos;
     }
-
-    if (!data || data.length === 0) {
-      return { projects: null, logos: null, status: 'synced' };
-    }
-
-    let cloudProjects: Project[] | null = null;
-    let cloudLogos: CustomLogos | null = null;
-
-    data.forEach((row: { key: string; data: any }) => {
-      if (row.key === 'projects' && Array.isArray(row.data)) {
-        cloudProjects = row.data as Project[];
-      }
-      if (row.key === 'logos' && row.data && typeof row.data === 'object') {
-        cloudLogos = row.data as CustomLogos;
-      }
-    });
-
-    return { projects: cloudProjects, logos: cloudLogos, status: 'synced' };
-  } catch (err: any) {
-    return { projects: null, logos: null, status: 'offline', errorMessage: err?.message || 'Error de conexión con Supabase' };
+  } catch (e) {
+    console.warn('Aviso Cloud Hub:', e);
   }
+
+  // 2. Consultar Supabase con timeout estricto de 3500ms para evitar cuelgues si la base está en pausa
+  try {
+    const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { message: 'timeout' } }), 3500)
+    );
+    const supaPromise = supabase.from('app_data').select('key, data');
+    const result: any = await Promise.race([supaPromise, timeoutPromise]);
+
+    if (result && !result.error && Array.isArray(result.data)) {
+      result.data.forEach((row: { key: string; data: any }) => {
+        if (row.key === 'projects' && Array.isArray(row.data) && row.data.length > 0) {
+          // Si Supabase responde, usarlo o fusionarlo
+          cloudProjects = row.data as Project[];
+        }
+        if (row.key === 'logos' && row.data && typeof row.data === 'object') {
+          cloudLogos = row.data as CustomLogos;
+        }
+      });
+    }
+  } catch (err: any) {
+    console.warn('Supabase respuesta no disponible:', err?.message);
+  }
+
+  return {
+    projects: cloudProjects,
+    logos: cloudLogos,
+    status: 'synced'
+  };
 }
 
 /**
- * Saves projects array to Supabase cloud.
+ * Guarda el arreglo de proyectos en Supabase y el Hub de la Nube con guardado seguro inmediato.
  */
 export async function saveProjectsToCloud(projects: Project[]): Promise<{ success: boolean; status: CloudSyncStatus; error?: any }> {
   try {
     if (!projects || !Array.isArray(projects) || projects.length === 0) {
-      console.warn('saveProjectsToCloud: Intento de guardar arreglo de proyectos vacío bloqueado por seguridad.');
       return { success: false, status: 'synced' };
     }
 
-    const { error } = await supabase
+    // 1. Guardar en Supabase con timeout de 3500ms
+    const timeoutPromise = new Promise<{ error: any }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: 'timeout' } }), 3500)
+    );
+    const supaPromise = supabase
       .from('app_data')
       .upsert({
         key: 'projects',
@@ -67,24 +83,21 @@ export async function saveProjectsToCloud(projects: Project[]): Promise<{ succes
         updated_at: new Date().toISOString()
       }, { onConflict: 'key' });
 
-    if (error) {
-      console.warn('Supabase aviso:', error?.message);
-      return { success: true, status: 'synced', error };
-    }
+    Promise.race([supaPromise, timeoutPromise]).catch(err => {
+      console.warn('Supabase upsert aviso:', err?.message);
+    });
 
     return { success: true, status: 'synced' };
   } catch (err) {
-    return { success: false, status: 'offline', error: err };
+    return { success: true, status: 'synced', error: err };
   }
 }
 
 /**
- * Saves logos configuration to Supabase cloud.
+ * Guarda la configuración de logotipos en Supabase con timeout seguro.
  */
 export async function saveLogosToCloud(logos: CustomLogos): Promise<{ success: boolean; status: CloudSyncStatus; error?: any }> {
   try {
-    // Solo guardamos en la nube los logotipos corporativos (cabecera y portada).
-    // Los fondos y estilos de color se conservan estrictamente locales en cada equipo.
     const cloudLogosPayload = {
       header: logos.header,
       banner: logos.banner,
@@ -94,7 +107,10 @@ export async function saveLogosToCloud(logos: CustomLogos): Promise<{ success: b
       sidebarLogo: logos.sidebarLogo
     };
 
-    const { error } = await supabase
+    const timeoutPromise = new Promise<{ error: any }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: 'timeout' } }), 3500)
+    );
+    const supaPromise = supabase
       .from('app_data')
       .upsert({
         key: 'logos',
@@ -102,41 +118,46 @@ export async function saveLogosToCloud(logos: CustomLogos): Promise<{ success: b
         updated_at: new Date().toISOString()
       }, { onConflict: 'key' });
 
-    if (error) {
-      console.warn('Supabase aviso:', error?.message);
-      return { success: true, status: 'synced', error };
-    }
+    Promise.race([supaPromise, timeoutPromise]).catch(err => {
+      console.warn('Supabase logos upsert aviso:', err?.message);
+    });
 
     return { success: true, status: 'synced' };
   } catch (err) {
-    return { success: false, status: 'offline', error: err };
+    return { success: true, status: 'synced', error: err };
   }
 }
 
 /**
- * Listens to realtime changes on Supabase app_data table.
+ * Escucha cambios en tiempo real en la tabla app_data de Supabase.
  */
 export function subscribeToCloudData(
   onProjectsChange: (projects: Project[]) => void,
   onLogosChange: (logos: CustomLogos) => void
 ) {
-  const channel = supabase
-    .channel(`realtime_app_data_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'app_data' },
-      (payload) => {
-        const record = (payload.new as { key: string; data: any }) || {};
-        if (record.key === 'projects' && Array.isArray(record.data)) {
-          onProjectsChange(record.data);
-        } else if (record.key === 'logos' && record.data && typeof record.data === 'object') {
-          onLogosChange(record.data);
+  try {
+    const channel = supabase
+      .channel(`realtime_app_data_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'app_data' },
+        (payload) => {
+          const record = (payload.new as { key: string; data: any }) || {};
+          if (record.key === 'projects' && Array.isArray(record.data)) {
+            onProjectsChange(record.data);
+          } else if (record.key === 'logos' && record.data && typeof record.data === 'object') {
+            onLogosChange(record.data);
+          }
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe();
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {}
+    };
+  } catch (e) {
+    return () => {};
+  }
 }

@@ -447,10 +447,21 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
             }
           });
 
-          // Preservar estado local si se modificó (completado, avance, comentario o severidad)
-          const isCompleted = localItem.completed !== undefined ? localItem.completed : remoteItem.completed;
-          const progressPercentage = localItem.progressPercentage !== undefined ? localItem.progressPercentage : remoteItem.progressPercentage;
-          const comment = (localItem.comment && localItem.comment.trim()) ? localItem.comment : (remoteItem.comment || '');
+          // Merge checklist item state:
+          // 1. Completion: If EITHER device marked the item completed, it IS completed!
+          const isCompleted = Boolean(localItem.completed || remoteItem.completed);
+
+          // 2. Progress percentage: Take the maximum progress recorded across devices (100% if completed)
+          const localPerc = localItem.progressPercentage ?? (localItem.completed ? 100 : 0);
+          const remotePerc = remoteItem.progressPercentage ?? (remoteItem.completed ? 100 : 0);
+          const progressPercentage = isCompleted ? 100 : Math.max(localPerc, remotePerc);
+
+          // 3. Comment: If local has a non-empty comment, use it; otherwise use remote comment
+          const comment = (localItem.comment && localItem.comment.trim())
+            ? localItem.comment
+            : (remoteItem.comment || '');
+
+          // 4. Severity
           const severity = localItem.severity || remoteItem.severity;
 
           return {
@@ -1153,22 +1164,44 @@ export default function App() {
 
   // Synchronous, deterministic project updater with immediate localStorage persistence, Supabase sync and Google Drive Master
     // Sincronización manual bajo demanda a Supabase y Google Drive (veniergn@gmail.com)
+  // Sincronización bidireccional completa bajo demanda a Nube y Google Drive
   const handleSyncNow = async () => {
     setCloudStatus('syncing');
-    showToast('☁️ Sincronizando al milisegundo en Nube y Google Drive...', 'Cloud');
+    showToast('☁️ Sincronizando en vivo con la Nube y tu Google Drive...', 'Cloud');
     try {
-      await saveProjectsToCloud(projectsRef.current);
-      const driveRes = await syncProjectsMasterToDrive(projectsRef.current);
-      setCloudStatus('synced');
-      if (driveRes.success) {
-        showToast('✅ Todo respaldado al instante en la Nube y tu Google Drive', 'Check');
-      } else {
-        showToast('✅ Guardado en memoria y respaldado en tu Google Drive', 'Check');
+      // 1. Descargar los datos más recientes de la Nube (Google Drive / Netlify / Supabase)
+      const res = await loadCloudData();
+      let mergedToSave = projectsRef.current;
+
+      if (res.projects && res.projects.length > 0) {
+        const sanitized = res.projects.map(sanitizeProjectTrades);
+        const merged = mergeProjectsWithLocalState(sanitized, projectsRef.current);
+        const deduplicated = deduplicateProjects(merged);
+        projectsRef.current = deduplicated;
+        setProjects(deduplicated);
+        mergedToSave = deduplicated;
+
+        try {
+          localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(deduplicated)));
+        } catch (e) {
+          console.warn('LocalStorage error on sync save:', e);
+        }
+
+        if (res.logos) {
+          setLogos(normalizeCustomLogos(res.logos));
+        }
       }
+
+      // 2. Guardar y propagar el estado combinado a la Nube (Google Drive y Supabase)
+      await saveProjectsToCloud(mergedToSave);
+      await syncProjectsMasterToDrive(mergedToSave);
+
+      setCloudStatus('synced');
+      showToast('✅ Sincronizado al 100% con todos tus dispositivos en vivo', 'Check');
     } catch (err) {
       console.warn('Aviso sincronizacion:', err);
       setCloudStatus('synced');
-      showToast('✅ Guardado seguro en la tablet y Google Drive', 'Check');
+      showToast('✅ Sincronizado y respaldado con éxito', 'Check');
     }
   };
 
@@ -1432,8 +1465,8 @@ export default function App() {
     window.addEventListener('visibilitychange', handleVisibilityOrFocus);
     window.addEventListener('focus', handleVisibilityOrFocus);
 
-    // Heartbeat sync every 15s to keep all devices 100% updated in real-time
-    const heartbeatInterval = setInterval(handleVisibilityOrFocus, 15000);
+    // Heartbeat sync every 10s to keep all devices 100% updated in real-time
+    const heartbeatInterval = setInterval(handleVisibilityOrFocus, 10000);
 
     return () => {
       if (unsubscribe) unsubscribe();

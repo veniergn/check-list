@@ -356,6 +356,13 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
 
     const filename = 'Control_Avance_Master_Database.json';
 
+    // Sincronizar de forma inmediata con el endpoint serverless /api/sync
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projects: cleanProjects })
+    }).catch(e => console.warn('Aviso /api/sync POST:', e));
+
     const res = await uploadFileToDrive({
       base64: `data:application/json;base64,${base64Data}`,
       filename,
@@ -424,4 +431,36 @@ export async function backupUnitNotesToDrive(projectName: string, unitName: stri
     console.warn('Aviso backup notas a Google Drive:', err);
     return { success: false, url: '', error: err?.message };
   }
+}
+
+/**
+ * Descarga la Base de Datos Maestra más reciente desde el Hub de Sincronización en la Nube (/api/sync).
+ */
+export async function fetchProjectsMasterFromCloud(): Promise<{ projects: any[] | null; logos: any | null; lastSyncedAt?: string }> {
+  try {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 6000) : null;
+
+    const res = await fetch('/api/sync', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: controller?.signal
+    });
+
+    if (timeoutId) clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+        return {
+          projects: data.projects,
+          logos: data.logos || null,
+          lastSyncedAt: data.lastSyncedAt
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso al obtener datos de /api/sync:', err);
+  }
+  return { projects: null, logos: null };
 }
