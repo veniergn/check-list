@@ -180,7 +180,7 @@ export function TopHeader({
         {cloudStatus && (
           <button
             onClick={onOpenCloudSetup}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#101D30] border border-[#29384C] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer active:scale-95"
+            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-[#101D30] border border-[#29384C] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer active:scale-95 shrink-0"
             title="Toca para sincronizar al instante con Supabase y tu Google Drive (veniergn@gmail.com)"
           >
             {cloudStatus === 'syncing' ? (
@@ -194,8 +194,7 @@ export function TopHeader({
               {cloudStatus === 'syncing'
                 ? 'Sincronizando...'
                 : cloudStatus === 'synced'
-                ? 'Nube y Drive Activos'
-                : 'Sin Conexión'}
+                ? 'Nube y Drive' : 'Sin Conexión'}
             </span>
           </button>
         )}

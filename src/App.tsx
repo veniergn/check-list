@@ -3448,6 +3448,7 @@ export default function App() {
         onEditDirectorPhoto={() => directorPhotoInputRef.current?.click()}
         directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
         directorRole={logos.directorRole || 'Director Técnico'}
+        onSyncNow={handleSyncNow}
         avatarUrl={logos.directorAvatarUrl || '/avatar_venier.png'}
         customLogoUrl={logos.sidebarLogo}
         logoSize={logos.sidebarLogoSize}

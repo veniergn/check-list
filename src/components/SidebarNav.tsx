@@ -12,6 +12,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Cloud,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -42,6 +43,7 @@ interface SidebarNavProps {
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
   onEditDirectorPhoto?: () => void;
+  onSyncNow?: () => void;
 }
 
 export function SidebarNav({

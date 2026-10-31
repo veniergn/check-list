@@ -43,8 +43,10 @@ export async function loadCloudData(): Promise<{
     if (result && !result.error && Array.isArray(result.data)) {
       result.data.forEach((row: { key: string; data: any }) => {
         if (row.key === 'projects' && Array.isArray(row.data) && row.data.length > 0) {
-          // Si Supabase responde, usarlo o fusionarlo
-          cloudProjects = row.data as Project[];
+          // Solo usar datos de Supabase si Drive aún no los cargó, evitando sobrescribir con versiones desactualizadas
+          if (!cloudProjects) {
+            cloudProjects = row.data as Project[];
+          }
         }
         if (row.key === 'logos' && row.data && typeof row.data === 'object') {
           cloudLogos = row.data as CustomLogos;

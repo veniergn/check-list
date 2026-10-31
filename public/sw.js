@@ -1,5 +1,5 @@
 // Minimal PWA Service Worker for Control de Avance
-const CACHE_NAME = 'control-avance-v37';
+const CACHE_NAME = 'control-avance-v38';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -45,6 +45,11 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests and skip Supabase API / external URLs
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+
+  // CRITICAL: NEVER cache API endpoints or Netlify functions! Always direct network
+  if (url.pathname.startsWith('/.netlify/') || url.pathname.startsWith('/api/')) {
+    return;
+  }
 
   // Network-first for dynamic content with cache fallback
   event.respondWith(
