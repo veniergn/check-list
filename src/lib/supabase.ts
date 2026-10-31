@@ -10,7 +10,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export type CloudSyncStatus = 'synced' | 'syncing' | 'offline';
 
 /**
- * Carga proyectos y logos desde la Nube (/api/sync y Supabase con carrera de tiempo límite rápida).
+ * Carga proyectos y logos desde la Nube (/.netlify/functions/sync y Supabase con carrera de tiempo límite rápida).
  */
 export async function loadCloudData(): Promise<{
   projects: Project[] | null;
@@ -21,7 +21,7 @@ export async function loadCloudData(): Promise<{
   let cloudProjects: Project[] | null = null;
   let cloudLogos: CustomLogos | null = null;
 
-  // 1. Consultar de forma ultrarrápida el Cloud Sync Hub (/api/sync)
+  // 1. Consultar de forma ultrarrápida el Cloud Sync Hub (/.netlify/functions/sync)
   try {
     const driveMaster = await fetchProjectsMasterFromCloud();
     if (driveMaster && driveMaster.projects && driveMaster.projects.length > 0) {

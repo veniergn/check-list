@@ -356,12 +356,12 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
 
     const filename = 'Control_Avance_Master_Database.json';
 
-    // Sincronizar de forma inmediata con el endpoint serverless /api/sync
-    fetch('/api/sync', {
+    // Sincronizar de forma inmediata con el endpoint serverless /.netlify/functions/sync
+    fetch('/.netlify/functions/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projects: cleanProjects })
-    }).catch(e => console.warn('Aviso /api/sync POST:', e));
+    }).catch(e => console.warn('Aviso /.netlify/functions/sync POST:', e));
 
     const res = await uploadFileToDrive({
       base64: `data:application/json;base64,${base64Data}`,
@@ -434,14 +434,14 @@ export async function backupUnitNotesToDrive(projectName: string, unitName: stri
 }
 
 /**
- * Descarga la Base de Datos Maestra más reciente desde el Hub de Sincronización en la Nube (/api/sync).
+ * Descarga la Base de Datos Maestra más reciente desde el Hub de Sincronización en la Nube (/.netlify/functions/sync).
  */
 export async function fetchProjectsMasterFromCloud(): Promise<{ projects: any[] | null; logos: any | null; lastSyncedAt?: string }> {
   try {
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const timeoutId = controller ? setTimeout(() => controller.abort(), 6000) : null;
 
-    const res = await fetch('/api/sync', {
+    const res = await fetch('/.netlify/functions/sync', {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       signal: controller?.signal
@@ -460,7 +460,7 @@ export async function fetchProjectsMasterFromCloud(): Promise<{ projects: any[] 
       }
     }
   } catch (err) {
-    console.warn('Aviso al obtener datos de /api/sync:', err);
+    console.warn('Aviso al obtener datos de /.netlify/functions/sync:', err);
   }
   return { projects: null, logos: null };
 }
