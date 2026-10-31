@@ -382,3 +382,46 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
     }
   }
 }
+
+/**
+ * Guarda un respaldo específico de las Notas y cosas a realizar de una unidad directamente en Google Drive (veniergn@gmail.com).
+ */
+export async function backupUnitNotesToDrive(projectName: string, unitName: string, notes: any[]): Promise<UploadResponse> {
+  try {
+    const payload = {
+      system: 'Control de Avance - Notas y Cosas a Realizar',
+      adminUser: 'veniergn@gmail.com',
+      projectName: projectName || 'Obra',
+      unitName: unitName || 'Unidad',
+      lastSyncedAt: new Date().toISOString(),
+      notesCount: (notes || []).length,
+      notes: notes || []
+    };
+
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64Data = typeof window !== 'undefined'
+      ? btoa(unescape(encodeURIComponent(jsonStr)))
+      : Buffer.from(jsonStr).toString('base64');
+
+    const cleanProject = (projectName || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const cleanUnit = (unitName || 'Unidad').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = 'Notas_' + cleanProject + '_' + cleanUnit + '.json';
+
+    const res = await uploadFileToDrive({
+      base64: 'data:application/json;base64,' + base64Data,
+      filename,
+      mimeType: 'application/json'
+    });
+
+    if (res.success && res.url) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('control_avance_drive_notes_' + cleanProject + '_' + cleanUnit, res.url);
+      }
+    }
+
+    return res;
+  } catch (err: any) {
+    console.warn('Aviso backup notas a Google Drive:', err);
+    return { success: false, url: '', error: err?.message };
+  }
+}

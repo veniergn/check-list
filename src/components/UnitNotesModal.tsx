@@ -694,7 +694,7 @@ export function UnitNotesModal({
           <div className="text-xs text-slate-400 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>
-              Las notas quedan guardadas para <strong>{unit.name}</strong> y sincronizadas en la Nube.
+              Las notas quedan guardadas para <strong>{unit.name}</strong> y respaldadas en tu <strong>Google Drive (veniergn@gmail.com)</strong> y Supabase.
             </span>
           </div>
 

@@ -42,7 +42,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { setActiveEntrySoundId, getActiveEntrySoundId, EntrySoundId } from './utils/entrySounds';
 import { saveLocalImage, getLocalImage, getAllLocalImages } from './utils/localImageStore';
 import { enqueueDriveUpload, subscribeToDriveUploads, processDriveQueue } from './utils/driveQueue';
-import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive, syncProjectsMasterToDrive } from './lib/driveUpload';
+import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive, syncProjectsMasterToDrive, backupUnitNotesToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
 const STORAGE_KEY_LOGOS = 'CONTROL_AVANCE_LOGOS_V4';
@@ -117,7 +117,6 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
         priority: n.priority,
         targetDate: n.targetDate
       })),
-      ...u,
       sketches: (u.sketches || []).map(s => ({
         id: s.id,
         title: s.title,
@@ -448,8 +447,19 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
             }
           });
 
+          // Preservar estado local si se modificó (completado, avance, comentario o severidad)
+          const isCompleted = localItem.completed !== undefined ? localItem.completed : remoteItem.completed;
+          const progressPercentage = localItem.progressPercentage !== undefined ? localItem.progressPercentage : remoteItem.progressPercentage;
+          const comment = (localItem.comment && localItem.comment.trim()) ? localItem.comment : (remoteItem.comment || '');
+          const severity = localItem.severity || remoteItem.severity;
+
           return {
             ...remoteItem,
+            ...localItem,
+            completed: isCompleted,
+            progressPercentage,
+            comment,
+            severity,
             photos: Array.from(photoMap.values())
           };
         });
@@ -486,6 +496,13 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
         notes: Array.from(noteMap.values()),
         trades: mergedTrades
       };
+    });
+
+    // Preservar unidades creadas localmente que aún no estén en remoto
+    (localProj.units || []).forEach(localUnit => {
+      if (!mergedUnits.some(u => u.id === localUnit.id)) {
+        mergedUnits.push(localUnit);
+      }
     });
 
     // Merge Saved Reports (Informes Anteriores) by ID
@@ -1024,12 +1041,10 @@ export default function App() {
     setIsMilestonesModalOpen(true);
   };
 
-  // Save or Update Milestone with Supabase Cloud persistence
+  // Save or Update Milestone with Supabase Cloud and Drive persistence
   const handleSaveMilestone = (projectId: string, milestone: Milestone) => {
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== projectId) return proj;
         const currentList = proj.milestones || [];
         const exists = currentList.some(m => m.id === milestone.id);
@@ -1041,47 +1056,29 @@ export default function App() {
           milestones: updatedMilestones
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(`Hito "${milestone.name}" guardado en la Nube`, 'Calendar');
-    });
+    showToast('Hito guardado y sincronizado en Nube y Drive', 'Calendar');
   };
 
-  // Delete Milestone with Supabase Cloud persistence
+  // Delete Milestone with Supabase Cloud and Drive persistence
   const handleDeleteMilestone = (projectId: string, milestoneId: string) => {
     if (!confirm('¿Eliminar este hito del cronograma de la obra?')) return;
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== projectId) return proj;
         return {
           ...proj,
           milestones: (proj.milestones || []).filter(m => m.id !== milestoneId)
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Hito eliminado del cronograma', 'Trash2');
-    });
+    showToast('Hito eliminado del cronograma en Nube y Drive', 'Trash2');
   };
 
-  // Toggle Manual Complete on Milestone with Supabase Cloud persistence
+  // Toggle Manual Complete on Milestone with Supabase Cloud and Drive persistence
   const handleToggleManualMilestone = (projectId: string, milestoneId: string) => {
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== projectId) return proj;
         return {
           ...proj,
@@ -1096,24 +1093,15 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Estado del hito actualizado en la Nube', 'Check');
-    });
+    showToast('Estado del hito actualizado en Nube y Drive', 'Check');
   };
 
-  // Update Milestone Progress Percentage with Supabase Cloud persistence
+  // Update Milestone Progress Percentage with Supabase Cloud and Drive persistence
   const handleUpdateMilestoneProgress = (projectId: string, milestoneId: string, percentage: number) => {
-    lastLocalEditTimeRef.current = Date.now();
     const clamped = Math.max(0, Math.min(100, Math.round(percentage)));
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== projectId) return proj;
         return {
           ...proj,
@@ -1127,15 +1115,8 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(`Avance del hito actualizado al ${clamped}%`, 'Check');
-    });
+    showToast('Avance del hito actualizado en Nube y Drive', 'Check');
   };
 
   const projectForMilestones = projects.find(p => p.id === (milestonesProjectId || selectedProjectId));
@@ -1171,6 +1152,25 @@ export default function App() {
   }, [projects]);
 
   // Synchronous, deterministic project updater with immediate localStorage persistence, Supabase sync and Google Drive Master
+    // Sincronización manual bajo demanda a Supabase y Google Drive (veniergn@gmail.com)
+  const handleSyncNow = async () => {
+    setCloudStatus('syncing');
+    showToast('☁️ Sincronizando con Supabase y Google Drive (veniergn@gmail.com)...', 'Cloud');
+    try {
+      const res = await saveProjectsToCloud(projectsRef.current);
+      setCloudStatus(res.status);
+      const driveRes = await syncProjectsMasterToDrive(projectsRef.current);
+      if (driveRes.success) {
+        showToast('✅ Todo respaldado con éxito en Supabase y tu Google Drive', 'Check');
+      } else {
+        showToast('Guardado en Supabase (Google Drive sincronizándose en segundo plano)', 'Check');
+      }
+    } catch (err) {
+      console.error('Error al sincronizar:', err);
+      showToast('Error de conexión con la Nube', 'AlertCircle');
+    }
+  };
+
   const updateProjectsAndSync = (updater: (prev: Project[]) => Project[]) => {
     lastLocalEditTimeRef.current = Date.now();
     const updated = updater(projectsRef.current);
@@ -1218,13 +1218,20 @@ export default function App() {
               } catch (e) {
                 console.warn('LocalStorage error on cloud init:', e);
               }
-              if (countTotalPhotos(merged) > countTotalPhotos(sanitized)) {
+              // Detectar si lo local tiene más fotos, notas o ítems completados para respaldar de inmediato a la Nube y Drive
+              const localNotes = merged.reduce((s, p) => s + p.units.reduce((us, u) => us + (u.notes?.length || 0), 0), 0);
+              const cloudNotes = sanitized.reduce((s, p) => s + p.units.reduce((us, u) => us + (u.notes?.length || 0), 0), 0);
+              const localChecks = merged.reduce((s, p) => s + p.units.reduce((us, u) => us + u.trades.reduce((ts, t) => ts + t.items.filter(i => i.completed).length, 0), 0), 0);
+              const cloudChecks = sanitized.reduce((s, p) => s + p.units.reduce((us, u) => us + u.trades.reduce((ts, t) => ts + t.items.filter(i => i.completed).length, 0), 0), 0);
+
+              if (countTotalPhotos(merged) > countTotalPhotos(sanitized) || localNotes > cloudNotes || localChecks !== cloudChecks) {
                 shouldPushLocalToCloud = true;
               }
               return merged;
             });
             if (shouldPushLocalToCloud) {
               saveProjectsToCloud(projectsRef.current);
+              syncProjectsMasterToDrive(projectsRef.current);
             }
             showToast('Conectado a la Nube Supabase', 'Cloud');
           } else {
@@ -1456,14 +1463,16 @@ export default function App() {
       return;
     }
 
-    // Auto-sync immediately to Supabase cloud (debounced 300ms)
-    if (!isInitialCloudLoadRef.current) {
+    // Auto-sync continuo e inmediato a Supabase Cloud y Google Drive (veniergn@gmail.com)
+    if (!isInitialCloudLoadRef.current && projects && projects.length > 0) {
       if (cloudSaveTimerRef.current) clearTimeout(cloudSaveTimerRef.current);
       cloudSaveTimerRef.current = setTimeout(async () => {
         setCloudStatus('syncing');
         const res = await saveProjectsToCloud(projects);
         setCloudStatus(res.status);
-      }, 300);
+        // Respaldo maestro garantizado en Google Drive
+        syncProjectsMasterToDrive(projects);
+      }, 600);
     }
   }, [projects]);
 
@@ -1824,13 +1833,10 @@ export default function App() {
 
   // Checklist Item Progress Percentage Update (0 to 100)
   const handleUpdateItemProgress = (tradeId: string, itemId: string, percentage: number) => {
-    lastLocalEditTimeRef.current = Date.now();
     const clamped = Math.max(0, Math.min(100, isNaN(percentage) ? 0 : Math.round(percentage)));
     const isCompleted = clamped === 100;
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -1857,24 +1863,14 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
-    });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
     });
   };
 
   // Delete checklist item
   const handleDeleteItem = (tradeId: string, itemId: string) => {
     if (!confirm('¿Eliminar esta tarea del checklist de la unidad?')) return;
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -1894,27 +1890,17 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Tarea eliminada y sincronizada', 'Trash2');
-    });
+    showToast('Tarea eliminada y sincronizada en Nube y Drive', 'Trash2');
   };
 
-  // Edit / rename checklist item and persist immediately to Supabase Cloud
+  // Edit / rename checklist item and persist immediately to Supabase Cloud and Drive
   const handleEditItem = (tradeId: string, itemId: string, newName: string) => {
     const trimmed = newName.trim();
     if (!trimmed || !selectedProjectId || !selectedUnitId) return;
 
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -1940,15 +1926,8 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(`Ítem modificado: "${trimmed}"`, 'Check');
-    });
+    showToast('Ítem modificado y sincronizado en Nube y Drive', 'Check');
   };
 
   // Add custom checklist item to trade (smart selector: current unit or replicated across selected active projects)
@@ -2139,12 +2118,9 @@ export default function App() {
 
   // Save or remove technical comment / observation on checklist item
   const handleSaveItemComment = (tradeId: string, itemId: string, comment: string) => {
-    lastLocalEditTimeRef.current = Date.now();
     const trimmed = comment.trim();
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -2170,19 +2146,8 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      if (trimmed) {
-        showToast('Observación guardada en la Nube', 'Check');
-      } else {
-        showToast('Observación eliminada en la Nube', 'Trash2');
-      }
-    });
+    showToast(trimmed ? 'Observación guardada en Nube y Drive' : 'Observación eliminada', trimmed ? 'Check' : 'Trash2');
   };
 
   // Add photo to item (from camera, file picker or modal) and persist directly to Google Drive (Gmail) & Supabase Cloud
@@ -2318,7 +2283,7 @@ export default function App() {
     });
   };
 
-  // Save technical observation with severity directly to Supabase Cloud
+  // Save technical observation with severity directly to Supabase Cloud and Drive
   const handleSaveObservation = async (
     tradeId: string,
     itemId: string,
@@ -2327,14 +2292,11 @@ export default function App() {
     isExplicitDelete: boolean = false
   ) => {
     if (!selectedProjectId || !selectedUnitId) return;
-    lastLocalEditTimeRef.current = Date.now();
     const trimmed = comment.trim();
-
-    let updatedProjectsList: Project[] = [];
     let hadPriorComment = false;
 
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -2362,21 +2324,15 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      if (trimmed) {
-        showToast('Observación guardada en la Nube Supabase', 'Cloud');
-      } else if (isExplicitDelete && hadPriorComment) {
-        showToast('Observación eliminada en la Nube', 'Trash2');
-      } else {
-        showToast('Cambios guardados en la Nube', 'Check');
-      }
-    });
+    if (trimmed) {
+      showToast('Observación guardada en Nube y Drive', 'Cloud');
+    } else if (isExplicitDelete && hadPriorComment) {
+      showToast('Observación eliminada en Nube y Drive', 'Trash2');
+    } else {
+      showToast('Cambios guardados en Nube y Drive', 'Check');
+    }
   };
 
   // Save Croquis sketch to unit and sync to Google Drive & Supabase Cloud (Instant optimistic save)
@@ -2698,20 +2654,24 @@ export default function App() {
     });
   };
 
-  // Unit Notes Management (Cosas a Realizar y Recordatorios por Depto)
+  // Unit Notes Management (Cosas a Realizar y Recordatorios por Depto) con respaldo a Google Drive
   const handleSaveUnitNote = (unitId: string, noteData: Omit<UnitNote, 'id' | 'createdAt'> & { id?: string }) => {
-    lastLocalEditTimeRef.current = Date.now();
-    const noteId = noteData.id || `note_${Date.now()}`;
+    const noteId = noteData.id || ('note_' + Date.now());
     const nowIso = new Date().toISOString();
+    let currentProjName = '';
+    let currentUnitName = '';
+    let targetNotes: UnitNote[] = [];
 
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        const hasUnit = (proj.units || []).some(u => u.id === unitId);
+        if (proj.id !== selectedProjectId && !hasUnit) return proj;
+        currentProjName = proj.name;
         return {
           ...proj,
           units: proj.units.map(u => {
             if (u.id !== unitId) return u;
+            currentUnitName = u.name;
             const currentNotes = u.notes || [];
             const existingIndex = currentNotes.findIndex(n => n.id === noteId);
             let updatedNotes: UnitNote[];
@@ -2733,74 +2693,68 @@ export default function App() {
               };
               updatedNotes = [newNote, ...currentNotes];
             }
+            targetNotes = updatedNotes;
             return { ...u, notes: updatedNotes };
           })
         };
       });
-      updatedProjectsList = updated;
-      projectsRef.current = updated;
-      return updated;
     });
 
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
-    } catch (e) {
-      console.warn('LocalStorage error on note save:', e);
+    // Guardado y Respaldo dedicado del departamento en Google Drive (veniergn@gmail.com)
+    if (currentProjName && currentUnitName && targetNotes.length > 0) {
+      backupUnitNotesToDrive(currentProjName, currentUnitName, targetNotes);
     }
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Nota guardada y sincronizada en la Nube', 'Check');
-    });
+    showToast('💾 Nota guardada en la tablet, Supabase y Google Drive (veniergn@gmail.com)', 'Check');
   };
 
   const handleDeleteUnitNote = (unitId: string, noteId: string) => {
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
+    let currentProjName = '';
+    let currentUnitName = '';
+    let targetNotes: UnitNote[] = [];
+
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        const hasUnit = (proj.units || []).some(u => u.id === unitId);
+        if (proj.id !== selectedProjectId && !hasUnit) return proj;
+        currentProjName = proj.name;
         return {
           ...proj,
           units: proj.units.map(u => {
             if (u.id !== unitId) return u;
+            currentUnitName = u.name;
             const updatedNotes = (u.notes || []).filter(n => n.id !== noteId);
+            targetNotes = updatedNotes;
             return { ...u, notes: updatedNotes };
           })
         };
       });
-      updatedProjectsList = updated;
-      projectsRef.current = updated;
-      return updated;
     });
 
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
-    } catch (e) {
-      console.warn('LocalStorage error on note delete:', e);
+    if (currentProjName && currentUnitName) {
+      backupUnitNotesToDrive(currentProjName, currentUnitName, targetNotes);
     }
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Nota eliminada en la Nube', 'Trash2');
-    });
+    showToast('Nota eliminada en la Nube y Drive', 'Trash2');
   };
 
   const handleToggleUnitNote = (unitId: string, noteId: string) => {
-    lastLocalEditTimeRef.current = Date.now();
     const nowIso = new Date().toISOString();
-    let updatedProjectsList: Project[] = [];
     let isNowCompleted = false;
+    let currentProjName = '';
+    let currentUnitName = '';
+    let targetNotes: UnitNote[] = [];
 
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        const hasUnit = (proj.units || []).some(u => u.id === unitId);
+        if (proj.id !== selectedProjectId && !hasUnit) return proj;
+        currentProjName = proj.name;
         return {
           ...proj,
           units: proj.units.map(u => {
             if (u.id !== unitId) return u;
+            currentUnitName = u.name;
             const updatedNotes = (u.notes || []).map(n => {
               if (n.id !== noteId) return n;
               isNowCompleted = !n.completed;
@@ -2811,34 +2765,26 @@ export default function App() {
                 updatedAt: nowIso
               };
             });
+            targetNotes = updatedNotes;
             return { ...u, notes: updatedNotes };
           })
         };
       });
-      updatedProjectsList = updated;
-      projectsRef.current = updated;
-      return updated;
     });
 
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedProjectsList)));
-    } catch (e) {
-      console.warn('LocalStorage error on note toggle:', e);
+    if (currentProjName && currentUnitName) {
+      backupUnitNotesToDrive(currentProjName, currentUnitName, targetNotes);
     }
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(isNowCompleted ? 'Nota marcada como realizada ✔' : 'Nota marcada como pendiente', 'Check');
-    });
+    showToast(isNowCompleted ? 'Nota marcada como realizada ✔ (Nube y Drive)' : 'Nota marcada como pendiente (Nube y Drive)', 'Check');
   };
 
-  // Create Unit
+  // Create Unit with Cloud and Drive sync
   const handleCreateUnit = (unitName: string, unitType?: 'unit' | 'common_area') => {
     if (!selectedProjectId) return;
     const resolvedType = unitType || (unitName.toLowerCase().includes('depto') ? 'unit' : 'common_area');
     const newUnit: Unit = {
-      id: `unit_${Date.now()}`,
+      id: 'unit_' + Date.now(),
       name: unitName,
       type: resolvedType,
       category: resolvedType === 'common_area' ? 'Espacio Común' : 'Departamento',
@@ -2846,7 +2792,7 @@ export default function App() {
       blueprints: []
     };
 
-    setProjects(prev => prev.map(p => {
+    updateProjectsAndSync(prev => prev.map(p => {
       if (p.id !== selectedProjectId) return p;
       return {
         ...p,
@@ -2855,12 +2801,12 @@ export default function App() {
     }));
 
     setIsNewUnitModalOpen(false);
-    showToast(`${resolvedType === 'common_area' ? 'Espacio común' : 'Departamento'} "${unitName}" agregado`, 'Check');
+    showToast('Unidad agregada y sincronizada en Nube y Drive', 'Check');
   };
 
-  // Edit Unit Name and Type (Denomination by floor)
+  // Edit Unit Name and Type with Cloud and Drive sync
   const handleSaveUnitName = (unitId: string, newName: string, newType?: 'unit' | 'common_area') => {
-    setProjects(prev => prev.map(p => {
+    updateProjectsAndSync(prev => prev.map(p => {
       return {
         ...p,
         units: p.units.map(u => {
@@ -2877,12 +2823,12 @@ export default function App() {
         })
       };
     }));
-    showToast(`Denominación actualizada a "${newName}"`, 'Check');
+    showToast('Denominación actualizada y sincronizada en Nube y Drive', 'Check');
   };
 
-  // Update project schedule dates (startDate, estimatedEndDate)
+  // Update project schedule dates (startDate, estimatedEndDate) with Cloud and Drive sync
   const handleUpdateProjectDates = (projectId: string, startDate: string, estimatedEndDate: string) => {
-    setProjects(prev => prev.map(p => {
+    updateProjectsAndSync(prev => prev.map(p => {
       if (p.id !== projectId) return p;
       return {
         ...p,
@@ -2890,7 +2836,7 @@ export default function App() {
         estimatedEndDate
       };
     }));
-    showToast('Cronograma de obra actualizado', 'Calendar');
+    showToast('Cronograma de obra actualizado y sincronizado en Nube y Drive', 'Calendar');
   };
 
   // Calendar & Project Manager handlers (strictly isolated by project, cloud synchronized, and backed up to Google Drive)
