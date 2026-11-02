@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Plus,
   Trash2,
+  Pencil,
   X,
   AlertTriangle,
   Phone
@@ -26,6 +27,7 @@ interface ContractorsFullViewProps {
   onSaveContractorPhoto: (projectId: string, contractorId: string, avatarUrl: string) => void;
   onAddContractor?: (projectId: string, contractor: ContractorProfile) => void;
   onDeleteContractor?: (projectId: string, contractorId: string) => void;
+  onUpdateContractor?: (projectId: string, contractor: ContractorProfile, oldName?: string) => void;
   onShowToast?: (msg: string, icon?: string) => void;
 }
 
@@ -53,6 +55,7 @@ export function ContractorsFullView({
   onSaveContractorPhoto,
   onAddContractor,
   onDeleteContractor,
+  onUpdateContractor,
   onShowToast
 }: ContractorsFullViewProps) {
   const [activeProjectFilter, setActiveProjectFilter] = useState<string>(selectedProjectId || 'all');
@@ -61,6 +64,53 @@ export function ContractorsFullView({
     projectId: string;
     contractor: ContractorProfile;
   } | null>(null);
+
+  // Edit Contractor Profile State
+  const [editingProfile, setEditingProfile] = useState<{
+    projectId: string;
+    contractor: ContractorProfile;
+    projectName: string;
+  } | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState(ROLE_PRESETS[0]);
+  const [editColor, setEditColor] = useState(COLOR_PRESETS[0]);
+  const [editPhone, setEditPhone] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const handleStartEditProfile = (item: { projectId: string; contractor: ContractorProfile; projectName: string }) => {
+    setEditingProfile(item);
+    setEditName(item.contractor.name || '');
+    setEditRole(item.contractor.role || ROLE_PRESETS[0]);
+    setEditColor(item.contractor.color || COLOR_PRESETS[0]);
+    setEditPhone((item.contractor as any).phone || '');
+    setEditNotes((item.contractor as any).notes || '');
+  };
+
+  const handleSaveEditProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProfile || !editName.trim()) return;
+
+    const initials = editName
+      .trim()
+      .split(' ')
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+
+    const updated: ContractorProfile = {
+      ...editingProfile.contractor,
+      name: editName.trim(),
+      role: editRole.trim(),
+      color: editColor,
+      initials: initials || 'TR',
+      ...((editPhone.trim() ? { phone: editPhone.trim() } : {}) as any),
+      ...((editNotes.trim() ? { notes: editNotes.trim() } : {}) as any)
+    };
+
+    onUpdateContractor?.(editingProfile.projectId, updated, editingProfile.contractor.name);
+    onShowToast?.(`Datos de ${updated.name} actualizados y guardados en la Nube y Drive`, 'Check');
+    setEditingProfile(null);
+  };
 
   // Add Contractor Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -262,6 +312,13 @@ export function ContractorsFullView({
                     {item.assignedTasksCount} tareas
                   </span>
                   <button
+                    onClick={() => handleStartEditProfile(item)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors cursor-pointer"
+                    title="Editar nombre, rol o datos del responsable"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={() => setContractorToDelete({
                       projectId: item.projectId,
                       contractor: c,
@@ -299,9 +356,14 @@ export function ContractorsFullView({
                   </button>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-black text-white leading-snug">
-                    {c.name}
+                <div
+                  onClick={() => handleStartEditProfile(item)}
+                  className="cursor-pointer group/name text-center"
+                  title="Clic para modificar nombre, especialidad o color"
+                >
+                  <h3 className="text-sm font-black text-white group-hover/name:text-cyan-400 transition-colors flex items-center justify-center gap-1.5">
+                    <span>{c.name}</span>
+                    <Pencil className="w-3 h-3 text-cyan-400 opacity-0 group-hover/name:opacity-100 transition-opacity" />
                   </h3>
                   <p className="text-xs text-blue-400 font-semibold mt-0.5">
                     {c.role}
@@ -311,10 +373,14 @@ export function ContractorsFullView({
 
               {/* Action Strip */}
               <div className="pt-2 border-t border-[#29384C]/60 flex items-center justify-between text-[11px] text-[#94A3B8]">
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Activo</span>
-                </span>
+                <button
+                  onClick={() => handleStartEditProfile(item)}
+                  className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Editar nombre, rol o datos del responsable"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Editar</span>
+                </button>
                 <button
                   onClick={() => setEditingContractor({
                     projectId: item.projectId,
@@ -323,7 +389,7 @@ export function ContractorsFullView({
                   className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5" />
-                  <span>Cambiar Foto</span>
+                  <span>Foto</span>
                 </button>
               </div>
             </div>
@@ -502,6 +568,156 @@ export function ContractorsFullView({
           onShowToast={onShowToast}
         />
       )}
-    </div>
+          {/* Modal: Editar Responsable / Contratista */}
+      {editingProfile && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#101D30] border border-[#29384C] rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#29384C] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center font-bold"
+                  style={{ backgroundColor: `${editColor}25`, border: `1px solid ${editColor}60`, color: editColor }}
+                >
+                  <Pencil className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Editar Responsable</h3>
+                  <p className="text-[11px] text-[#94A3B8]">
+                    Obra: <span className="text-white font-bold">{editingProfile.projectName}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProfile(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditProfile} className="space-y-4">
+              {/* Preview Avatar */}
+              <div className="flex justify-center py-2">
+                <ContractorAvatar
+                  avatarUrl={editingProfile.contractor.avatarUrl}
+                  name={editName || 'Responsable'}
+                  color={editColor}
+                  sizeClassName="w-16 h-16"
+                  ringClassName="ring-4 ring-[#17263B] shadow-md"
+                />
+              </div>
+
+              {/* Nombre Input */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Nombre y Apellido <span className="text-cyan-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Ej: Marcelo Gómez, Cuadrilla Sanitaria..."
+                  className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-semibold"
+                />
+              </div>
+
+              {/* Rol / Cargo */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Cargo / Rol en Obra
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editRole}
+                  onChange={e => setEditRole(e.target.value)}
+                  placeholder="Ej: Capataz General, Oficial Albañil..."
+                  className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 mb-1.5"
+                />
+                <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
+                  {ROLE_PRESETS.slice(0, 5).map(rp => (
+                    <button
+                      key={rp}
+                      type="button"
+                      onClick={() => setEditRole(rp)}
+                      className="px-2 py-0.5 rounded-lg bg-[#081321] hover:bg-[#17263B] text-[9.5px] text-slate-400 hover:text-white whitespace-nowrap border border-[#29384C]"
+                    >
+                      {rp.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Color Identifier */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Color Identificador de Cuadrilla
+                </label>
+                <div className="flex items-center gap-2">
+                  {COLOR_PRESETS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setEditColor(c)}
+                      className={`w-7 h-7 rounded-xl transition-all cursor-pointer ${
+                        editColor === c ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Phone / Contact */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Teléfono / WhatsApp de Contacto (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  placeholder="Ej: +54 9 261 555-1234"
+                  className="w-full bg-[#081321] border border-[#29384C] rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Notas / Observaciones del Responsable
+                </label>
+                <textarea
+                  rows={2}
+                  value={editNotes}
+                  onChange={e => setEditNotes(e.target.value)}
+                  placeholder="Especialidad, herramientas a cargo, horario de cuadrilla..."
+                  className="w-full bg-[#081321] border border-[#29384C] rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 custom-scrollbar"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="pt-3 border-t border-[#29384C] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile(null)}
+                  className="px-4 py-2 rounded-xl bg-[#17263B] text-slate-300 hover:text-white font-bold text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-xs shadow-md active:scale-95 transition-all"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+</div>
   );
 }

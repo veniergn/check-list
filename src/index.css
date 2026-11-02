@@ -188,6 +188,25 @@ html.font-bold-mode .font-black {
   scrollbar-color: rgba(51, 65, 85, 0.7) transparent;
 }
 
+@keyframes gantt-urgent-flash {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(244, 63, 94, 0.95), 0 0 6px rgba(239, 68, 68, 1);
+    border-color: #f43f5e;
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.98);
+    box-shadow: 0 0 4px rgba(244, 63, 94, 0.35);
+    border-color: #fda4af;
+  }
+}
+
+.gantt-task-blinking {
+  animation: gantt-urgent-flash 1.05s infinite ease-in-out !important;
+}
+
 /* Print specific styles for Technical Inspection Act & Gantt PDF - Strict Landscape */
 @media print {
   @page {
@@ -231,7 +250,8 @@ html.font-bold-mode .font-black {
   }
 
   /* Desactivar backdrop oscuro y centrado fixed del modal para que solo fluya la hoja */
-  .report-modal-backdrop {
+  .report-modal-backdrop,
+  .gantt-print-backdrop {
     position: static !important;
     inset: auto !important;
     background: #ffffff !important;
@@ -245,7 +265,8 @@ html.font-bold-mode .font-black {
     overflow: visible !important;
     display: block !important;
   }
-  .report-modal-dialog {
+  .report-modal-dialog,
+  .gantt-print-dialog {
     position: static !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -260,7 +281,8 @@ html.font-bold-mode .font-black {
     overflow: visible !important;
   }
   .report-sheet-wrapper,
-  .monthly-report-sheet-wrapper {
+  .monthly-report-sheet-wrapper,
+  .gantt-sheet-wrapper {
     background: #ffffff !important;
     background-color: #ffffff !important;
     padding: 0 !important;

@@ -3064,7 +3064,54 @@ export default function App() {
         localStorage.setItem(`pm_contractors_${projectId}`, JSON.stringify(current.filter(c => c.id !== contractorId)));
       }
     } catch {}
-    showToast('Trabajador eliminado del equipo', 'Trash2');
+        showToast('Trabajador eliminado del equipo', 'Trash2');
+  };
+
+  // Update contractor profile with dual cloud sync (Supabase + Google Drive) and cascade name updates to calendar events
+  const handleUpdateContractor = (projectId: string, updatedContractor: ContractorProfile, oldName?: string) => {
+    updateProjectsAndSync(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        const currentContractors = getProjectContractors(p);
+        const exists = currentContractors.some(c => c.id === updatedContractor.id);
+        const nextContractors = exists
+          ? currentContractors.map(c => c.id === updatedContractor.id ? updatedContractor : c)
+          : [...currentContractors, updatedContractor];
+
+        // Cascade name change to project's calendarEvents if name was edited
+        let nextEvents = p.calendarEvents || [];
+        if (oldName && oldName.trim() && oldName.trim().toLowerCase() !== updatedContractor.name.trim().toLowerCase()) {
+          const oldNorm = oldName.trim().toLowerCase();
+          nextEvents = nextEvents.map(evt => {
+            if ((evt.assignedTo || '').trim().toLowerCase() === oldNorm) {
+              return {
+                ...evt,
+                assignedTo: updatedContractor.name,
+                assignedRole: updatedContractor.role
+              };
+            }
+            return evt;
+          });
+        }
+
+        return {
+          ...p,
+          contractors: nextContractors,
+          calendarEvents: nextEvents
+        };
+      })
+    );
+
+    try {
+      const proj = projects.find(p => p.id === projectId);
+      if (proj) {
+        const currentContractors = getProjectContractors(proj);
+        const nextContractors = currentContractors.map(c => c.id === updatedContractor.id ? updatedContractor : c);
+        localStorage.setItem(`pm_contractors_${projectId}`, JSON.stringify(nextContractors));
+      }
+    } catch {}
+
+    showToast(`Responsable "${updatedContractor.name}" actualizado y sincronizado en Nube y Drive`, 'Check');
   };
 
   // Obra Materials Excel Handler
@@ -3654,8 +3701,12 @@ export default function App() {
               selectedProjectId={selectedProjectId}
               onSelectProject={handleSelectProject}
               onSaveTask={handleSaveCalendarEvent}
+              onDeleteTask={handleDeleteCalendarEvent}
               onSaveMilestone={handleSaveMilestone}
               onOpenMilestonesConfig={handleOpenMilestonesConfig}
+              onOpenProjectManager={handleOpenProjectManager}
+              onShowToast={showToast}
+              directorName={logos.directorName || selectedProject?.director || 'Arq. Venier Gastón'}
             />
           </ErrorBoundary>
         )}
@@ -3671,6 +3722,7 @@ export default function App() {
               selectedProjectId={selectedProjectId}
               onSaveContractorPhoto={handleSaveContractorPhoto}
               onAddContractor={handleAddContractor}
+              onUpdateContractor={handleUpdateContractor}
               onDeleteContractor={handleDeleteContractor}
               onShowToast={showToast}
             />

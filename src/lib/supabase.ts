@@ -10,7 +10,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export type CloudSyncStatus = 'synced' | 'syncing' | 'offline';
 
 /**
- * Carga proyectos y logos desde la Nube (/.netlify/functions/sync y Supabase con carrera de tiempo límite rápida).
+ * Carga proyectos y logos desde la Nube priorizando Supabase como base de datos en tiempo real,
+ * con fallback a Google Drive / Cloud Sync Hub si Supabase estuviera temporalmente inaccesible.
  */
 export async function loadCloudData(): Promise<{
   projects: Project[] | null;
@@ -21,21 +22,10 @@ export async function loadCloudData(): Promise<{
   let cloudProjects: Project[] | null = null;
   let cloudLogos: CustomLogos | null = null;
 
-  // 1. Consultar de forma ultrarrápida el Cloud Sync Hub (/.netlify/functions/sync)
-  try {
-    const driveMaster = await fetchProjectsMasterFromCloud();
-    if (driveMaster && driveMaster.projects && driveMaster.projects.length > 0) {
-      cloudProjects = driveMaster.projects as Project[];
-      if (driveMaster.logos) cloudLogos = driveMaster.logos as CustomLogos;
-    }
-  } catch (e) {
-    console.warn('Aviso Cloud Hub:', e);
-  }
-
-  // 2. Consultar Supabase con timeout estricto de 3500ms para evitar cuelgues si la base está en pausa
+  // 1. Consultar Supabase en primer lugar (Base de datos en tiempo real de alta velocidad)
   try {
     const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: { message: 'timeout' } }), 3500)
+      setTimeout(() => resolve({ data: null, error: { message: 'timeout' } }), 4000)
     );
     const supaPromise = supabase.from('app_data').select('key, data');
     const result: any = await Promise.race([supaPromise, timeoutPromise]);
@@ -43,10 +33,7 @@ export async function loadCloudData(): Promise<{
     if (result && !result.error && Array.isArray(result.data)) {
       result.data.forEach((row: { key: string; data: any }) => {
         if (row.key === 'projects' && Array.isArray(row.data) && row.data.length > 0) {
-          // Solo usar datos de Supabase si Drive aún no los cargó, evitando sobrescribir con versiones desactualizadas
-          if (!cloudProjects) {
-            cloudProjects = row.data as Project[];
-          }
+          cloudProjects = row.data as Project[];
         }
         if (row.key === 'logos' && row.data && typeof row.data === 'object') {
           cloudLogos = row.data as CustomLogos;
@@ -55,6 +42,19 @@ export async function loadCloudData(): Promise<{
     }
   } catch (err: any) {
     console.warn('Supabase respuesta no disponible:', err?.message);
+  }
+
+  // 2. Si Supabase no devolvió proyectos (ej. offline o primera carga), consultar como respaldo Cloud Hub / Google Drive
+  if (!cloudProjects || cloudProjects.length === 0) {
+    try {
+      const driveMaster = await fetchProjectsMasterFromCloud();
+      if (driveMaster && driveMaster.projects && driveMaster.projects.length > 0) {
+        cloudProjects = driveMaster.projects as Project[];
+        if (!cloudLogos && driveMaster.logos) cloudLogos = driveMaster.logos as CustomLogos;
+      }
+    } catch (e) {
+      console.warn('Aviso Cloud Hub:', e);
+    }
   }
 
   return {

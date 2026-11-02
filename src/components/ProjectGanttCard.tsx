@@ -38,6 +38,9 @@ interface ProjectGanttCardProps {
   onSaveMilestone?: (projectId: string, milestone: Milestone) => void;
   contractors?: ContractorProfile[];
   large?: boolean; // Para vista ampliada al entrar a la obra (UnitsView)
+  onEditTask?: (task: ProjectCalendarEvent) => void;
+  onAddTask?: (contractorName?: string, dateStr?: string) => void;
+  onOpenA3Print?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -335,14 +338,14 @@ export function ProjectGanttCard({
         const taskProgress = task.progress !== undefined ? task.progress : (task.completed || task.status === 'completed' ? 100 : 0);
         const isDone = Boolean(task.completed || task.status === 'completed' || taskProgress >= 100);
         const isOverdue = daysDiff < 0 && !isDone;
-        const isApproaching = daysDiff >= 0 && daysDiff <= 3;
-        const hasNoProgress = taskProgress === 0;
-        const hasSignificantProgress = taskProgress > 0;
+        // Tarea pronta a terminar en el tiempo (5 días o menos)
+        const isApproaching = daysDiff >= 0 && daysDiff <= 5;
+        // No está avanzando (menos de 50% de avance físico en la recta final)
+        const hasLowProgress = taskProgress < 50;
         const isCriticalAlarm = task.type === 'alarm' || alarms.isCriticalDelay;
-        const isApproachingNoProgress = isApproaching && hasNoProgress && !isDone;
+        const isApproachingNoProgress = isApproaching && hasLowProgress && !isDone;
 
-        // Criterio de color y titilado en rojo:
-        // "no es lo mismo que quede 3 dias para terminar sin avances a que tengamos un avance del 90% quedando 3 dias no estari aen rojo sino naranja, eso porcentaje se lo podria colocar si entro en la tarea ahi le puedo ir colocando porcentaje de avance."
+        // Criterio de color y titilado en rojo con animación pulsante:
         let pillClasses = 'bg-cyan-500 text-slate-950 border-cyan-400';
         let statusText = `${taskProgress}% • Pendiente`;
 
@@ -350,18 +353,19 @@ export function ProjectGanttCard({
           pillClasses = 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/25';
           statusText = '100% Listo';
         } else if (isOverdue || isCriticalAlarm || isApproachingNoProgress) {
-          pillClasses = 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-[0_0_14px_rgba(244,63,94,1)]';
+          // Titilará visiblemente con animación flash glow
+          pillClasses = 'bg-rose-600 text-white border-2 border-rose-300 gantt-task-blinking shadow-[0_0_18px_rgba(244,63,94,1)] font-black';
           statusText = isOverdue
-            ? `${taskProgress}% • Atraso +${Math.abs(daysDiff)}d`
+            ? `${taskProgress}% • ¡Atraso +${Math.abs(daysDiff)}d!`
             : daysDiff === 0
-            ? `${taskProgress}% • ¡Vence Hoy sin avances!`
+            ? `${taskProgress}% • ¡Vence Hoy sin avances suficientes!`
             : `${taskProgress}% • ¡Quedan ${daysDiff}d sin avances!`;
-        } else if (isApproaching && hasSignificantProgress) {
-          // Quedan <= 3 días pero con avance registrado (ej. 90%) -> NARANJA / ÁMBAR (No titila en rojo)
+        } else if (isApproaching && taskProgress >= 50) {
+          // Quedan <= 5 días pero con avance significativo (>= 50%) -> ÁMBAR
           pillClasses = 'bg-amber-500 text-slate-950 border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)] font-bold';
-          statusText = `${taskProgress}% • Quedan ${daysDiff}d`;
+          statusText = `${taskProgress}% • Quedan ${daysDiff}d (${taskProgress}%)`;
         } else if (taskProgress > 0 || task.status === 'in_progress') {
-          // En curso al día con tiempo suficiente -> VERDE ESMERALDA ("si venimos bien")
+          // En curso al día con tiempo suficiente -> VERDE ESMERALDA
           pillClasses = 'bg-emerald-600 text-white border-emerald-400 shadow-emerald-600/25';
           statusText = `${taskProgress}% • En curso al día`;
         }
