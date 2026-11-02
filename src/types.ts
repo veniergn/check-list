@@ -85,6 +85,7 @@ export interface Unit {
   isLocked?: boolean; // Frozen/locked state
   sketches?: SketchDocument[]; // Registered hand-drawn croquis
   notes?: UnitNote[]; // Notas y recordatorios técnicos del departamento
+  deletedItemIds?: string[]; // Registered tombstones of deleted items
 }
 
 export interface Milestone {
@@ -328,6 +329,7 @@ export interface Project {
     totalArea?: string;
   };
   units: Unit[];
+  deletedItemIds?: string[]; // Registered tombstones of deleted items across project
 }
 
 export interface TradeTemplate {

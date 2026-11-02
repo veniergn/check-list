@@ -65,6 +65,48 @@ export async function loadCloudData(): Promise<{
 }
 
 /**
+ * Prepara una copia ligera de los proyectos para Supabase y Realtime.
+ * Remueve cadenas binarias base64 pesadas (> 40KB) conservando intactos todos los
+ * enlaces CDN permanentes de Google Drive (https://lh3.googleusercontent.com/...),
+ * estados, porcentajes, contratistas y notas para sincronización ultrarrápida (<300ms).
+ */
+export function prepareLightweightProjectsForSupabase(projects: Project[]): Project[] {
+  if (!Array.isArray(projects)) return [];
+  return projects.map(p => ({
+    ...p,
+    coverImageUrl: p.coverImageUrl?.startsWith('http') ? p.coverImageUrl : (p.coverImageUrl && p.coverImageUrl.length > 50000 ? '' : p.coverImageUrl),
+    contractors: (p.contractors || []).map(c => {
+      if (c.excelFile?.base64Data) {
+        const { base64Data, ...rest } = c.excelFile;
+        return { ...c, excelFile: rest };
+      }
+      return c;
+    }),
+    units: (p.units || []).map(u => ({
+      ...u,
+      sketches: (u.sketches || []).map(s => ({
+        ...s,
+        dataUrl: s.dataUrl?.startsWith('http') ? s.dataUrl : (s.dataUrl && s.dataUrl.length > 40000 ? '' : s.dataUrl)
+      })),
+      blueprints: (u.blueprints || []).map(b => ({
+        ...b,
+        url: b.url?.startsWith('http') ? b.url : (b.url && b.url.length > 40000 ? '' : b.url)
+      })),
+      trades: (u.trades || []).map(t => ({
+        ...t,
+        items: (t.items || []).map(i => ({
+          ...i,
+          photos: (i.photos || []).map(ph => ({
+            ...ph,
+            dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 40000 ? '' : ph.dataUrl)
+          }))
+        }))
+      }))
+    }))
+  }));
+}
+
+/**
  * Guarda el arreglo de proyectos en Supabase y el Hub de la Nube con guardado seguro inmediato.
  */
 export async function saveProjectsToCloud(projects: Project[]): Promise<{ success: boolean; status: CloudSyncStatus; error?: any }> {
@@ -73,25 +115,38 @@ export async function saveProjectsToCloud(projects: Project[]): Promise<{ succes
       return { success: false, status: 'synced' };
     }
 
-    // 1. Guardar en Supabase con timeout de 3500ms
+    const lightweightProjects = prepareLightweightProjectsForSupabase(projects);
+
+    let isDone = false;
     const timeoutPromise = new Promise<{ error: any }>((resolve) =>
-      setTimeout(() => resolve({ error: { message: 'timeout' } }), 3500)
+      setTimeout(() => {
+        if (!isDone) resolve({ error: { message: 'timeout' } });
+      }, 12000)
     );
+
     const supaPromise = supabase
       .from('app_data')
       .upsert({
         key: 'projects',
-        data: projects,
+        data: lightweightProjects,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'key' });
+      }, { onConflict: 'key' })
+      .then(res => {
+        isDone = true;
+        return res;
+      });
 
-    Promise.race([supaPromise, timeoutPromise]).catch(err => {
-      console.warn('Supabase upsert aviso:', err?.message);
-    });
+    const res: any = await Promise.race([supaPromise, timeoutPromise]);
+
+    if (res && res.error) {
+      console.warn('Supabase upsert aviso:', res.error?.message || res.error);
+      return { success: false, status: 'offline', error: res.error };
+    }
 
     return { success: true, status: 'synced' };
-  } catch (err) {
-    return { success: true, status: 'synced', error: err };
+  } catch (err: any) {
+    console.warn('Supabase upsert catch:', err?.message || err);
+    return { success: false, status: 'offline', error: err };
   }
 }
 

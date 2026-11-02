@@ -164,6 +164,15 @@ export function normalizeTradeId(tradeName: string): string {
 
 export function sanitizeProjectTrades(project: Project): Project {
   if (!project || !project.units) return project;
+
+  const storedDeleted = getStoredDeletedItemIds();
+  const allDeleted = new Set<string>(storedDeleted);
+  (project.deletedItemIds || []).forEach(id => allDeleted.add(id));
+  (project.units || []).forEach(u => (u.deletedItemIds || []).forEach(id => {
+    allDeleted.add(id);
+    allDeleted.add(`${u.id}:${id}`);
+  }));
+
   return {
     ...project,
     calendarEvents: project.calendarEvents || [],
@@ -179,19 +188,21 @@ export function sanitizeProjectTrades(project: Project): Project {
               ? trade.id
               : normalizeTradeId(trade.name));
 
+        const activeItems = (trade.items || []).filter(item => !isItemDeleted(item.id, unit.id, allDeleted));
+
         if (!seen.has(key)) {
           seen.set(key, {
             ...trade,
             id: canonicalId,
             name: masterTrade ? masterTrade.name : trade.name.trim(),
             shortName: trade.shortName || (masterTrade ? masterTrade.shortName : trade.name.trim()),
-            items: [...(trade.items || [])]
+            items: activeItems
           });
         } else {
           // If duplicate trade exists in this unit, merge items avoiding duplicates
           const existing = seen.get(key)!;
           const existingItemNames = new Set((existing.items || []).map(i => i.name.toLowerCase().trim()));
-          (trade.items || []).forEach(item => {
+          activeItems.forEach(item => {
             if (!existingItemNames.has(item.name.toLowerCase().trim())) {
               existing.items.push(item);
               existingItemNames.add(item.name.toLowerCase().trim());
@@ -237,6 +248,16 @@ export function deduplicateProjects(projects: Project[]): Project[] {
     if (raw) deletedIds = new Set(JSON.parse(raw));
   } catch (e) {}
 
+  const storedDeletedItems = getStoredDeletedItemIds();
+  const allDeletedItems = new Set<string>(storedDeletedItems);
+  projects.forEach(p => {
+    (p.deletedItemIds || []).forEach(id => allDeletedItems.add(id));
+    (p.units || []).forEach(u => (u.deletedItemIds || []).forEach(id => {
+      allDeletedItems.add(id);
+      allDeletedItems.add(`${u.id}:${id}`);
+    }));
+  });
+
   const map = new Map<string, Project>();
 
   for (const proj of projects) {
@@ -246,7 +267,15 @@ export function deduplicateProjects(projects: Project[]): Project[] {
     const normKey = proj.name.trim().toLowerCase();
 
     if (!map.has(normKey)) {
-      map.set(normKey, { ...proj });
+      // Prune deleted items from the initial project
+      const prunedUnits = (proj.units || []).map(u => ({
+        ...u,
+        trades: (u.trades || []).map(t => ({
+          ...t,
+          items: pruneDeletedItems(t.items, u.id, allDeletedItems)
+        }))
+      }));
+      map.set(normKey, { ...proj, units: prunedUnits });
     } else {
       const existing = map.get(normKey)!;
 
@@ -260,7 +289,13 @@ export function deduplicateProjects(projects: Project[]): Project[] {
       (proj.units || []).forEach(u => {
         const uKey = (u.name || u.id).trim().toLowerCase();
         if (!unitMap.has(uKey)) {
-          unitMap.set(uKey, u);
+          unitMap.set(uKey, {
+            ...u,
+            trades: (u.trades || []).map(t => ({
+              ...t,
+              items: pruneDeletedItems(t.items, u.id, allDeletedItems)
+            }))
+          });
         } else {
           const curr = unitMap.get(uKey)!;
           const mergedSketches = [...(curr.sketches || [])];
@@ -281,11 +316,40 @@ export function deduplicateProjects(projects: Project[]): Project[] {
               mergedNotes.push(nt);
             }
           });
+
+          // Merge trades and prune deleted items
+          const tradeMap = new Map<string, Trade>();
+          (curr.trades || []).forEach(t => {
+            const tKey = t.name.toLowerCase().trim();
+            tradeMap.set(tKey, { ...t, items: [...(t.items || [])] });
+          });
+          (u.trades || []).forEach(t => {
+            const tKey = t.name.toLowerCase().trim();
+            if (!tradeMap.has(tKey)) {
+              tradeMap.set(tKey, { ...t, items: [...(t.items || [])] });
+            } else {
+              const exT = tradeMap.get(tKey)!;
+              const exItemIds = new Set((exT.items || []).map(i => i.id));
+              (t.items || []).forEach(item => {
+                if (!exItemIds.has(item.id)) {
+                  exT.items.push(item);
+                  exItemIds.add(item.id);
+                }
+              });
+            }
+          });
+
+          const finalTrades = Array.from(tradeMap.values()).map(t => ({
+            ...t,
+            items: pruneDeletedItems(t.items, curr.id, allDeletedItems)
+          }));
+
           unitMap.set(uKey, {
             ...curr,
             sketches: mergedSketches,
             blueprints: mergedBlueprints,
-            notes: mergedNotes
+            notes: mergedNotes,
+            trades: finalTrades
           });
         }
       });
@@ -315,7 +379,8 @@ export function deduplicateProjects(projects: Project[]): Project[] {
         contractors: Array.from(contractorMap.values()),
         monthlyReportData: existing.monthlyReportData || proj.monthlyReportData,
         materialsExcelFile: existing.materialsExcelFile || proj.materialsExcelFile,
-        coverImageUrl: existing.coverImageUrl || proj.coverImageUrl
+        coverImageUrl: existing.coverImageUrl || proj.coverImageUrl,
+        deletedItemIds: Array.from(new Set([...(existing.deletedItemIds || []), ...(proj.deletedItemIds || [])]))
       });
     }
   }
@@ -328,6 +393,22 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
   if (!remoteProjects || remoteProjects.length === 0) return localProjects;
 
   const remoteIds = new Set(remoteProjects.map(p => p.id));
+  const storedDeleted = getStoredDeletedItemIds();
+  const allDeletedItems = new Set<string>(storedDeleted);
+  remoteProjects.forEach(p => {
+    (p.deletedItemIds || []).forEach(id => allDeletedItems.add(id));
+    (p.units || []).forEach(u => (u.deletedItemIds || []).forEach(id => {
+      allDeletedItems.add(id);
+      allDeletedItems.add(`${u.id}:${id}`);
+    }));
+  });
+  localProjects.forEach(p => {
+    (p.deletedItemIds || []).forEach(id => allDeletedItems.add(id));
+    (p.units || []).forEach(u => (u.deletedItemIds || []).forEach(id => {
+      allDeletedItems.add(id);
+      allDeletedItems.add(`${u.id}:${id}`);
+    }));
+  });
 
   const mergedRemote = remoteProjects.map(remoteProj => {
     const localProj = localProjects.find(lp => lp.id === remoteProj.id);
@@ -416,7 +497,7 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
         const localTrade = (localUnit.trades || []).find(lt => lt.id === remoteTrade.id);
         if (!localTrade) return remoteTrade;
 
-        const mergedItems = (remoteTrade.items || []).map(remoteItem => {
+        const mergedItems = (remoteTrade.items || []).filter(remoteItem => !isItemDeleted(remoteItem.id, remoteUnit.id, allDeletedItems)).map(remoteItem => {
           const localItem = (localTrade.items || []).find(li => li.id === remoteItem.id);
           if (!localItem) return remoteItem;
 
@@ -1258,7 +1339,7 @@ export default function App() {
               const localChecks = merged.reduce((s, p) => s + p.units.reduce((us, u) => us + u.trades.reduce((ts, t) => ts + t.items.filter(i => i.completed).length, 0), 0), 0);
               const cloudChecks = sanitized.reduce((s, p) => s + p.units.reduce((us, u) => us + u.trades.reduce((ts, t) => ts + t.items.filter(i => i.completed).length, 0), 0), 0);
 
-              if (countTotalPhotos(merged) > countTotalPhotos(sanitized) || localNotes > cloudNotes || localChecks !== cloudChecks) {
+              if (countTotalPhotos(merged) > countTotalPhotos(sanitized) || localNotes > cloudNotes) {
                 shouldPushLocalToCloud = true;
               }
               return merged;
@@ -1815,11 +1896,8 @@ export default function App() {
 
   // Checklist Item Toggle
   const handleToggleItem = (tradeId: string, itemId: string) => {
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -1852,13 +1930,6 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
-    });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
     });
   };
 
@@ -1900,15 +1971,25 @@ export default function App() {
   // Delete checklist item
   const handleDeleteItem = (tradeId: string, itemId: string) => {
     if (!confirm('¿Eliminar esta tarea del checklist de la unidad?')) return;
+    if (!selectedProjectId || !selectedUnitId) return;
+
+    // Registrar permanentemente el borrado en localStorage y tombstone
+    saveDeletedItemId(itemId, selectedUnitId, selectedProjectId);
+
     updateProjectsAndSync(prev => {
       return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
+        const currentDeleted = proj.deletedItemIds || [];
+        const nextDeleted = Array.from(new Set([...currentDeleted, itemId, `${selectedUnitId}:${itemId}`]));
         return {
           ...proj,
+          deletedItemIds: nextDeleted,
           units: proj.units.map(u => {
             if (u.id !== selectedUnitId) return u;
+            const uDeleted = u.deletedItemIds || [];
             return {
               ...u,
+              deletedItemIds: Array.from(new Set([...uDeleted, itemId])),
               trades: u.trades.map(t => {
                 const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
                 if (!isMatch) return t;
@@ -1979,7 +2060,7 @@ export default function App() {
     });
 
     if (scope === 'current_unit' || targetProjectIds.length === 0) {
-      setProjects(prev => prev.map(proj => {
+      updateProjectsAndSync(prev => prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -2013,13 +2094,13 @@ export default function App() {
           })
         };
       }));
-      showToast(`Tarea agregada en la unidad actual (0%)`, 'Check');
+      showToast(`Tarea agregada en la unidad actual (0%) y sincronizada`, 'Check');
     } else {
       // Replicate to all departments/units of each selected project with 0% initial progress
       const targetSet = new Set(targetProjectIds);
       let totalUnitsAffected = 0;
 
-      setProjects(prev => prev.map(proj => {
+      updateProjectsAndSync(prev => prev.map(proj => {
         if (!targetSet.has(proj.id)) return proj;
         totalUnitsAffected += proj.units.length;
         return {
@@ -2055,7 +2136,7 @@ export default function App() {
       }));
 
       const countObras = targetProjectIds.length;
-      showToast(`Ítem replicado en ${countObras} ${countObras === 1 ? 'obra' : 'obras'} (${totalUnitsAffected} unidades)`, 'Layers');
+      showToast(`Ítem replicado y sincronizado en ${countObras} ${countObras === 1 ? 'obra' : 'obras'} (${totalUnitsAffected} unidades)`, 'Layers');
     }
   };
 
@@ -2082,9 +2163,7 @@ export default function App() {
       ]
     };
 
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
+    updateProjectsAndSync(prev => {
       const updated = prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
@@ -2100,270 +2179,10 @@ export default function App() {
           })
         };
       });
-      const sanitized = updated.map(sanitizeProjectTrades);
-      updatedProjectsList = sanitized;
-      return sanitized;
+      return updated.map(sanitizeProjectTrades);
     });
 
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(`Gremio "${trimmed}" agregado ${scope === 'all_units' ? 'en todo el complejo' : 'en este depto'}`, 'Check');
-    });
-  };
-
-  // Delete a Trade from unit or all units in project
-  const handleDeleteTrade = (tradeId: string, tradeName: string, scope: 'current_unit' | 'all_units' = 'current_unit') => {
-    if (!confirm(`¿Eliminar el gremio "${tradeName}" y todas sus tareas asociadas?`)) return;
-    if (!selectedProjectId) return;
-
-    const normalizedName = tradeName.toLowerCase().trim();
-
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
-        return {
-          ...proj,
-          units: proj.units.map(u => {
-            if (scope === 'current_unit' && u.id !== selectedUnitId) return u;
-            return {
-              ...u,
-              trades: u.trades.filter(t => t.id !== tradeId && t.name.toLowerCase().trim() !== normalizedName)
-            };
-          })
-        };
-      });
-      const sanitized = updated.map(sanitizeProjectTrades);
-      updatedProjectsList = sanitized;
-      return sanitized;
-    });
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast(`Gremio "${tradeName}" eliminado`, 'Trash2');
-    });
-  };
-
-  // Save or remove technical comment / observation on checklist item
-  const handleSaveItemComment = (tradeId: string, itemId: string, comment: string) => {
-    const trimmed = comment.trim();
-    updateProjectsAndSync(prev => {
-      return prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
-        return {
-          ...proj,
-          units: proj.units.map(u => {
-            if (u.id !== selectedUnitId) return u;
-            return {
-              ...u,
-              trades: u.trades.map(t => {
-                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
-                if (!isMatch) return t;
-                return {
-                  ...t,
-                  items: t.items.map(item => {
-                    if (item.id !== itemId) return item;
-                    return {
-                      ...item,
-                      comment: trimmed ? trimmed : undefined
-                    };
-                  })
-                };
-              })
-            };
-          })
-        };
-      });
-    });
-    showToast(trimmed ? 'Observación guardada en Nube y Drive' : 'Observación eliminada', trimmed ? 'Check' : 'Trash2');
-  };
-
-  // Add photo to item (from camera, file picker or modal) and persist directly to Google Drive (Gmail) & Supabase Cloud
-  const handleAddPhoto = async (tradeId: string, itemId: string, dataUrl: string) => {
-    if (!selectedProjectId || !selectedUnitId) return;
-    lastLocalEditTimeRef.current = Date.now();
-
-    const now = new Date();
-    const dateString = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const timestamp = `${dateString}, ${timeString} hs`;
-    const photoId = `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-    // 1. Guardar de inmediato en almacenamiento indestructible IndexedDB (< 5ms)
-    saveLocalImage(photoId, dataUrl);
-
-    const initialPhoto = {
-      id: photoId,
-      dataUrl: dataUrl,
-      timestamp
-    };
-
-    const targetProjId = selectedProjectId;
-    const targetUId = selectedUnitId;
-    const activeProj = projectsRef.current.find(p => p.id === targetProjId);
-    const activeUnit = activeProj?.units?.find(u => u.id === targetUId);
-
-    // 2. Respuesta instantánea en interfaz local (< 5ms)
-    let updatedList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== targetProjId) return proj;
-        return {
-          ...proj,
-          units: proj.units.map(u => {
-            if (u.id !== targetUId) return u;
-            return {
-              ...u,
-              trades: u.trades.map(t => {
-                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
-                if (!isMatch) return t;
-                return {
-                  ...t,
-                  items: t.items.map(item => {
-                    if (item.id !== itemId) return item;
-                    return {
-                      ...item,
-                      photos: [...(item.photos || []), initialPhoto]
-                    };
-                  })
-                };
-              })
-            };
-          })
-        };
-      });
-      projectsRef.current = updated;
-      updatedList = updated;
-      return updated;
-    });
-
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedList)));
-    } catch (e) {}
-
-    showToast('📸 Foto guardada al instante. Respaldando en Google Drive...', 'Camera');
-
-    // 3. Encolar para subida garantizada a Google Drive en segundo plano
-    const filename = `inspeccion_${(activeProj?.name || 'obra').replace(/\s+/g, '_')}_${tradeId}_${itemId}_${Date.now()}.jpg`;
-    enqueueDriveUpload({
-      type: 'photo',
-      projectId: targetProjId,
-      projectName: activeProj?.name,
-      unitId: targetUId,
-      unitName: activeUnit?.name,
-      tradeId,
-      itemId,
-      targetId: photoId,
-      filename
-    }, dataUrl);
-  };
-
-  // Delete photo from item and persist immediately to Supabase Cloud
-  const handleDeletePhoto = async (tradeId: string, itemId: string, photoId: string) => {
-    if (!confirm('¿Eliminar esta fotografía de la inspección?')) return;
-    if (!selectedProjectId || !selectedUnitId) return;
-    lastLocalEditTimeRef.current = Date.now();
-
-    let updatedProjectsList: Project[] = [];
-
-    setProjects(prev => {
-      const updated = prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
-        return {
-          ...proj,
-          units: proj.units.map(u => {
-            if (u.id !== selectedUnitId) return u;
-            return {
-              ...u,
-              trades: u.trades.map(t => {
-                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
-                if (!isMatch) return t;
-                return {
-                  ...t,
-                  items: t.items.map(item => {
-                    if (item.id !== itemId) return item;
-                    return {
-                      ...item,
-                      photos: (item.photos || []).filter(p => p.id !== photoId)
-                    };
-                  })
-                };
-              })
-            };
-          })
-        };
-      });
-      updatedProjectsList = updated;
-      return updated;
-    });
-
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedProjectsList));
-    } catch (e) {
-      console.warn('LocalStorage error on photo delete:', e);
-    }
-
-    // Persist immediately to Supabase Cloud
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Fotografía eliminada en la Nube', 'Trash2');
-    });
-  };
-
-  // Save technical observation with severity directly to Supabase Cloud and Drive
-  const handleSaveObservation = async (
-    tradeId: string,
-    itemId: string,
-    comment: string,
-    severity: 'low' | 'medium' | 'high' | undefined,
-    isExplicitDelete: boolean = false
-  ) => {
-    if (!selectedProjectId || !selectedUnitId) return;
-    const trimmed = comment.trim();
-    let hadPriorComment = false;
-
-    updateProjectsAndSync(prev => {
-      return prev.map(proj => {
-        if (proj.id !== selectedProjectId) return proj;
-        return {
-          ...proj,
-          units: proj.units.map(u => {
-            if (u.id !== selectedUnitId) return u;
-            return {
-              ...u,
-              trades: u.trades.map(t => {
-                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
-                if (!isMatch) return t;
-                return {
-                  ...t,
-                  items: t.items.map(item => {
-                    if (item.id !== itemId) return item;
-                    hadPriorComment = !!(item.comment && item.comment.trim());
-                    return {
-                      ...item,
-                      comment: trimmed ? trimmed : undefined,
-                      severity: trimmed ? severity : undefined
-                    };
-                  })
-                };
-              })
-            };
-          })
-        };
-      });
-    });
-
-    if (trimmed) {
-      showToast('Observación guardada en Nube y Drive', 'Cloud');
-    } else if (isExplicitDelete && hadPriorComment) {
-      showToast('Observación eliminada en Nube y Drive', 'Trash2');
-    } else {
-      showToast('Cambios guardados en Nube y Drive', 'Check');
-    }
+    showToast(`Gremio "${trimmed}" agregado y sincronizado ${scope === 'all_units' ? 'en todo el complejo' : 'en este depto'}`, 'Check');
   };
 
   // Save Croquis sketch to unit and sync to Google Drive & Supabase Cloud (Instant optimistic save)
@@ -2450,10 +2269,9 @@ export default function App() {
   // Delete Croquis sketch from unit and sync to Supabase Cloud
   const handleDeleteSketch = (projectId: string, unitId: string, sketchId: string) => {
     if (!confirm('¿Eliminar este croquis del registro de la unidad?')) return;
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== projectId) return proj;
         return {
           ...proj,
@@ -2466,30 +2284,8 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
-
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedProjectsList));
-    } catch (e) {
-      console.warn('LocalStorage error on sketch delete:', e);
-    }
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Croquis eliminado en la Nube', 'Trash2');
-    });
-  };
-
-  // Trigger camera for active item
-  const handleTriggerCamera = (tradeId: string, itemId: string, tradeName: string, itemName: string) => {
-    setActivePhotoViewer({ tradeId, itemId, tradeName: tradeName || '', itemName: itemName || '' });
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-      cameraInputRef.current.click();
-    }
+    showToast('Croquis eliminado y sincronizado en Nube y Drive', 'Trash2');
   };
 
   // Handle camera capture or image selection from global input

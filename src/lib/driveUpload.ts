@@ -28,6 +28,25 @@ export interface UploadResponse {
   error?: string;
 }
 
+
+/**
+ * Safe, chunked Base64 encoder that handles UTF-8 strings of any size
+ * without triggering call-stack size exceeded or URI malformed errors.
+ */
+export function safeStringToBase64(str: string): string {
+  if (typeof window === 'undefined') {
+    return Buffer.from(str).toString('base64');
+  }
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  const len = bytes.byteLength;
+  const chunkSize = 0x8000; // 32KB chunks
+  for (let i = 0; i < len; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, Math.min(i + chunkSize, len))));
+  }
+  return btoa(binary);
+}
+
 export function isDriveUrl(url?: string): boolean {
   if (!url || typeof url !== 'string') return false;
   return url.startsWith('https://lh3.googleusercontent.com') ||
@@ -330,15 +349,38 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
 
   isSyncingMaster = true;
   try {
+    // Sanitize projects to strip heavy raw base64 data (> 40KB) keeping Google Drive URLs
     const cleanProjects = projects.map(p => ({
       ...p,
+      coverImageUrl: p.coverImageUrl?.startsWith('http') ? p.coverImageUrl : (p.coverImageUrl && p.coverImageUrl.length > 50000 ? '' : p.coverImageUrl),
       contractors: (p.contractors || []).map((c: any) => {
         if (c.excelFile?.base64Data && c.excelFile.driveFileId) {
           const { base64Data, ...rest } = c.excelFile;
           return { ...c, excelFile: rest };
         }
         return c;
-      })
+      }),
+      units: (p.units || []).map((u: any) => ({
+        ...u,
+        sketches: (u.sketches || []).map((s: any) => ({
+          ...s,
+          dataUrl: s.dataUrl?.startsWith('http') ? s.dataUrl : (s.dataUrl && s.dataUrl.length > 40000 ? '' : s.dataUrl)
+        })),
+        blueprints: (u.blueprints || []).map((b: any) => ({
+          ...b,
+          url: b.url?.startsWith('http') ? b.url : (b.url && b.url.length > 40000 ? '' : b.url)
+        })),
+        trades: (u.trades || []).map((t: any) => ({
+          ...t,
+          items: (t.items || []).map((i: any) => ({
+            ...i,
+            photos: (i.photos || []).map((ph: any) => ({
+              ...ph,
+              dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 40000 ? '' : ph.dataUrl)
+            }))
+          }))
+        }))
+      }))
     }));
 
     const payload = {
@@ -350,9 +392,7 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
     };
 
     const jsonStr = JSON.stringify(payload, null, 2);
-    const base64Data = typeof window !== 'undefined'
-      ? btoa(unescape(encodeURIComponent(jsonStr)))
-      : Buffer.from(jsonStr).toString('base64');
+    const base64Data = safeStringToBase64(jsonStr);
 
     const filename = 'Control_Avance_Master_Database.json';
 
