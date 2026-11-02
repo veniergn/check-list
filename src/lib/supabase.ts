@@ -45,7 +45,7 @@ export async function loadCloudData(): Promise<{
   }
 
   // 2. Si Supabase no devolvió proyectos (ej. offline o primera carga), consultar como respaldo Cloud Hub / Google Drive
-  if (!cloudProjects || cloudProjects.length === 0) {
+  if (!cloudProjects || (cloudProjects as Project[]).length === 0) {
     try {
       const driveMaster = await fetchProjectsMasterFromCloud();
       if (driveMaster && driveMaster.projects && driveMaster.projects.length > 0) {

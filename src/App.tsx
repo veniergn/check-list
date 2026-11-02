@@ -36,6 +36,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { exportInspectionPlanillaToExcel } from './utils/excelExport';
 import { Toast } from './components/Toast';
 import { loadCloudData, saveProjectsToCloud, saveLogosToCloud, subscribeToCloudData, CloudSyncStatus } from './lib/supabase';
+import { getStoredDeletedItemIds, saveDeletedItemId, isItemDeleted, pruneDeletedItems } from './utils/tombstones';
 import { CloudSetupModal } from './components/CloudSetupModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
@@ -164,7 +165,6 @@ export function normalizeTradeId(tradeName: string): string {
 
 export function sanitizeProjectTrades(project: Project): Project {
   if (!project || !project.units) return project;
-
   const storedDeleted = getStoredDeletedItemIds();
   const allDeleted = new Set<string>(storedDeleted);
   (project.deletedItemIds || []).forEach(id => allDeleted.add(id));
@@ -248,8 +248,8 @@ export function deduplicateProjects(projects: Project[]): Project[] {
     if (raw) deletedIds = new Set(JSON.parse(raw));
   } catch (e) {}
 
-  const storedDeletedItems = getStoredDeletedItemIds();
-  const allDeletedItems = new Set<string>(storedDeletedItems);
+  const storedDeleted = getStoredDeletedItemIds();
+  const allDeletedItems = new Set<string>(storedDeleted);
   projects.forEach(p => {
     (p.deletedItemIds || []).forEach(id => allDeletedItems.add(id));
     (p.units || []).forEach(u => (u.deletedItemIds || []).forEach(id => {
@@ -267,7 +267,6 @@ export function deduplicateProjects(projects: Project[]): Project[] {
     const normKey = proj.name.trim().toLowerCase();
 
     if (!map.has(normKey)) {
-      // Prune deleted items from the initial project
       const prunedUnits = (proj.units || []).map(u => ({
         ...u,
         trades: (u.trades || []).map(t => ({
@@ -1973,7 +1972,7 @@ export default function App() {
     if (!confirm('¿Eliminar esta tarea del checklist de la unidad?')) return;
     if (!selectedProjectId || !selectedUnitId) return;
 
-    // Registrar permanentemente el borrado en localStorage y tombstone
+    // Registrar permanentemente el borrado en localStorage y tombstones
     saveDeletedItemId(itemId, selectedUnitId, selectedProjectId);
 
     updateProjectsAndSync(prev => {
@@ -2185,6 +2184,235 @@ export default function App() {
     showToast(`Gremio "${trimmed}" agregado y sincronizado ${scope === 'all_units' ? 'en todo el complejo' : 'en este depto'}`, 'Check');
   };
 
+  // Delete a Trade from unit or all units in project
+  const handleDeleteTrade = (tradeId: string, tradeName: string, scope: 'current_unit' | 'all_units' = 'current_unit') => {
+    if (!confirm(`¿Eliminar el gremio "${tradeName}" y todas sus tareas asociadas?`)) return;
+    if (!selectedProjectId) return;
+
+    const normalizedName = tradeName.toLowerCase().trim();
+
+    updateProjectsAndSync(prev => {
+      const updated = prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (scope === 'current_unit' && u.id !== selectedUnitId) return u;
+            return {
+              ...u,
+              trades: u.trades.filter(t => t.id !== tradeId && t.name.toLowerCase().trim() !== normalizedName)
+            };
+          })
+        };
+      });
+      return updated.map(sanitizeProjectTrades);
+    });
+
+    showToast(`Gremio "${tradeName}" eliminado y sincronizado en Nube y Drive`, 'Trash2');
+  };
+
+  // Save or remove technical comment / observation on checklist item
+  const handleSaveItemComment = (tradeId: string, itemId: string, comment: string) => {
+    const trimmed = comment.trim();
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== selectedUnitId) return u;
+            return {
+              ...u,
+              trades: u.trades.map(t => {
+                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
+                if (!isMatch) return t;
+                return {
+                  ...t,
+                  items: t.items.map(item => {
+                    if (item.id !== itemId) return item;
+                    return {
+                      ...item,
+                      comment: trimmed ? trimmed : undefined
+                    };
+                  })
+                };
+              })
+            };
+          })
+        };
+      });
+    });
+    showToast(trimmed ? 'Observación guardada en Nube y Drive' : 'Observación eliminada', trimmed ? 'Check' : 'Trash2');
+  };
+
+  // Add photo to item (from camera, file picker or modal) and persist directly to Google Drive (Gmail) & Supabase Cloud
+  const handleAddPhoto = async (tradeId: string, itemId: string, dataUrl: string) => {
+    if (!selectedProjectId || !selectedUnitId) return;
+    lastLocalEditTimeRef.current = Date.now();
+
+    const now = new Date();
+    const dateString = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const timestamp = `${dateString}, ${timeString} hs`;
+    const photoId = `ph_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // 1. Guardar de inmediato en almacenamiento indestructible IndexedDB (< 5ms)
+    saveLocalImage(photoId, dataUrl);
+
+    const initialPhoto = {
+      id: photoId,
+      dataUrl: dataUrl,
+      timestamp
+    };
+
+    const targetProjId = selectedProjectId;
+    const targetUId = selectedUnitId;
+    const activeProj = projectsRef.current.find(p => p.id === targetProjId);
+    const activeUnit = activeProj?.units?.find(u => u.id === targetUId);
+
+    // 2. Respuesta instantánea en interfaz local (< 5ms)
+    let updatedList: Project[] = [];
+    setProjects(prev => {
+      const updated = prev.map(proj => {
+        if (proj.id !== targetProjId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== targetUId) return u;
+            return {
+              ...u,
+              trades: u.trades.map(t => {
+                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
+                if (!isMatch) return t;
+                return {
+                  ...t,
+                  items: t.items.map(item => {
+                    if (item.id !== itemId) return item;
+                    return {
+                      ...item,
+                      photos: [...(item.photos || []), initialPhoto]
+                    };
+                  })
+                };
+              })
+            };
+          })
+        };
+      });
+      projectsRef.current = updated;
+      updatedList = updated;
+      return updated;
+    });
+
+    try {
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(createLightweightProjectsForLocal(updatedList)));
+    } catch (e) {}
+
+    showToast('📸 Foto guardada al instante. Respaldando en Google Drive...', 'Camera');
+
+    // 3. Encolar para subida garantizada a Google Drive en segundo plano
+    const filename = `inspeccion_${(activeProj?.name || 'obra').replace(/\s+/g, '_')}_${tradeId}_${itemId}_${Date.now()}.jpg`;
+    enqueueDriveUpload({
+      type: 'photo',
+      projectId: targetProjId,
+      projectName: activeProj?.name,
+      unitId: targetUId,
+      unitName: activeUnit?.name,
+      tradeId,
+      itemId,
+      targetId: photoId,
+      filename
+    }, dataUrl);
+  };
+
+  // Delete photo from item and persist immediately to Supabase Cloud and Drive
+  const handleDeletePhoto = async (tradeId: string, itemId: string, photoId: string) => {
+    if (!confirm('¿Eliminar esta fotografía de la inspección?')) return;
+    if (!selectedProjectId || !selectedUnitId) return;
+
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== selectedUnitId) return u;
+            return {
+              ...u,
+              trades: u.trades.map(t => {
+                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
+                if (!isMatch) return t;
+                return {
+                  ...t,
+                  items: t.items.map(item => {
+                    if (item.id !== itemId) return item;
+                    return {
+                      ...item,
+                      photos: (item.photos || []).filter(p => p.id !== photoId)
+                    };
+                  })
+                };
+              })
+            };
+          })
+        };
+      });
+    });
+    showToast('Fotografía eliminada y sincronizada en Nube y Drive', 'Trash2');
+  };
+
+  // Save technical observation with severity directly to Supabase Cloud and Drive
+  const handleSaveObservation = async (
+    tradeId: string,
+    itemId: string,
+    comment: string,
+    severity: 'low' | 'medium' | 'high' | undefined,
+    isExplicitDelete: boolean = false
+  ) => {
+    if (!selectedProjectId || !selectedUnitId) return;
+    const trimmed = comment.trim();
+    let hadPriorComment = false;
+
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
+        if (proj.id !== selectedProjectId) return proj;
+        return {
+          ...proj,
+          units: proj.units.map(u => {
+            if (u.id !== selectedUnitId) return u;
+            return {
+              ...u,
+              trades: u.trades.map(t => {
+                const isMatch = t.id === tradeId || (t.name && t.name.toLowerCase().trim() === tradeId?.toLowerCase().trim()) || (t.items && t.items.some(i => i.id === itemId));
+                if (!isMatch) return t;
+                return {
+                  ...t,
+                  items: t.items.map(item => {
+                    if (item.id !== itemId) return item;
+                    hadPriorComment = !!(item.comment && item.comment.trim());
+                    return {
+                      ...item,
+                      comment: trimmed ? trimmed : undefined,
+                      severity: trimmed ? severity : undefined
+                    };
+                  })
+                };
+              })
+            };
+          })
+        };
+      });
+    });
+
+    if (trimmed) {
+      showToast('Observación guardada en Nube y Drive', 'Cloud');
+    } else if (isExplicitDelete && hadPriorComment) {
+      showToast('Observación eliminada en Nube y Drive', 'Trash2');
+    } else {
+      showToast('Cambios guardados en Nube y Drive', 'Check');
+    }
+  };
+
   // Save Croquis sketch to unit and sync to Google Drive & Supabase Cloud (Instant optimistic save)
   const handleSaveSketch = async (projectId: string, unitId: string, sketch: SketchDocument) => {
     lastLocalEditTimeRef.current = Date.now();
@@ -2286,6 +2514,15 @@ export default function App() {
       });
     });
     showToast('Croquis eliminado y sincronizado en Nube y Drive', 'Trash2');
+  };
+
+  // Trigger camera for active item
+  const handleTriggerCamera = (tradeId: string, itemId: string, tradeName: string, itemName: string) => {
+    setActivePhotoViewer({ tradeId, itemId, tradeName: tradeName || '', itemName: itemName || '' });
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+      cameraInputRef.current.click();
+    }
   };
 
   // Handle camera capture or image selection from global input
@@ -2444,11 +2681,9 @@ export default function App() {
 
   const handleDeleteUnitBlueprint = (unitId: string, docId: string) => {
     if (!confirm('¿Eliminar este plano técnico?')) return;
-    lastLocalEditTimeRef.current = Date.now();
-    let updatedProjectsList: Project[] = [];
 
-    setProjects(prev => {
-      const updated = prev.map(proj => {
+    updateProjectsAndSync(prev => {
+      return prev.map(proj => {
         if (proj.id !== selectedProjectId) return proj;
         return {
           ...proj,
@@ -2459,8 +2694,6 @@ export default function App() {
           })
         };
       });
-      updatedProjectsList = updated;
-      return updated;
     });
 
     setActiveBlueprintViewerUnit(prev => {
@@ -2468,17 +2701,7 @@ export default function App() {
       return { ...prev, blueprints: (prev.blueprints || []).filter(d => d.id !== docId) };
     });
 
-    try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updatedProjectsList));
-    } catch (e) {
-      console.warn('LocalStorage error on blueprint delete:', e);
-    }
-
-    setCloudStatus('syncing');
-    saveProjectsToCloud(updatedProjectsList).then(res => {
-      setCloudStatus(res.status);
-      showToast('Plano eliminado en la Nube', 'Trash2');
-    });
+    showToast('Plano técnico eliminado y sincronizado en Nube y Drive', 'Trash2');
   };
 
   // Unit Notes Management (Cosas a Realizar y Recordatorios por Depto) con respaldo a Google Drive
