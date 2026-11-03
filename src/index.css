@@ -755,3 +755,64 @@ body.has-custom-bg {
   background: rgba(100, 116, 139, 0.7) !important;
 }
 
+
+/* REGLAS OBLIGATORIAS DE IMPRESIÓN PARA MINUTAS DE REUNIÓN EN OBRA (A4 PORTRAIT) */
+@media print {
+  body.printing-site-meeting,
+  body.printing-site-meeting html {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body.printing-site-meeting #root {
+    display: none !important;
+  }
+  body.printing-site-meeting .site-meeting-modal-container {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  body.printing-site-meeting .site-meeting-pages-container {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  body.printing-site-meeting .site-meeting-a4-page {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
+    padding: 12mm 15mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+  }
+  body.printing-site-meeting .site-meeting-a4-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+}

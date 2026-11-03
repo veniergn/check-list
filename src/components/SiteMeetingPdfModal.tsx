@@ -276,7 +276,12 @@ export function SiteMeetingPdfModal({
   const pages = useMemo(() => paginateMeeting(meeting), [meeting]);
 
   const handlePrint = () => {
+    // Agregar clase temporal al body para asegurar que nada oculte la minuta
+    document.body.classList.add('printing-site-meeting');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-site-meeting');
+    }, 1200);
   };
 
   const handleDownloadPdf = async () => {
