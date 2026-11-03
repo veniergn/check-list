@@ -70,6 +70,24 @@ export function SiteMeetingsModal({
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Sincronizar el botón "Volver para atrás" del navegador o de la barra superior
+  useEffect(() => {
+    if (!isOpen) return;
+    (window as any).__customSectionBackHandler = () => {
+      if (viewState === 'create' || viewState === 'edit') {
+        setViewState('list');
+        return true;
+      }
+      onClose();
+      return true;
+    };
+    return () => {
+      if ((window as any).__customSectionBackHandler) {
+        (window as any).__customSectionBackHandler = null;
+      }
+    };
+  }, [isOpen, viewState, onClose]);
+
   // Form state
   const [formDate, setFormDate] = useState('');
   const [formTime, setFormTime] = useState('');
@@ -189,7 +207,7 @@ export function SiteMeetingsModal({
         newPhotos.push(newPhotoItem);
 
         // Upload to Google Drive in background to obtain permanent driveUrl
-        const cleanProjectName = (project.name || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const cleanProjectName = ((project?.name || 'Obra') || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
         const filename = `Reunion_${cleanProjectName}_${Date.now()}_${i + 1}.jpg`;
 
         uploadFileToDrive({
@@ -254,7 +272,7 @@ export function SiteMeetingsModal({
     const updatedMeeting: SiteMeeting = {
       id: meetingId,
       projectId: project.id,
-      projectName: project.name,
+      projectName: (project?.name || 'Obra'),
       title: formTitle.trim() || 'Reunión en Obra',
       date: formDate,
       time: formTime || '09:00',
@@ -266,17 +284,19 @@ export function SiteMeetingsModal({
       updatedAt: new Date().toISOString()
     };
 
-    onSaveMeeting(updatedMeeting);
-    onShowToast?.(editingMeetingId ? 'Reunión actualizada' : 'Reunión guardada exitosamente', 'Check');
+    try {
+      onSaveMeeting(updatedMeeting);
+      onShowToast?.(editingMeetingId ? 'Reunión actualizada' : 'Reunión guardada exitosamente', 'Check');
 
-    if (andShareWhatsApp) {
-      // Intento compartir nativo (si soporta fotos) o WhatsApp directo
-      shareMeetingNative(updatedMeeting).catch(() => {
+      if (andShareWhatsApp) {
         sendMeetingWhatsApp(updatedMeeting);
-      });
-    }
+      }
 
-    setViewState('list');
+      setViewState('list');
+    } catch (err) {
+      console.error('Error al guardar reunión:', err);
+      onShowToast?.('Error al guardar la reunión', 'AlertCircle');
+    }
   };
 
   // WhatsApp quick send from list card
@@ -332,7 +352,7 @@ export function SiteMeetingsModal({
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
                 <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="text-cyan-300 font-bold">{project.name}</span>
+                <span className="text-cyan-300 font-bold">{(project?.name || 'Obra')}</span>
                 <span className="text-slate-500">•</span>
                 <span className="text-slate-400">Minutas, fotos y envío a WhatsApp</span>
               </div>
@@ -600,7 +620,7 @@ export function SiteMeetingsModal({
                   </label>
                   <div className="px-3 py-2 bg-[#172554]/50 border border-indigo-500/40 rounded-xl text-xs font-bold text-cyan-300 flex items-center gap-2">
                     <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span className="truncate">{project.name}</span>
+                    <span className="truncate">{(project?.name || 'Obra')}</span>
                   </div>
                 </div>
 

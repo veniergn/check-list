@@ -149,6 +149,17 @@ const createLightweightProjectsForLocal = (projs: Project[]): any[] => {
           })) || []
         }))
       }))
+    })),
+    siteMeetings: (p.siteMeetings || []).map(m => ({
+      ...m,
+      photos: (m.photos || []).map(ph => ({
+        id: ph.id,
+        caption: ph.caption,
+        driveUrl: ph.driveUrl,
+        driveFileId: ph.driveFileId,
+        createdAt: ph.createdAt,
+        dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 250000 ? '' : (ph.dataUrl || ''))
+      }))
     }))
   }));
 };
@@ -1095,57 +1106,63 @@ export default function App() {
   const [activeSiteMeetingsProjectId, setActiveSiteMeetingsProjectId] = useState<string | null>(null);
 
   const handleSaveSiteMeeting = (meeting: SiteMeeting) => {
-    setProjects(prev => {
-      const updated = prev.map(p => {
-        if (p.id !== meeting.projectId) return p;
-        const existingMeetings = p.siteMeetings || [];
-        const idx = existingMeetings.findIndex(m => m.id === meeting.id);
-        let newMeetings: SiteMeeting[];
-        if (idx >= 0) {
-          newMeetings = [...existingMeetings];
-          newMeetings[idx] = meeting;
-        } else {
-          newMeetings = [meeting, ...existingMeetings];
-        }
-        return {
-          ...p,
-          siteMeetings: newMeetings
-        };
+    try {
+      const nextProjects = updateProjectsAndSync(prev => {
+        return prev.map(p => {
+          if (p.id !== meeting.projectId) return p;
+          const existingMeetings = p.siteMeetings || [];
+          const idx = existingMeetings.findIndex(m => m.id === meeting.id);
+          let newMeetings: SiteMeeting[];
+          if (idx >= 0) {
+            newMeetings = [...existingMeetings];
+            newMeetings[idx] = meeting;
+          } else {
+            newMeetings = [meeting, ...existingMeetings];
+          }
+          return {
+            ...p,
+            siteMeetings: newMeetings
+          };
+        });
       });
-      updateProjectsAndSync(updated);
 
       // Respaldo de seguridad en Google Drive (veniergn@gmail.com)
-      const targetProj = updated.find(p => p.id === meeting.projectId);
+      const targetProj = nextProjects.find(p => p.id === meeting.projectId);
       if (targetProj) {
         backupSiteMeetingsToDrive(targetProj.name, targetProj.siteMeetings || []).catch(e =>
           console.warn('Aviso backup reuniones a Google Drive:', e)
         );
       }
-      return updated;
-    });
+    } catch (err) {
+      console.error('Error al guardar reunión en obra:', err);
+      showToast('Error al guardar la reunión', 'AlertCircle');
+    }
   };
 
   const handleDeleteSiteMeeting = (meetingId: string) => {
     if (!activeSiteMeetingsProjectId) return;
-    setProjects(prev => {
-      const updated = prev.map(p => {
-        if (p.id !== activeSiteMeetingsProjectId) return p;
-        const newMeetings = (p.siteMeetings || []).filter(m => m.id !== meetingId);
-        return {
-          ...p,
-          siteMeetings: newMeetings
-        };
+    try {
+      const nextProjects = updateProjectsAndSync(prev => {
+        return prev.map(p => {
+          if (p.id !== activeSiteMeetingsProjectId) return p;
+          const newMeetings = (p.siteMeetings || []).filter(m => m.id !== meetingId);
+          return {
+            ...p,
+            siteMeetings: newMeetings
+          };
+        });
       });
-      updateProjectsAndSync(updated);
 
-      const targetProj = updated.find(p => p.id === activeSiteMeetingsProjectId);
+      const targetProj = nextProjects.find(p => p.id === activeSiteMeetingsProjectId);
       if (targetProj) {
         backupSiteMeetingsToDrive(targetProj.name, targetProj.siteMeetings || []).catch(e =>
           console.warn('Aviso backup reuniones a Google Drive:', e)
         );
       }
-      return updated;
-    });
+    } catch (err) {
+      console.error('Error al eliminar reunión:', err);
+      showToast('Error al eliminar la reunión', 'AlertCircle');
+    }
   };
 
   // Croquis a mano alzada modal state
@@ -1846,10 +1863,14 @@ export default function App() {
   };
 
   const handleBack = () => {
-    // 1. Si la sección actual (Materiales o Certificados) tiene navegación interna (cerrar Excel, modal, etc.)
+    // Si la ventana de Reuniones en Obra está abierta, volver atrás o cerrarla de forma segura
     if (typeof (window as any).__customSectionBackHandler === 'function') {
       const handled = (window as any).__customSectionBackHandler();
-      if (handled) return; // Se manejó internamente dentro de la misma sección
+      if (handled) return;
+    }
+    if (activeSiteMeetingsProjectId) {
+      setActiveSiteMeetingsProjectId(null);
+      return;
     }
 
     if (currentView === 'checklist') {
@@ -4152,15 +4173,20 @@ export default function App() {
 
       {/* Modal de Reuniones en Obra con minutas, fotos y WhatsApp */}
       {activeSiteMeetingsProjectId && (
-        <SiteMeetingsModal
-          isOpen={!!activeSiteMeetingsProjectId}
-          project={projects.find(p => p.id === activeSiteMeetingsProjectId) || selectedProject || projects[0]}
-          neonColor={localColors.neonColor || '#00f2fe'}
-          onClose={() => setActiveSiteMeetingsProjectId(null)}
-          onSaveMeeting={handleSaveSiteMeeting}
-          onDeleteMeeting={handleDeleteSiteMeeting}
-          onShowToast={showToast}
-        />
+        <ErrorBoundary
+          fallbackTitle="Error al abrir Reuniones en Obra"
+          onReset={() => setActiveSiteMeetingsProjectId(null)}
+        >
+          <SiteMeetingsModal
+            isOpen={!!activeSiteMeetingsProjectId}
+            project={projects.find(p => p.id === activeSiteMeetingsProjectId) || (selectedProjectId ? projects.find(p => p.id === selectedProjectId) : null) || projects[0]}
+            neonColor={localColors.neonColor || '#00f2fe'}
+            onClose={() => setActiveSiteMeetingsProjectId(null)}
+            onSaveMeeting={handleSaveSiteMeeting}
+            onDeleteMeeting={handleDeleteSiteMeeting}
+            onShowToast={showToast}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Floating PWA App Download Balloon for Mobile and Notebook */}

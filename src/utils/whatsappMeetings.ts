@@ -71,12 +71,20 @@ export function formatMeetingForWhatsApp(meeting: SiteMeeting): string {
  * Abre WhatsApp directamente con el texto codificado
  */
 export function sendMeetingWhatsApp(meeting: SiteMeeting, phone?: string): void {
-  const text = formatMeetingForWhatsApp(meeting);
-  const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
-  const url = cleanPhone
-    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
-    : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+  try {
+    const text = formatMeetingForWhatsApp(meeting);
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+    const url = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+    const win = window.open(url, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      window.location.href = url;
+    }
+  } catch (err) {
+    console.warn('Aviso abriendo WhatsApp:', err);
+  }
 }
 
 /**
