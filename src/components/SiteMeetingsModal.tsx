@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useId } from 'react';
 import {
   X,
   Users,
+  Printer,
   Plus,
   Calendar,
   Clock,
@@ -32,6 +33,7 @@ import {
   copyMeetingWhatsAppText
 } from '../utils/whatsappMeetings';
 import { compressBase64Image, uploadFileToDrive } from '../lib/driveUpload';
+import { SiteMeetingPdfModal } from './SiteMeetingPdfModal';
 
 // WhatsApp icon SVG component
 function WhatsAppIcon({ className = 'w-4 h-4' }: { className?: string }) {
@@ -46,6 +48,7 @@ interface SiteMeetingsModalProps {
   isOpen: boolean;
   project: Project;
   neonColor?: string;
+  headerLogoUrl?: string;
   onClose: () => void;
   onSaveMeeting: (meeting: SiteMeeting) => void;
   onDeleteMeeting: (meetingId: string) => void;
@@ -56,6 +59,7 @@ export function SiteMeetingsModal({
   isOpen,
   project,
   neonColor = '#6366f1',
+  headerLogoUrl,
   onClose,
   onSaveMeeting,
   onDeleteMeeting,
@@ -103,6 +107,9 @@ export function SiteMeetingsModal({
 
   // Lightbox modal for previewing photos
   const [activeLightboxPhoto, setActiveLightboxPhoto] = useState<SiteMeetingPhoto | null>(null);
+
+  // PDF Preview & Print modal state
+  const [pdfModalMeeting, setPdfModalMeeting] = useState<SiteMeeting | null>(null);
 
   // Copy feedback state
   const [copiedMeetingId, setCopiedMeetingId] = useState<string | null>(null);
@@ -252,7 +259,7 @@ export function SiteMeetingsModal({
   };
 
   // Save meeting (either create or edit)
-  const handleSave = (andShareWhatsApp = false) => {
+  const handleSave = (andShareWhatsApp = false, openPdf = false) => {
     if (!formDate.trim()) {
       onShowToast?.('Por favor ingresa la fecha de la reunión', 'AlertCircle');
       return;
@@ -290,6 +297,10 @@ export function SiteMeetingsModal({
 
       if (andShareWhatsApp) {
         sendMeetingWhatsApp(updatedMeeting);
+      }
+
+      if (openPdf) {
+        setPdfModalMeeting(updatedMeeting);
       }
 
       setViewState('list');
@@ -473,9 +484,19 @@ export function SiteMeetingsModal({
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
+                              onClick={() => setPdfModalMeeting(meeting)}
+                              className="px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+                              title="Generar e imprimir informe completo de la reunión en PDF (A4 Vertical con fotos)"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Informe PDF A4</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleSendWhatsAppCard(meeting)}
                               className="px-2.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-                              title="Enviar minuta completa con fotos por WhatsApp"
+                              title="Enviar minuta completa limpia por WhatsApp"
                             >
                               <WhatsAppIcon className="w-3.5 h-3.5 fill-emerald-400" />
                               <span className="hidden sm:inline">WhatsApp</span>
@@ -866,6 +887,16 @@ export function SiteMeetingsModal({
 
                 <button
                   type="button"
+                  onClick={() => handleSave(false, true)}
+                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs inline-flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  title="Guardar y abrir de inmediato el informe en PDF A4 vertical con fotos"
+                >
+                  <Printer className="w-4 h-4 text-slate-950" />
+                  <span>Guardar y Ver PDF A4</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleSave(false)}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
                 >
@@ -887,6 +918,16 @@ export function SiteMeetingsModal({
           )}
         </div>
       </div>
+
+      {/* Modal de Informe PDF en A4 Vertical de la Reunión */}
+      {pdfModalMeeting && (
+        <SiteMeetingPdfModal
+          isOpen={!!pdfModalMeeting}
+          meeting={pdfModalMeeting}
+          headerLogoUrl={headerLogoUrl}
+          onClose={() => setPdfModalMeeting(null)}
+        />
+      )}
 
       {/* Lightbox Modal for Photo Preview */}
       {activeLightboxPhoto && (

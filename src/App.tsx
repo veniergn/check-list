@@ -4181,6 +4181,7 @@ export default function App() {
             isOpen={!!activeSiteMeetingsProjectId}
             project={projects.find(p => p.id === activeSiteMeetingsProjectId) || (selectedProjectId ? projects.find(p => p.id === selectedProjectId) : null) || projects[0]}
             neonColor={localColors.neonColor || '#00f2fe'}
+            headerLogoUrl={logos.header}
             onClose={() => setActiveSiteMeetingsProjectId(null)}
             onSaveMeeting={handleSaveSiteMeeting}
             onDeleteMeeting={handleDeleteSiteMeeting}

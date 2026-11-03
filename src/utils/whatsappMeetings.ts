@@ -22,53 +22,45 @@ export function formatMeetingDate(dateStr: string): string {
 }
 
 /**
- * Construye el texto completo estructurado y profesional para enviar por WhatsApp
- * a quienes no tienen la app instalada.
+ * Construye el texto limpio, formal y profesional para enviar por WhatsApp:
+ * - Sin emojis/iconos (eliminados completamente por solicitud del usuario).
+ * - Sin URLs de Google Drive o enlaces crudos que generen tarjeta de vista previa.
+ * - Toda la información de cabecera (obra, fecha, hora, con quién fue la reunión, motivo),
+ *   temas tratados y acuerdos/compromisos intacta.
  */
 export function formatMeetingForWhatsApp(meeting: SiteMeeting): string {
   const dateFormatted = formatMeetingDate(meeting.date);
   const timeFormatted = meeting.time ? `${meeting.time} hs` : '';
 
-  let text = `🏗️ *MINUTA DE REUNIÓN EN OBRA*\n`;
+  let text = `*MINUTA DE REUNIÓN EN OBRA*\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `🏢 *OBRA:* ${meeting.projectName || 'Obra'}\n`;
-  if (dateFormatted) text += `📅 *FECHA:* ${dateFormatted}\n`;
-  if (timeFormatted) text += `⏰ *HORA:* ${timeFormatted}\n`;
-  text += `👥 *CON QUIÉN FUE LA REUNIÓN:*\n${meeting.attendees || 'Personal en obra'}\n\n`;
-  text += `📌 *MOTIVO:* ${meeting.title || 'Reunión de coordinación'}\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `*OBRA:* ${meeting.projectName || 'Obra'}\n`;
+  if (dateFormatted) text += `*FECHA:* ${dateFormatted}\n`;
+  if (timeFormatted) text += `*HORA:* ${timeFormatted}\n`;
+  text += `*CON QUIÉN FUE LA REUNIÓN:*\n${meeting.attendees || 'Personal en obra'}\n\n`;
+  text += `*MOTIVO:* ${meeting.title || 'Reunión en obra'}\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  text += `📝 *TEMAS TRATADOS EN LA REUNIÓN:*\n`;
+  text += `*TEMAS TRATADOS EN LA REUNIÓN:*\n`;
   text += `${meeting.topics ? meeting.topics.trim() : '(Sin detalle registrado)'}\n\n`;
 
   if (meeting.commitments && meeting.commitments.trim()) {
-    text += `🤝 *ACUERDOS Y COMPROMISOS:*\n`;
+    text += `*ACUERDOS Y COMPROMISOS:*\n`;
     text += `${meeting.commitments.trim()}\n\n`;
   }
 
   if (meeting.photos && meeting.photos.length > 0) {
-    text += `📸 *FOTOGRAFÍAS ADJUNTAS (${meeting.photos.length}):*\n`;
-    meeting.photos.forEach((photo, index) => {
-      const caption = photo.caption ? ` - ${photo.caption}` : '';
-      if (photo.driveUrl && photo.driveUrl.startsWith('http')) {
-        text += `• Foto ${index + 1}${caption}: ${photo.driveUrl}\n`;
-      } else if (photo.dataUrl && photo.dataUrl.startsWith('http')) {
-        text += `• Foto ${index + 1}${caption}: ${photo.dataUrl}\n`;
-      } else {
-        text += `• Foto ${index + 1}${caption} (archivada en sistema)\n`;
-      }
-    });
-    text += `\n`;
+    text += `*REGISTRO FOTOGRÁFICO:* (${meeting.photos.length} imagen(es) en informe técnico PDF A4)\n\n`;
   }
 
   text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `_Registro técnico - Control de Avance de Obras_`;
+  text += `_Control de Avance de Obras_`;
 
   return text;
 }
 
 /**
- * Abre WhatsApp directamente con el texto codificado
+ * Abre WhatsApp directamente con el texto limpio y codificado
  */
 export function sendMeetingWhatsApp(meeting: SiteMeeting, phone?: string): void {
   try {
@@ -88,7 +80,7 @@ export function sendMeetingWhatsApp(meeting: SiteMeeting, phone?: string): void 
 }
 
 /**
- * Convierte un DataURL (base64) a objeto File para Web Share API
+ * Convierte un DataURL (base64) a objeto File para Web Share API si es necesario
  */
 export function dataUrlToFile(dataUrl: string, filename: string): File | null {
   try {
@@ -117,7 +109,6 @@ export async function shareMeetingNative(meeting: SiteMeeting): Promise<boolean>
   }
 
   try {
-    // Si hay fotos en base64, intentar armar array de Files
     const files: File[] = [];
     if (meeting.photos && meeting.photos.length > 0) {
       for (let i = 0; i < Math.min(meeting.photos.length, 5); i++) {
@@ -138,14 +129,13 @@ export async function shareMeetingNative(meeting: SiteMeeting): Promise<boolean>
       return true;
     }
 
-    // Compartir solo texto si no soporta files
     await navigator.share({
       title: `Reunión ${meeting.projectName}: ${meeting.title}`,
       text
     });
     return true;
   } catch (e: any) {
-    if (e.name === 'AbortError') return true; // El usuario canceló voluntariamente
+    if (e.name === 'AbortError') return true;
     return false;
   }
 }
@@ -159,7 +149,6 @@ export async function copyMeetingWhatsAppText(meeting: SiteMeeting): Promise<boo
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // Fallback manual con textarea invisible
     try {
       const el = document.createElement('textarea');
       el.value = text;
