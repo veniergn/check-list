@@ -273,6 +273,7 @@ export function SiteMeetingPdfModal({
 
   if (!isOpen || !meeting) return null;
 
+  const allPhotos = meeting.photos || [];
   const pages = useMemo(() => paginateMeeting(meeting), [meeting]);
 
   const handlePrint = () => {
@@ -697,7 +698,7 @@ export function SiteMeetingPdfModal({
                   {pageData.showPhotosHeading && (
                     <div className="border-l-4 border-cyan-700 pl-2.5 mb-2">
                       <h2 className="text-xs font-black text-slate-950 uppercase tracking-wider">
-                        REGISTRO FOTOGRÁFICO DE LA REUNIÓN ({allPhotos.length} FOTOGRAFÍAS)
+                        REGISTRO FOTOGRÁFICO DE LA REUNIÓN ({(meeting.photos || []).length} FOTOGRAFÍAS)
                       </h2>
                     </div>
                   )}
