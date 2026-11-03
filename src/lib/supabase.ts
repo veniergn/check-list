@@ -102,6 +102,13 @@ export function prepareLightweightProjectsForSupabase(projects: Project[]): Proj
           }))
         }))
       }))
+    })),
+    siteMeetings: (p.siteMeetings || []).map(m => ({
+      ...m,
+      photos: (m.photos || []).map(ph => ({
+        ...ph,
+        dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 40000 ? '' : ph.dataUrl)
+      }))
     }))
   }));
 }

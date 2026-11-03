@@ -380,6 +380,13 @@ export async function syncProjectsMasterToDrive(projects: any[]): Promise<Upload
             }))
           }))
         }))
+      })),
+      siteMeetings: (p.siteMeetings || []).map((m: any) => ({
+        ...m,
+        photos: (m.photos || []).map((ph: any) => ({
+          ...ph,
+          dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 50000 ? '' : ph.dataUrl)
+        }))
       }))
     }));
 
@@ -476,6 +483,56 @@ export async function backupUnitNotesToDrive(projectName: string, unitName: stri
 /**
  * Descarga la Base de Datos Maestra más reciente desde el Hub de Sincronización en la Nube (/.netlify/functions/sync).
  */
+
+/**
+ * Guarda un respaldo específico de las Minutas y Reuniones en Obra directamente en Google Drive (veniergn@gmail.com).
+ */
+export async function backupSiteMeetingsToDrive(projectName: string, meetings: any[]): Promise<UploadResponse> {
+  try {
+    const payload = {
+      system: 'Control de Avance - Minutas y Reuniones en Obra',
+      adminUser: 'veniergn@gmail.com',
+      projectName: projectName || 'Obra',
+      lastSyncedAt: new Date().toISOString(),
+      meetingsCount: (meetings || []).length,
+      meetings: (meetings || []).map(m => ({
+        ...m,
+        photos: (m.photos || []).map((ph: any) => ({
+          id: ph.id,
+          caption: ph.caption,
+          driveUrl: ph.driveUrl,
+          driveFileId: ph.driveFileId,
+          createdAt: ph.createdAt,
+          dataUrl: ph.dataUrl?.startsWith('http') ? ph.dataUrl : (ph.dataUrl && ph.dataUrl.length > 60000 ? '' : ph.dataUrl)
+        }))
+      }))
+    };
+
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64Data = safeStringToBase64(jsonStr);
+
+    const cleanProject = (projectName || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = 'Reuniones_' + cleanProject + '_backup.json';
+
+    const res = await uploadFileToDrive({
+      base64: 'data:application/json;base64,' + base64Data,
+      filename,
+      mimeType: 'application/json'
+    });
+
+    if (res.success && res.url) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('control_avance_drive_meetings_' + cleanProject, res.url);
+      }
+    }
+
+    return res;
+  } catch (err: any) {
+    console.warn('Aviso backup reuniones a Google Drive:', err);
+    return { success: false, url: '', error: err?.message };
+  }
+}
+
 export async function fetchProjectsMasterFromCloud(): Promise<{ projects: any[] | null; logos: any | null; lastSyncedAt?: string }> {
   try {
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;

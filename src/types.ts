@@ -330,6 +330,32 @@ export interface Project {
   };
   units: Unit[];
   deletedItemIds?: string[]; // Registered tombstones of deleted items across project
+  siteMeetings?: SiteMeeting[]; // Minutas y reuniones en obra con temas, fotos y envío a WhatsApp
+}
+
+
+export interface SiteMeetingPhoto {
+  id: string;
+  dataUrl: string; // base64 o URL directa
+  driveUrl?: string; // URL en Google Drive (veniergn@gmail.com)
+  driveFileId?: string;
+  caption?: string;
+  createdAt: string;
+}
+
+export interface SiteMeeting {
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string; // Motivo o Título de la reunión
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  attendees: string; // Con quién fue la reunión (ej: "Ing. Perez, Capataz Walter, Herrería")
+  topics: string; // Todos los temas hablados en la reunión (texto libre, pegado desde celular)
+  commitments?: string; // Acuerdos, compromisos y próximos pasos acordados
+  photos: SiteMeetingPhoto[]; // Fotografías de temas tratados en la reunión
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
 }
 
 export interface TradeTemplate {

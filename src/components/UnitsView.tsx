@@ -28,7 +28,8 @@ import {
   Check,
   AlertTriangle,
   Briefcase,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Users
 } from 'lucide-react';
 import { Project, Unit, StatusFilter, ProjectCalendarEvent, Milestone } from '../types';
 import { calculateUnitProgress, getUnitItemCounts, calculateProjectProgress, isUnitCommonArea, parseUnitFloor, hexToRgba } from '../utils/calculations';
@@ -69,6 +70,7 @@ interface UnitsViewProps {
   onAddTrade?: (tradeName: string, scope?: 'current_unit' | 'all_units') => void;
   onDeleteTrade?: (tradeId: string, tradeName: string, scope?: 'current_unit' | 'all_units') => void;
   onOpenCroquis?: (unitId?: string) => void;
+  onOpenSiteMeetings?: (projectId: string) => void;
   onOpenMonthlyReport?: (projectId: string, openHistory?: boolean) => void;
   onSaveProjectCover?: (projectId: string, coverUrl: string, position?: { x: number; y: number; zoom: number }) => void;
   onShowToast?: (msg: string, icon?: string) => void;
@@ -101,6 +103,7 @@ export function UnitsView({
   onAddTrade,
   onDeleteTrade,
   onOpenCroquis,
+  onOpenSiteMeetings,
   onOpenMonthlyReport,
   onSaveProjectCover,
   onShowToast,
@@ -579,6 +582,23 @@ export function UnitsView({
             >
               <PenTool className="w-3.5 h-3.5 text-[#00c2ff]" />
               <span>Croquis ({totalProjectSketches})</span>
+            </button>
+          )}
+
+          {onOpenSiteMeetings && (
+            <button
+              type="button"
+              onClick={() => onOpenSiteMeetings(project.id)}
+              className="px-3 py-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(99,102,241,0.2)] active:scale-95"
+              title="Minutas y registro de reuniones en obra con temas, fotos y envío por WhatsApp"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Reuniones en Obra</span>
+              {(project.siteMeetings || []).length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500 text-slate-950 font-mono font-black">
+                  {(project.siteMeetings || []).length}
+                </span>
+              )}
             </button>
           )}
 

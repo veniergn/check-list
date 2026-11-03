@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Building2, DoorOpen, Image as ImageIcon, FileText, Download, ShieldCheck, PenTool } from 'lucide-react';
-import { Project, Unit, UnitNote, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto, MaterialOrder, ContractorCertificate } from './types';
+import { Project, Unit, UnitNote, ViewMode, CustomLogos, Milestone, Trade, SketchDocument, LocalColors, ProjectCalendarEvent, PMTaskStatus, ProjectManagerTask, BlueprintDocument, ContractorProfile, AppTheme, InspectionPhoto, MaterialOrder, ContractorCertificate, SiteMeeting } from './types';
 import { getProjectContractors } from './utils/pmContractors';
 import { getInitialMockData, DEFAULT_LOGO_URL, createInitialTrades, MASTER_TRADES_TEMPLATE } from './data/initialData';
 import { compressImageFile, calculateUnitProgress, hexToRgba, parseUnitFloor } from './utils/calculations';
@@ -28,6 +28,7 @@ import { BlueprintViewerModal } from './components/BlueprintViewerModal';
 import { NewProjectModal, NewProjectPayload } from './components/NewProjectModal';
 import { NewUnitModal } from './components/NewUnitModal';
 import { EditUnitModal } from './components/EditUnitModal';
+import { SiteMeetingsModal } from './components/SiteMeetingsModal';
 import { SecurityConfirmModal } from './components/SecurityConfirmModal';
 import { MilestonesModal } from './components/MilestonesModal';
 import { CroquisModal } from './components/CroquisModal';
@@ -43,7 +44,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { setActiveEntrySoundId, getActiveEntrySoundId, EntrySoundId } from './utils/entrySounds';
 import { saveLocalImage, getLocalImage, getAllLocalImages } from './utils/localImageStore';
 import { enqueueDriveUpload, subscribeToDriveUploads, processDriveQueue } from './utils/driveQueue';
-import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive, syncProjectsMasterToDrive, backupUnitNotesToDrive } from './lib/driveUpload';
+import { uploadFileToDrive, isDriveUrl, backupCalendarEventsToDrive, syncProjectManagerToDrive, backupMaterialsToDrive, backupCertificatesToDrive, syncProjectsMasterToDrive, backupUnitNotesToDrive, backupSiteMeetingsToDrive } from './lib/driveUpload';
 
 const STORAGE_KEY_PROJECTS = 'CONTROL_AVANCE_OBRA_V3';
 const STORAGE_KEY_LOGOS = 'CONTROL_AVANCE_LOGOS_V4';
@@ -368,6 +369,11 @@ export function deduplicateProjects(projects: Project[]): Project[] {
       (existing.contractors || []).forEach(c => contractorMap.set(c.id || c.name, c));
       (proj.contractors || []).forEach(c => contractorMap.set(c.id || c.name, c));
 
+      // Merge Site Meetings
+      const meetingMap = new Map<string, any>();
+      (existing.siteMeetings || []).forEach(m => meetingMap.set(m.id, m));
+      (proj.siteMeetings || []).forEach(m => meetingMap.set(m.id, m));
+
       map.set(normKey, {
         ...existing,
         location: existing.location || proj.location,
@@ -376,6 +382,7 @@ export function deduplicateProjects(projects: Project[]): Project[] {
         calendarEvents: Array.from(eventMap.values()),
         savedReports: Array.from(reportMap.values()),
         contractors: Array.from(contractorMap.values()),
+        siteMeetings: Array.from(meetingMap.values()),
         monthlyReportData: existing.monthlyReportData || proj.monthlyReportData,
         materialsExcelFile: existing.materialsExcelFile || proj.materialsExcelFile,
         coverImageUrl: existing.coverImageUrl || proj.coverImageUrl,
@@ -601,6 +608,22 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
     (localProj.savedReports || []).forEach(r => repMap.set(r.id, r));
     (remoteProj.savedReports || []).forEach(r => repMap.set(r.id, r));
 
+    // Merge Site Meetings by ID and latest timestamp
+    const meetingMap = new Map<string, any>();
+    (localProj.siteMeetings || []).forEach(m => meetingMap.set(m.id, m));
+    (remoteProj.siteMeetings || []).forEach(remoteM => {
+      const localM = meetingMap.get(remoteM.id);
+      if (!localM) {
+        meetingMap.set(remoteM.id, remoteM);
+      } else {
+        const localTime = localM.updatedAt ? new Date(localM.updatedAt).getTime() : 0;
+        const remoteTime = remoteM.updatedAt ? new Date(remoteM.updatedAt).getTime() : 0;
+        if (remoteTime > localTime) {
+          meetingMap.set(remoteM.id, remoteM);
+        }
+      }
+    });
+
     const mergedMonthlyData = remoteProj.monthlyReportData || localProj.monthlyReportData;
     const mergedCoverImage = remoteProj.coverImageUrl || localProj.coverImageUrl;
     const mergedCoverPos = remoteProj.coverImagePosition || localProj.coverImagePosition;
@@ -612,6 +635,7 @@ export function mergeProjectsWithLocalState(remoteProjects: Project[], localProj
       ...remoteProj,
       calendarEvents: Array.from(mergedEventsMap.values()),
       savedReports: Array.from(repMap.values()),
+      siteMeetings: Array.from(meetingMap.values()),
       monthlyReportData: mergedMonthlyData,
       coverImageUrl: mergedCoverImage,
       coverImagePosition: mergedCoverPos,
@@ -1065,6 +1089,63 @@ export default function App() {
     setMonthlyReportProjectId(targetPid);
     setMonthlyReportInitialTab(openHistoryTab ? 'history' : 'editor');
     setIsMonthlyReportModalOpen(true);
+  };
+
+  // Reuniones en Obra modal state
+  const [activeSiteMeetingsProjectId, setActiveSiteMeetingsProjectId] = useState<string | null>(null);
+
+  const handleSaveSiteMeeting = (meeting: SiteMeeting) => {
+    setProjects(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== meeting.projectId) return p;
+        const existingMeetings = p.siteMeetings || [];
+        const idx = existingMeetings.findIndex(m => m.id === meeting.id);
+        let newMeetings: SiteMeeting[];
+        if (idx >= 0) {
+          newMeetings = [...existingMeetings];
+          newMeetings[idx] = meeting;
+        } else {
+          newMeetings = [meeting, ...existingMeetings];
+        }
+        return {
+          ...p,
+          siteMeetings: newMeetings
+        };
+      });
+      updateProjectsAndSync(updated);
+
+      // Respaldo de seguridad en Google Drive (veniergn@gmail.com)
+      const targetProj = updated.find(p => p.id === meeting.projectId);
+      if (targetProj) {
+        backupSiteMeetingsToDrive(targetProj.name, targetProj.siteMeetings || []).catch(e =>
+          console.warn('Aviso backup reuniones a Google Drive:', e)
+        );
+      }
+      return updated;
+    });
+  };
+
+  const handleDeleteSiteMeeting = (meetingId: string) => {
+    if (!activeSiteMeetingsProjectId) return;
+    setProjects(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== activeSiteMeetingsProjectId) return p;
+        const newMeetings = (p.siteMeetings || []).filter(m => m.id !== meetingId);
+        return {
+          ...p,
+          siteMeetings: newMeetings
+        };
+      });
+      updateProjectsAndSync(updated);
+
+      const targetProj = updated.find(p => p.id === activeSiteMeetingsProjectId);
+      if (targetProj) {
+        backupSiteMeetingsToDrive(targetProj.name, targetProj.siteMeetings || []).catch(e =>
+          console.warn('Aviso backup reuniones a Google Drive:', e)
+        );
+      }
+      return updated;
+    });
   };
 
   // Croquis a mano alzada modal state
@@ -3614,6 +3695,7 @@ export default function App() {
                 setCroquisModalTargetUnitId(unitId);
                 setIsCroquisModalOpen(true);
               }}
+              onOpenSiteMeetings={(projId) => setActiveSiteMeetingsProjectId(projId)}
             />
           </ErrorBoundary>
         )}
@@ -4067,6 +4149,19 @@ export default function App() {
       )}
 
       {/* CloudSetupModal eliminado definitivamente: sincronización silenciosa y automática al milisegundo */}
+
+      {/* Modal de Reuniones en Obra con minutas, fotos y WhatsApp */}
+      {activeSiteMeetingsProjectId && (
+        <SiteMeetingsModal
+          isOpen={!!activeSiteMeetingsProjectId}
+          project={projects.find(p => p.id === activeSiteMeetingsProjectId) || selectedProject || projects[0]}
+          neonColor={localColors.neonColor || '#00f2fe'}
+          onClose={() => setActiveSiteMeetingsProjectId(null)}
+          onSaveMeeting={handleSaveSiteMeeting}
+          onDeleteMeeting={handleDeleteSiteMeeting}
+          onShowToast={showToast}
+        />
+      )}
 
       {/* Floating PWA App Download Balloon for Mobile and Notebook */}
       <PWAInstallPrompt />
