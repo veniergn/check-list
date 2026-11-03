@@ -19,24 +19,20 @@ async function waitForImagesToLoad(element: HTMLElement): Promise<void> {
 }
 
 /**
- * Genera un archivo Blob PDF en formato A4 vertical con fotos incrustadas a partir de la hoja HTML
+ * Genera un archivo Blob PDF en formato A4 vertical con fotos completas a partir de las páginas HTML (.site-meeting-a4-page)
+ * Cada página se procesa independientemente para garantizar cero cortes de imágenes y diagramación perfecta.
  */
 export async function generateMeetingPdfBlob(
-  element: HTMLElement,
+  containerElement: HTMLElement,
   meeting: SiteMeeting
 ): Promise<{ blob: Blob; filename: string }> {
-  await waitForImagesToLoad(element);
+  // Buscar todas las páginas A4 individuales
+  const pageElements = Array.from(
+    containerElement.querySelectorAll<HTMLElement>('.site-meeting-a4-page')
+  );
 
-  // Capturar el contenedor de la hoja con alta resolución (escala 2x para nitidez de texto y fotos)
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: '#ffffff',
-    logging: false
-  });
+  const targets = pageElements.length > 0 ? pageElements : [containerElement];
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -46,28 +42,29 @@ export async function generateMeetingPdfBlob(
 
   const pdfWidth = 210;
   const pdfHeight = 297;
-  const canvasWidth = canvas.width;
-  const canvasHeight = canvas.height;
 
-  // Altura proporcional calculada en milímetros
-  const imgHeightMm = (canvasHeight * pdfWidth) / canvasWidth;
+  for (let i = 0; i < targets.length; i++) {
+    const pageEl = targets[i];
+    await waitForImagesToLoad(pageEl);
 
-  if (imgHeightMm <= pdfHeight) {
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeightMm);
-  } else {
-    // Si la minuta se extiende a más de 1 página A4
-    let heightLeft = imgHeightMm;
-    let position = 0;
+    // Capturar la hoja A4 a escala 2x para máxima nitidez de texto y fotografías
+    const canvas = await html2canvas(pageEl, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794 // 210mm a 96 DPI
+    });
 
-    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightMm);
-    heightLeft -= pdfHeight;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-    while (heightLeft > 0) {
-      position = -(imgHeightMm - heightLeft);
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightMm);
-      heightLeft -= pdfHeight;
+    if (i > 0) {
+      pdf.addPage('a4', 'portrait');
     }
+
+    // Agregar la página completa de 0 a 297mm sin cortar nada
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
   }
 
   const cleanProject = (meeting.projectName || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -79,13 +76,13 @@ export async function generateMeetingPdfBlob(
 }
 
 /**
- * Descarga directamente el archivo PDF en el dispositivo del usuario
+ * Descarga directamente el archivo PDF oficial en el dispositivo del usuario
  */
 export async function downloadMeetingPdf(
-  element: HTMLElement,
+  containerElement: HTMLElement,
   meeting: SiteMeeting
 ): Promise<string> {
-  const { blob, filename } = await generateMeetingPdfBlob(element, meeting);
+  const { blob, filename } = await generateMeetingPdfBlob(containerElement, meeting);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -98,16 +95,18 @@ export async function downloadMeetingPdf(
 }
 
 /**
- * Envía el archivo PDF de la minuta por WhatsApp (como archivo adjunto en móviles o con descarga en escritorio)
+ * Comparte el archivo PDF oficial de la minuta por WhatsApp
+ * - En celulares Android / iOS usa la API nativa compartiendo directamente el archivo .pdf
+ * - En computadoras descarga el PDF y abre WhatsApp Web con el mensaje oficial preparado
  */
 export async function shareMeetingPdfViaWhatsApp(
-  element: HTMLElement,
+  containerElement: HTMLElement,
   meeting: SiteMeeting
 ): Promise<{ method: 'native_share' | 'download_and_whatsapp' }> {
-  const { blob, filename } = await generateMeetingPdfBlob(element, meeting);
+  const { blob, filename } = await generateMeetingPdfBlob(containerElement, meeting);
   const pdfFile = new File([blob], filename, { type: 'application/pdf' });
 
-  // 1. Intento con Web Share API (celulares Android / iOS y navegadores modernos compatibles con archivos)
+  // 1. Intento nativo con Web Share API (celulares y navegadores que admiten compartir archivos)
   if (
     typeof navigator !== 'undefined' &&
     navigator.canShare &&
@@ -116,7 +115,7 @@ export async function shareMeetingPdfViaWhatsApp(
     try {
       await navigator.share({
         title: `Minuta de Reunión - ${meeting.projectName}`,
-        text: `Minuta de Reunión en Obra: ${meeting.projectName} - ${meeting.title}`,
+        text: `Minuta oficial en A4: ${meeting.projectName} - ${meeting.title}`,
         files: [pdfFile]
       });
       return { method: 'native_share' };
@@ -124,11 +123,11 @@ export async function shareMeetingPdfViaWhatsApp(
       if (err.name === 'AbortError') {
         return { method: 'native_share' };
       }
-      // Si falla el share de archivos, continúa con el fallback
+      // Si falla, continúa con fallback de descarga y apertura de chat
     }
   }
 
-  // 2. Fallback: descarga inmediata del archivo PDF oficial + apertura de WhatsApp
+  // 2. Fallback: Descarga del archivo PDF + apertura de WhatsApp
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -139,17 +138,17 @@ export async function shareMeetingPdfViaWhatsApp(
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 
   const text =
-    `*MINUTA DE REUNIÓN EN OBRA*\n` +
+    `*MINUTA DE REUNIÓN EN OBRA (DOCUMENTO PDF OFICIAL)*\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
     `*OBRA:* ${meeting.projectName || 'Obra'}\n` +
     `*FECHA:* ${meeting.date}\n` +
     `*CON QUIÉN FUE:* ${meeting.attendees}\n` +
-    `*MOTIVO:* ${meeting.title}\n\n` +
-    `📄 *Archivo PDF oficial adjunto:* ${filename}\n` +
-    `_Contiene informe completo en A4 con fotografías incrustadas._`;
+    `*ASUNTO:* ${meeting.title}\n\n` +
+    `📄 *Archivo PDF adjunto:* ${filename}\n` +
+    `_Documento oficial ajustado a hoja A4 con fotografías completas para imprimir o archivar._`;
 
-  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-  window.open(waUrl, '_blank');
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 
   return { method: 'download_and_whatsapp' };
 }

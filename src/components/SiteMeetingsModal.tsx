@@ -893,7 +893,7 @@ export function SiteMeetingsModal({
 
                 <button
                   type="button"
-                  onClick={() => handleSave(false)}
+                  onClick={() => handleSave(false, true)}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
                 >
                   <Check className="w-4 h-4" />
