@@ -340,7 +340,7 @@ export function SiteMeetingsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div className="site-meetings-modal-root fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 overflow-y-auto print:hidden">
       <div className="relative w-full max-w-4xl bg-[#0f172a] border border-[#1e293b] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Top Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gradient-to-r from-[#172554] via-[#1e1b4b] to-[#0f172a] border-b border-[#1e293b]">

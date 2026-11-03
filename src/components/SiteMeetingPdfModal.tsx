@@ -1,5 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { X, Printer, Download, Building2, Calendar, Clock, Users, FileText, Loader2, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Printer, Download, Building2, Calendar, Users, FileText, Loader2 } from 'lucide-react';
 import { SiteMeeting, SiteMeetingPhoto } from '../types';
 import { formatMeetingDate, sendMeetingWhatsApp } from '../utils/whatsappMeetings';
 import { downloadMeetingPdf, shareMeetingPdfViaWhatsApp } from '../utils/generateMeetingPdf';
@@ -20,60 +21,46 @@ interface SiteMeetingPdfModalProps {
   onClose: () => void;
 }
 
-/**
- * Representa el contenido asignado a una hoja A4 individual
- */
 interface MeetingPageData {
   pageNumber: number;
   totalPages: number;
   isFirstPage: boolean;
   isLastPage: boolean;
 
-  // Encabezados
   showHeaderAndMeta?: boolean;
   showContinuationHeader?: boolean;
 
-  // Temas tratados en esta página
   topicParagraphs?: string[];
   showTopicsHeading?: boolean;
   isTopicsContinuation?: boolean;
 
-  // Acuerdos y compromisos en esta página
   commitmentsText?: string;
 
-  // Fotografías en esta página (máximo por página calculado para que no se corten)
   photos?: SiteMeetingPhoto[];
   showPhotosHeading?: boolean;
 
-  // Firmas (solo en la última página del documento)
   showSignatures?: boolean;
 }
 
 /**
- * Función que divide inteligentemente el contenido de la reunión en hojas A4 individuales (210mm x 297mm)
- * garantizando que ninguna foto se corte y que el texto mantenga un tamaño legible (>= 11pt).
+ * Paginación determinista en hojas A4 verticales (210mm x 297mm)
  */
 function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
-  // Constantes de altura estimada en milímetros (hoja A4 = 297mm de alto)
-  // Márgenes: top 12mm + bottom 12mm = 24mm. Footer: 12mm. Altura útil = 261mm.
   const MAX_USABLE_HEIGHT = 261;
-  const HEADER_AND_META_HEIGHT = 68; // Encabezado principal oficial + caja de metadatos
-  const CONTINUATION_HEADER_HEIGHT = 20; // Banner compacto de continuación
-  const SIGNATURES_HEIGHT = 38; // Bloque de firmas Arq. Venier + Asistentes
-  const TOPICS_HEADING_HEIGHT = 12; // Título "TEMAS TRATADOS EN LA REUNIÓN"
-  const COMMITMENTS_BASE_HEIGHT = 18; // Título y márgenes de compromisos
-  const PHOTOS_HEADING_HEIGHT = 12; // Título "REGISTRO FOTOGRÁFICO"
-  const PHOTO_ROW_HEIGHT = 65; // Alto de una fila de 1 o 2 fotos completas
+  const HEADER_AND_META_HEIGHT = 68;
+  const CONTINUATION_HEADER_HEIGHT = 20;
+  const SIGNATURES_HEIGHT = 38;
+  const TOPICS_HEADING_HEIGHT = 12;
+  const COMMITMENTS_BASE_HEIGHT = 18;
+  const PHOTOS_HEADING_HEIGHT = 12;
+  const PHOTO_ROW_HEIGHT = 65;
 
-  // Helper para estimar altura de un párrafo a tipografía 11pt (~85 caracteres por línea)
   const getParagraphHeight = (text: string): number => {
     if (!text || text.trim() === '') return 4;
     const lines = Math.max(1, Math.ceil(text.length / 85));
-    // 6.6mm por línea + 4mm de margen inferior
     return lines * 6.6 + 4;
   };
 
-  // 1. Descomponer el texto de temas en bloques lógicos (párrafos, ítems numerados o viñetas)
   const rawTopics = meeting.topics ? meeting.topics.trim() : '';
   const paragraphs: string[] = [];
   if (rawTopics) {
@@ -98,7 +85,6 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     }
   }
 
-  // Dividir párrafos anormalmente largos (> 1200 chars) para permitir quiebres limpios si es necesario
   const refinedParagraphs: string[] = [];
   for (const p of paragraphs) {
     if (p.length > 1200) {
@@ -118,20 +104,17 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     }
   }
 
-  // 2. Calcular compromisos
   const commitments = meeting.commitments ? meeting.commitments.trim() : '';
   const commitmentsHeight = commitments
     ? COMMITMENTS_BASE_HEIGHT + Math.max(1, Math.ceil(commitments.length / 85)) * 6.6
     : 0;
 
-  // 3. Agrupar fotos en filas de 2 fotos
   const allPhotos = meeting.photos || [];
   const photoRows: SiteMeetingPhoto[][] = [];
   for (let i = 0; i < allPhotos.length; i += 2) {
     photoRows.push(allPhotos.slice(i, i + 2));
   }
 
-  // 4. VERIFICACIÓN: ¿Todo cabe en 1 SOLA HOJA A4?
   const totalTopicsHeight =
     (refinedParagraphs.length > 0 ? TOPICS_HEADING_HEIGHT : 0) +
     refinedParagraphs.reduce((sum, p) => sum + getParagraphHeight(p), 0);
@@ -146,7 +129,6 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     SIGNATURES_HEIGHT;
 
   if (totalContentIfSinglePage <= MAX_USABLE_HEIGHT) {
-    // Cabe perfectamente en 1 hoja A4
     return [
       {
         pageNumber: 1,
@@ -164,10 +146,7 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     ];
   }
 
-  // 5. DISTRIBUCIÓN MULTI-HOJA INTELIGENTE
   const pages: MeetingPageData[] = [];
-
-  // Iniciar Página 1
   let currentPage: MeetingPageData = {
     pageNumber: 1,
     totalPages: 1,
@@ -179,18 +158,15 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     photos: []
   };
 
-  // Altura ocupada en Página 1
   let currentHeight = HEADER_AND_META_HEIGHT + (refinedParagraphs.length > 0 ? TOPICS_HEADING_HEIGHT : 0);
   const PAGE_1_MAX_HEIGHT = 250;
   const OTHER_PAGES_MAX_HEIGHT = 250;
 
-  // A. Asignar párrafos de temas
   for (const p of refinedParagraphs) {
     const pHeight = getParagraphHeight(p);
     const limit = currentPage.pageNumber === 1 ? PAGE_1_MAX_HEIGHT : OTHER_PAGES_MAX_HEIGHT;
 
     if (currentHeight + pHeight > limit && (currentPage.topicParagraphs?.length ?? 0) > 0) {
-      // Guardar página actual y crear nueva
       pages.push(currentPage);
       currentPage = {
         pageNumber: pages.length + 1,
@@ -209,7 +185,6 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     }
   }
 
-  // B. Asignar compromisos
   if (commitments) {
     const limit = currentPage.pageNumber === 1 ? PAGE_1_MAX_HEIGHT : OTHER_PAGES_MAX_HEIGHT;
     if (currentHeight + commitmentsHeight > limit) {
@@ -230,7 +205,6 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     }
   }
 
-  // C. Asignar fotos por filas de a 2 (Garantiza que salgan ENTERAS)
   let photosHeadingAdded = false;
   for (const row of photoRows) {
     const isFirstRowOfAll = !photosHeadingAdded;
@@ -260,10 +234,8 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
     }
   }
 
-  // D. Asignar bloque de firmas
   const limitForSignatures = currentPage.pageNumber === 1 ? PAGE_1_MAX_HEIGHT : OTHER_PAGES_MAX_HEIGHT;
   if (currentHeight + SIGNATURES_HEIGHT > limitForSignatures) {
-    // Si no entra la firma al fondo de la hoja actual, se agrega en una hoja final con su banner
     pages.push(currentPage);
     currentPage = {
       pageNumber: pages.length + 1,
@@ -279,7 +251,6 @@ function paginateMeeting(meeting: SiteMeeting): MeetingPageData[] {
 
   pages.push(currentPage);
 
-  // Actualizar metadatos de total de páginas
   const totalPages = pages.length;
   pages.forEach((p, idx) => {
     p.pageNumber = idx + 1;
@@ -302,46 +273,63 @@ export function SiteMeetingPdfModal({
 
   if (!isOpen || !meeting) return null;
 
-  // Calcular las páginas distribuidas en A4
   const pages = useMemo(() => paginateMeeting(meeting), [meeting]);
 
-  // Handlers
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownloadPdf = async () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || isProcessingPdf) return;
     setIsProcessingPdf(true);
-    setStatusMessage('Generando archivo PDF en hojas A4 con fotos completas...');
+    setStatusMessage('Generando archivo PDF en hojas A4...');
+
+    const safetyTimer = setTimeout(() => {
+      setIsProcessingPdf(false);
+      setStatusMessage('Demoró más de lo esperado. Puedes pulsar Imprimir para guardar en PDF.');
+      setTimeout(() => setStatusMessage(null), 3500);
+    }, 10000);
+
     try {
       const filename = await downloadMeetingPdf(containerRef.current, meeting);
+      clearTimeout(safetyTimer);
       setStatusMessage(`¡Descargado con éxito: ${filename}!`);
-      setTimeout(() => setStatusMessage(null), 3500);
+      setTimeout(() => setStatusMessage(null), 3000);
     } catch (err) {
+      clearTimeout(safetyTimer);
       console.error('Error al generar PDF:', err);
       setStatusMessage('Error al generar el PDF. Puedes usar el botón Imprimir.');
-      setTimeout(() => setStatusMessage(null), 4000);
+      setTimeout(() => setStatusMessage(null), 3500);
     } finally {
       setIsProcessingPdf(false);
     }
   };
 
   const handleSendPdfWhatsApp = async () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || isProcessingPdf) return;
     setIsProcessingPdf(true);
     setStatusMessage('Generando PDF oficial en hojas A4 para WhatsApp...');
+
+    const safetyTimer = setTimeout(() => {
+      setIsProcessingPdf(false);
+      sendMeetingWhatsApp(meeting);
+      setStatusMessage(null);
+    }, 10000);
+
     try {
       const res = await shareMeetingPdfViaWhatsApp(containerRef.current, meeting);
+      clearTimeout(safetyTimer);
       if (res.method === 'native_share') {
         setStatusMessage('¡Archivo PDF compartido a WhatsApp!');
       } else {
         setStatusMessage('Archivo PDF descargado. Adjúntalo en el chat de WhatsApp que se acaba de abrir.');
       }
-      setTimeout(() => setStatusMessage(null), 4500);
+      setTimeout(() => setStatusMessage(null), 4000);
     } catch (err) {
+      clearTimeout(safetyTimer);
       console.error('Error al compartir PDF por WhatsApp:', err);
       sendMeetingWhatsApp(meeting);
+      setStatusMessage(null);
     } finally {
       setIsProcessingPdf(false);
     }
@@ -359,8 +347,9 @@ export function SiteMeetingPdfModal({
     now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) +
     ' hs';
 
-  return (
-    <div className="site-meeting-modal-container fixed inset-0 z-60 bg-slate-950/90 overflow-y-auto flex flex-col items-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:block">
+  // Modal montado directamente en document.body para que NUNCA sufra por estilos del modal padre
+  return createPortal(
+    <div className="site-meeting-modal-container fixed inset-0 z-70 bg-slate-950/90 overflow-y-auto flex flex-col items-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:block">
       {/* Dynamic print stylesheet para salida 100% limpia en A4 Portrait */}
       <style>{`
         @media print {
@@ -372,7 +361,7 @@ export function SiteMeetingPdfModal({
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          html, body, #root, #root > div {
+          html, body {
             background: #ffffff !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
@@ -383,17 +372,13 @@ export function SiteMeetingPdfModal({
             min-height: 0 !important;
             overflow: visible !important;
           }
+          #root,
           .no-print,
           header,
           nav,
           main,
           footer,
-          #root > div > header,
-          #root > div > main,
-          #root > div > nav,
-          [class*="wallpaper"],
-          [class*="luminous"],
-          [class*="blur-"] {
+          .site-meetings-modal-root {
             display: none !important;
           }
           .site-meeting-modal-container {
@@ -439,7 +424,6 @@ export function SiteMeetingPdfModal({
             page-break-after: auto !important;
             break-after: auto !important;
           }
-          /* Tipografía garantizada >= 11pt al imprimir */
           .site-meeting-a4-page p,
           .site-meeting-a4-page div.text-body,
           .site-meeting-a4-page li,
@@ -650,7 +634,7 @@ export function SiteMeetingPdfModal({
                 </div>
               )}
 
-              {/* TEMAS TRATADOS EN LA REUNIÓN (Párrafos asignados a esta hoja) */}
+              {/* TEMAS TRATADOS EN LA REUNIÓN */}
               {pageData.topicParagraphs && pageData.topicParagraphs.length > 0 && (
                 <div className="mb-4">
                   {pageData.showTopicsHeading && (
@@ -683,7 +667,7 @@ export function SiteMeetingPdfModal({
                 </div>
               )}
 
-              {/* ACUERDOS Y COMPROMISOS (Si caen en esta hoja) */}
+              {/* ACUERDOS Y COMPROMISOS */}
               {pageData.commitmentsText && (
                 <div className="mb-4">
                   <div className="border-l-4 border-amber-600 pl-2.5 mb-1.5">
@@ -702,7 +686,7 @@ export function SiteMeetingPdfModal({
                 </div>
               )}
 
-              {/* REGISTRO FOTOGRÁFICO (Fotos asignadas a esta hoja para que salgan 100% ENTERAS) */}
+              {/* REGISTRO FOTOGRÁFICO COMPLETO */}
               {pageData.photos && pageData.photos.length > 0 && (
                 <div className="mb-4">
                   {pageData.showPhotosHeading && (
@@ -713,7 +697,6 @@ export function SiteMeetingPdfModal({
                     </div>
                   )}
 
-                  {/* Cuadrícula de fotos completas sin cortes */}
                   <div
                     className={`grid gap-3 ${
                       pageData.photos.length === 1
@@ -727,7 +710,6 @@ export function SiteMeetingPdfModal({
                         className="border border-slate-300 rounded-lg overflow-hidden bg-slate-50 flex flex-col shadow-xs"
                         style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
                       >
-                        {/* Contenedor con altura y aspecto controlado para foto completa */}
                         <div className="relative aspect-[4/3] max-h-[62mm] w-full bg-slate-100 flex items-center justify-center overflow-hidden">
                           <img
                             src={photo.dataUrl || photo.driveUrl}
@@ -748,9 +730,8 @@ export function SiteMeetingPdfModal({
               )}
             </div>
 
-            {/* SECCIÓN INFERIOR DE LA HOJA: FIRMAS (SÓLO ÚLTIMA HOJA) Y PIE DE PÁGINA */}
+            {/* SECCIÓN INFERIOR: FIRMAS Y PIE DE PÁGINA */}
             <div>
-              {/* Bloque de Firmas y Validación (Sólo en la última hoja del documento) */}
               {pageData.showSignatures && (
                 <div className="pt-3 border-t-2 border-slate-900 mb-3" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                   <div className="grid grid-cols-2 gap-8 text-center text-xs">
@@ -775,7 +756,6 @@ export function SiteMeetingPdfModal({
                 </div>
               )}
 
-              {/* Pie de Página Oficial en todas las hojas */}
               <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-200">
                 <span>Control de Avance de Obras • Documento Oficial</span>
                 <span className="font-bold text-slate-600">
@@ -787,6 +767,7 @@ export function SiteMeetingPdfModal({
           </div>
         ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

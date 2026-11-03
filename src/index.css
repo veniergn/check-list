@@ -252,7 +252,7 @@ html.font-bold-mode .font-black {
   /* Desactivar backdrop oscuro y centrado fixed del modal para que solo fluya la hoja */
   .report-modal-backdrop,
   .gantt-print-backdrop,
-  .site-meeting-modal-container {
+  .site-meeting-modal-container { position: static !important; display: block !important; z-index: 99999 !important; visibility: visible !important; 
     position: static !important;
     inset: auto !important;
     background: #ffffff !important;
