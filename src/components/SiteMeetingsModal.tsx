@@ -295,11 +295,7 @@ export function SiteMeetingsModal({
       onSaveMeeting(updatedMeeting);
       onShowToast?.(editingMeetingId ? 'Reunión actualizada' : 'Reunión guardada exitosamente', 'Check');
 
-      if (andShareWhatsApp) {
-        sendMeetingWhatsApp(updatedMeeting);
-      }
-
-      if (openPdf) {
+      if (andShareWhatsApp || openPdf) {
         setPdfModalMeeting(updatedMeeting);
       }
 
@@ -494,12 +490,12 @@ export function SiteMeetingsModal({
 
                             <button
                               type="button"
-                              onClick={() => handleSendWhatsAppCard(meeting)}
+                              onClick={() => setPdfModalMeeting(meeting)}
                               className="px-2.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-                              title="Enviar minuta completa limpia por WhatsApp"
+                              title="Abrir minuta para enviar archivo PDF completo con fotos por WhatsApp o imprimir"
                             >
                               <WhatsAppIcon className="w-3.5 h-3.5 fill-emerald-400" />
-                              <span className="hidden sm:inline">WhatsApp</span>
+                              <span className="hidden sm:inline">Enviar PDF a WhatsApp</span>
                             </button>
 
                             <button
@@ -908,10 +904,10 @@ export function SiteMeetingsModal({
                   type="button"
                   onClick={() => handleSave(true)}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 transition-all active:scale-95"
-                  title="Guarda la reunión y abre WhatsApp automáticamente para enviarla"
+                  title="Guarda la reunión y genera de inmediato el archivo PDF oficial para enviar por WhatsApp"
                 >
                   <WhatsAppIcon className="w-4 h-4 fill-white" />
-                  <span>Guardar y Enviar por WhatsApp</span>
+                  <span>Guardar y Enviar PDF a WhatsApp</span>
                 </button>
               </div>
             </div>

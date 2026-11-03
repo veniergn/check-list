@@ -251,7 +251,8 @@ html.font-bold-mode .font-black {
 
   /* Desactivar backdrop oscuro y centrado fixed del modal para que solo fluya la hoja */
   .report-modal-backdrop,
-  .gantt-print-backdrop {
+  .gantt-print-backdrop,
+  .site-meeting-modal-container {
     position: static !important;
     inset: auto !important;
     background: #ffffff !important;
@@ -282,7 +283,8 @@ html.font-bold-mode .font-black {
   }
   .report-sheet-wrapper,
   .monthly-report-sheet-wrapper,
-  .gantt-sheet-wrapper {
+  .gantt-sheet-wrapper,
+  .site-meeting-a4-sheet {
     background: #ffffff !important;
     background-color: #ffffff !important;
     padding: 0 !important;
